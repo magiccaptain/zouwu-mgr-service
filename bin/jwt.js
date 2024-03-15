@@ -15,6 +15,8 @@ async function main() {
     { expiresIn: '70d' }
   );
 
+  console.log(token);
+
   app.close();
 }
 

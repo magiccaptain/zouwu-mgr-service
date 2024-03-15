@@ -8,6 +8,7 @@ import memcachedStore from 'cache-manager-memcached-store';
 import MemCache from 'memcache-pp';
 
 import { AuthModule, JwtAuthGuard } from './auth';
+import { BrokerModule } from './broker';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
@@ -38,6 +39,7 @@ import { UserModule } from './user/user.module';
     EventEmitterModule.forRoot(),
     SessionModule,
     UserModule,
+    BrokerModule,
   ],
   controllers: [HelloController],
   providers: [

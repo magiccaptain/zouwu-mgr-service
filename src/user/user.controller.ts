@@ -78,7 +78,7 @@ export class UserController {
     const user = await this.userService.get(userId);
     if (!user)
       throw new NotFoundException({
-        code: errCodes.USER_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `User ${userId} not found.`,
         keyPattern: 'userId',
         keyValue: { userId },
@@ -99,7 +99,7 @@ export class UserController {
     const user = await this.userService.update(userId, updateDto);
     if (!user)
       throw new NotFoundException({
-        code: errCodes.USER_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `User ${userId} not found.`,
         keyPattern: 'userId',
         keyValue: { userId },

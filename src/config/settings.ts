@@ -7,10 +7,10 @@ export const settings = env({
     url: 'mqtt://localhost:1883',
     username: 'admin',
     password: 'admin',
-    group: 'haivivi',
+    group: 'zouwu',
   },
   mongo: {
-    url: 'mongodb://localhost:27017/haivivi-core-dev',
+    url: 'mongodb://localhost:27017/zouwu-core-dev',
   },
   memcached: {
     url: 'localhost:11211',

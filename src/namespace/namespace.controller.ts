@@ -78,7 +78,7 @@ export class NamespaceController {
     const namespace = await this.namespaceService.get(namespaceIdOrNs);
     if (!namespace)
       throw new NotFoundException({
-        code: errCodes.NAMESPACE_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `Namespace ${namespaceIdOrNs} not found.`,
         keyPattern: 'namespaceIdOrNs',
         keyValue: { namespaceIdOrNs },
@@ -99,7 +99,7 @@ export class NamespaceController {
     const namespace = await this.namespaceService.update(namespaceId, updateDto);
     if (!namespace)
       throw new NotFoundException({
-        code: errCodes.NAMESPACE_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `Namespace ${namespaceId} not found.`,
         keyPattern: 'namespaceId',
         keyValue: { namespaceId },

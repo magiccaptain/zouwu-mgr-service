@@ -88,7 +88,7 @@ export class SessionController {
     const session = await this.sessionService.get(sessionId);
     if (!session)
       throw new NotFoundException({
-        code: errCodes.SESSION_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `Session ${sessionId} not found.`,
         keyPattern: 'sessionId',
         keyValue: { sessionId },
@@ -110,7 +110,7 @@ export class SessionController {
     const session = await this.sessionService.update(sessionId, updateDto);
     if (!session)
       throw new NotFoundException({
-        code: errCodes.SESSION_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `Session ${sessionId} not found.`,
         keyPattern: 'sessionId',
         keyValue: { sessionId },
@@ -155,8 +155,8 @@ export class SessionController {
       expireAt: dayjs().add(7, 'day').toDate(),
     });
 
-    // 有效期先用 1 天
-    const token = this.authService.signAccessToken({ sub: session.subject }, { expiresIn: '1d' });
+    // 有效期先用 7 天
+    const token = this.authService.signAccessToken({ sub: session.subject }, { expiresIn: '7d' });
     const tokenExpireAt = dayjs().add(1, 'd').toDate();
 
     return {
@@ -186,7 +186,7 @@ export class SessionController {
     const session = await this.sessionService.findAndMaybeRefreshKey(refreshSessionDto.key);
     if (!session) {
       throw new NotFoundException({
-        code: errCodes.SESSION_NOT_FOUND,
+        code: errCodes.NOT_FOUND,
         message: `Session key ${refreshSessionDto.key} not found.`,
         keyPattern: 'key',
         keyValue: { key: refreshSessionDto.key },
