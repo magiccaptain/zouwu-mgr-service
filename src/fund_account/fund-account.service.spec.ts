@@ -76,11 +76,11 @@ describe('HostingServerService', () => {
     it('should return an array of hosting servers', async () => {
       const toBeCreated = mockFundAccount();
       await fundAccountService.create(toBeCreated);
-      const allHostingServers = await fundAccountService.list({});
-      expect(allHostingServers).toBeInstanceOf(Array);
-      expect(allHostingServers.length).toBeGreaterThan(0);
+      const list = await fundAccountService.list({});
+      expect(list).toBeInstanceOf(Array);
+      expect(list.length).toBeGreaterThan(0);
 
-      expect(allHostingServers[0]).toMatchObject(toBeCreated);
+      expect(list[0]).toMatchObject(toBeCreated);
     });
   });
 

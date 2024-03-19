@@ -1455,6 +1455,241 @@
           }
         ]
       }
+    },
+    "/product": {
+      "post": {
+        "operationId": "createProduct",
+        "summary": "Create a fund account",
+        "description": "create fund account",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fund account created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Product"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listProducts",
+        "summary": "List fund accounts",
+        "description": "List fund accounts",
+        "parameters": [
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ZZ500_ENHANCE",
+                "ZZ1000_ENHANCE",
+                "GZ2000_ENHANCE",
+                "ZZ1000_NEUTRAL",
+                "HS300_ENHANCE",
+                "QUANT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "_sort",
+            "required": false,
+            "in": "query",
+            "description": "排序参数",
+            "schema": {
+              "enum": [
+                "createAt",
+                "-createAt",
+                "updateAt",
+                "-updateAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_limit",
+            "required": false,
+            "in": "query",
+            "description": "分页大小",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "_offset",
+            "required": false,
+            "in": "query",
+            "description": "分页偏移",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fund accounts listed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Product"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Product"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/product/{productId}": {
+      "get": {
+        "operationId": "getProductById",
+        "summary": "Get fund account by id",
+        "description": "Get fund account by id",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fund account found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Product"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateProductById",
+        "summary": "Update fund account by id",
+        "description": "Update fund account by id",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fund account updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Product"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Product"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteProductById",
+        "summary": "Delete fund account by id",
+        "description": "delete fund account by id",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Fund account deleted successfully"
+          }
+        },
+        "tags": [
+          "Product"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -2332,6 +2567,94 @@
           "product": {
             "type": "string",
             "description": "产品名称"
+          }
+        }
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "ZZ500_ENHANCE",
+              "ZZ1000_ENHANCE",
+              "GZ2000_ENHANCE",
+              "ZZ1000_NEUTRAL",
+              "HS300_ENHANCE",
+              "QUANT"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ]
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "ZZ500_ENHANCE",
+              "ZZ1000_ENHANCE",
+              "GZ2000_ENHANCE",
+              "ZZ1000_NEUTRAL",
+              "HS300_ENHANCE",
+              "QUANT"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "Entity id"
+          },
+          "createAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Entity created at when"
+          },
+          "updateAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Entity updated at when"
+          },
+          "createBy": {
+            "type": "string",
+            "description": "Entity created by who"
+          },
+          "updateBy": {
+            "type": "string",
+            "description": "Entity updated by who"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "ZZ500_ENHANCE",
+              "ZZ1000_ENHANCE",
+              "GZ2000_ENHANCE",
+              "ZZ1000_NEUTRAL",
+              "HS300_ENHANCE",
+              "QUANT"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
           }
         }
       }

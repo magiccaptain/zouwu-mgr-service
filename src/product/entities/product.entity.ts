@@ -15,7 +15,7 @@ export enum PRODUCT_TYPE {
   QUANT = 'QUANT',
 }
 
-export const PRODUCT_TYPE_ENUM = {
+export const PRODUCT_TYPE_I18N = {
   ZZ500_ENHANCE: 'zz500增强',
   ZZ1000_ENHANCE: 'zz1000增强',
   GZ2000_ENHANCE: 'gz2000增强',
@@ -33,7 +33,7 @@ export class ProductDoc {
 
   @IsNotEmpty()
   @IsEnum(PRODUCT_TYPE)
-  @ApiProperty({ enum: PRODUCT_TYPE_ENUM })
+  @ApiProperty({ enum: PRODUCT_TYPE })
   @Prop({ required: true })
   type: PRODUCT_TYPE;
 }

@@ -15,6 +15,7 @@ import { settings } from './config';
 import { FundAccountModule } from './fund_account';
 import { HelloController } from './hello.controller';
 import { HostingServerModule } from './hosting-servers';
+import { ProductModule } from './product';
 import { SessionModule } from './session';
 import { UserModule } from './user/user.module';
 
@@ -44,6 +45,7 @@ import { UserModule } from './user/user.module';
     BrokerModule,
     HostingServerModule,
     FundAccountModule,
+    ProductModule,
   ],
   controllers: [HelloController],
   providers: [
