@@ -6,10 +6,12 @@ import { getSortParams } from 'src/lib/sort';
 
 import { HostingServerDoc } from '../entities/hosting-server.entity';
 
+import { UpdateHostingServerDto } from './update-hosting-server.dto';
+
 const sortParams = getSortParams(HostingServerDoc);
 
 export class ListHostingServerQuery extends IntersectionType(
-  PickType(HostingServerDoc, ['name', 'broker', 'market'] as const),
+  PickType(UpdateHostingServerDto, ['name', 'broker', 'market'] as const),
   OmitType(QueryDto, ['_sort'])
 ) {
   /**

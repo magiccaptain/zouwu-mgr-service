@@ -89,4 +89,42 @@ export class HostingServerController {
 
     return hostingServer;
   }
+
+  /**
+   * update hosting server by id
+   */
+  @ApiOperation({ operationId: 'updateHostingServer' })
+  @ApiOkResponse({
+    description: 'The hosting server has been successfully updated.',
+    type: HostingServer,
+  })
+  @Patch(':hostingServerId')
+  async update(
+    @Param('hostingServerId') hostingServerId: string,
+    @Body() updateDto: UpdateHostingServerDto
+  ) {
+    const hostingServer = await this.hostingServerService.update(hostingServerId, updateDto);
+    if (!hostingServer) {
+      throw new NotFoundException({
+        code: errCodes.NOT_FOUND,
+        message: `HostingServer with id ${hostingServerId} not found`,
+        keyPattern: 'hostingServerId',
+        keyValue: { hostingServerId },
+      });
+    }
+    return hostingServer;
+  }
+
+  /**
+   * delete hosting server by id
+   */
+  @ApiOperation({ operationId: 'deleteHostingServer' })
+  @ApiNoContentResponse({
+    description: 'The hosting server has been successfully deleted.',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @Delete(':hostingServerId')
+  async delete(@Param('hostingServerId') hostingServerId: string) {
+    await this.hostingServerService.delete(hostingServerId);
+  }
 }
