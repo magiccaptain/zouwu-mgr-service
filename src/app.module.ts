@@ -13,6 +13,7 @@ import { BrokerModule } from './broker';
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
 import { HelloController } from './hello.controller';
+import { HostingServerModule } from './hosting-servers';
 import { SessionModule } from './session';
 import { UserModule } from './user/user.module';
 
@@ -40,6 +41,7 @@ import { UserModule } from './user/user.module';
     SessionModule,
     UserModule,
     BrokerModule,
+    HostingServerModule,
   ],
   controllers: [HelloController],
   providers: [

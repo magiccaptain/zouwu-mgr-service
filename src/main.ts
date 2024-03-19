@@ -27,8 +27,8 @@ async function bootstrap() {
   app.setGlobalPrefix(settings.prefix);
 
   const config = new DocumentBuilder()
-    .setTitle('Mekong API Server')
-    .setDescription('Mekong API for swap-charge services')
+    .setTitle('ZouWu API Server')
+    .setDescription('ZouWu API for swap-charge services')
     .setVersion('1.0')
     .addBearerAuth()
     .addTag('health')
