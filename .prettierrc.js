@@ -15,7 +15,7 @@ module.exports = {
   importOrderParserPlugins: ['jsx', 'typescript', 'decorators-legacy'],
   importOrderSeparation: true,
   plugins: [require.resolve('@ianvs/prettier-plugin-sort-imports')],
-  printWidth: 100,
+  printWidth: 80,
   quoteProps: 'consistent',
   singleQuote: true,
   trailingComma: 'es5',

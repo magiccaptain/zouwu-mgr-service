@@ -1,7 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { ApiHideProperty, ApiProperty, IntersectionType, OmitType } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  IntersectionType,
+  OmitType,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsDate, IsIP, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsIP,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { Document } from 'mongoose';
 
 import { createHash, validateHash } from 'src/lib/crypt';
@@ -163,6 +175,8 @@ UserSchema.virtual('password').set(function (pwd: string) {
   this._password = createHash(pwd);
 });
 
-UserSchema.methods.checkPassword = async function (pwd: string): Promise<boolean> {
+UserSchema.methods.checkPassword = async function (
+  pwd: string
+): Promise<boolean> {
   return this._password && validateHash(this._password, pwd);
 };

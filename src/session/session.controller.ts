@@ -25,7 +25,12 @@ import {
 import dayjs from 'dayjs';
 import { Response } from 'express';
 
-import { AuthService, LocalAuthGuard, Public, RequestWithPassport } from 'src/auth';
+import {
+  AuthService,
+  LocalAuthGuard,
+  Public,
+  RequestWithPassport,
+} from 'src/auth';
 import { errCodes } from 'src/common';
 import { splitShortTimeSpan } from 'src/lib/lang/time';
 
@@ -35,13 +40,20 @@ import { LoginSessionDto } from './dto/login-session.dto';
 import { RefreshSessionDto } from './dto/refresh-session.dto';
 import { RestrictTokenDto } from './dto/restrict-token.dto';
 import { UpdateSessionDto } from './dto/update-session.dto';
-import { OnlyToken, Session, SessionWithToken } from './entities/session.entity';
+import {
+  OnlyToken,
+  Session,
+  SessionWithToken,
+} from './entities/session.entity';
 import { SessionService } from './session.service';
 
 @ApiTags('auth')
 @Controller('sessions')
 export class SessionController {
-  constructor(private sessionService: SessionService, private authService: AuthService) {}
+  constructor(
+    private sessionService: SessionService,
+    private authService: AuthService
+  ) {}
 
   /**
    * Create session
@@ -106,7 +118,10 @@ export class SessionController {
     type: Session,
   })
   @Patch(':sessionId')
-  async update(@Param('sessionId') sessionId: string, @Body() updateDto: UpdateSessionDto) {
+  async update(
+    @Param('sessionId') sessionId: string,
+    @Body() updateDto: UpdateSessionDto
+  ) {
     const session = await this.sessionService.update(sessionId, updateDto);
     if (!session)
       throw new NotFoundException({
@@ -156,7 +171,10 @@ export class SessionController {
     });
 
     // 有效期先用 7 天
-    const token = this.authService.signAccessToken({ sub: session.subject }, { expiresIn: '7d' });
+    const token = this.authService.signAccessToken(
+      { sub: session.subject },
+      { expiresIn: '7d' }
+    );
     const tokenExpireAt = dayjs().add(1, 'd').toDate();
 
     return {
@@ -182,8 +200,12 @@ export class SessionController {
   @Public()
   @Post('@refresh')
   @HttpCode(200)
-  async refresh(@Body() refreshSessionDto: RefreshSessionDto): Promise<SessionWithToken> {
-    const session = await this.sessionService.findAndMaybeRefreshKey(refreshSessionDto.key);
+  async refresh(
+    @Body() refreshSessionDto: RefreshSessionDto
+  ): Promise<SessionWithToken> {
+    const session = await this.sessionService.findAndMaybeRefreshKey(
+      refreshSessionDto.key
+    );
     if (!session) {
       throw new NotFoundException({
         code: errCodes.NOT_FOUND,
@@ -194,7 +216,10 @@ export class SessionController {
     }
 
     // 有效期先用 1 天
-    const token = this.authService.signAccessToken({ sub: session.subject }, { expiresIn: '1d' });
+    const token = this.authService.signAccessToken(
+      { sub: session.subject },
+      { expiresIn: '1d' }
+    );
     const tokenExpireAt = dayjs().add(1, 'd').toDate();
 
     return {

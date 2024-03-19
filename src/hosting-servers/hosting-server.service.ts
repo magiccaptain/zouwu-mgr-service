@@ -7,7 +7,10 @@ import { buildMongooseQuery } from 'src/lib/mongoose-helper';
 import { CreateHostingServerDto } from './dto/create-hosting-server.dto';
 import { ListHostingServerQuery } from './dto/list-hosting-server.dto';
 import { UpdateHostingServerDto } from './dto/update-hosting-server.dto';
-import { HostingServer, HostingServerDocument } from './entities/hosting-server.entity';
+import {
+  HostingServer,
+  HostingServerDocument,
+} from './entities/hosting-server.entity';
 
 @Injectable()
 export class HostingServerService {
@@ -28,15 +31,25 @@ export class HostingServerService {
 
   list(query: ListHostingServerQuery): Promise<HostingServerDocument[]> {
     const { limit, sort, offset, filter } = buildMongooseQuery(query);
-    return this.hostingServerModel.find(filter).sort(sort).skip(offset).limit(limit).exec();
+    return this.hostingServerModel
+      .find(filter)
+      .sort(sort)
+      .skip(offset)
+      .limit(limit)
+      .exec();
   }
 
   get(id: string): Promise<HostingServerDocument> {
     return this.hostingServerModel.findById(id).exec();
   }
 
-  update(id: string, updateDto: UpdateHostingServerDto): Promise<HostingServerDocument> {
-    return this.hostingServerModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
+  update(
+    id: string,
+    updateDto: UpdateHostingServerDto
+  ): Promise<HostingServerDocument> {
+    return this.hostingServerModel
+      .findByIdAndUpdate(id, updateDto, { new: true })
+      .exec();
   }
 
   delete(id: string) {

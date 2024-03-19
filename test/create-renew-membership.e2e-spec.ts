@@ -33,18 +33,24 @@ describe('create or renew membership (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true })
+    );
     await app.init();
 
     authService = moduleFixture.get<AuthService>(AuthService);
     userService = moduleFixture.get<UserService>(UserService);
     planService = moduleFixture.get<PlanService>(PlanService);
-    subscriptionService = moduleFixture.get<SubscriptionService>(SubscriptionService);
+    subscriptionService =
+      moduleFixture.get<SubscriptionService>(SubscriptionService);
     orderService = moduleFixture.get<OrderService>(OrderService);
     membershipService = moduleFixture.get<MembershipService>(MembershipService);
 
     user = await userService.upsert({ username: 'xxxxx', ns: 'xxx' });
-    token = await authService.signAccessToken({ sub: user.id }, { expiresIn: '10s' });
+    token = await authService.signAccessToken(
+      { sub: user.id },
+      { expiresIn: '10s' }
+    );
   });
 
   afterEach(async () => {

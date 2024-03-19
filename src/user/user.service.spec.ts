@@ -44,7 +44,9 @@ describe('UserService', () => {
 
   it('should be init', async () => {
     expect(service).toBeDefined();
-    jest.spyOn(UserService.prototype, 'init').mockReturnValueOnce(Promise.resolve());
+    jest
+      .spyOn(UserService.prototype, 'init')
+      .mockReturnValueOnce(Promise.resolve());
     await service.init();
     expect(service.init).toBeCalledTimes(1);
 

@@ -13,7 +13,8 @@ export const enum Duration {
  * A delay promise
  * @param {Number} ms delay miliseconds
  */
-export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+export const delay = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Format time

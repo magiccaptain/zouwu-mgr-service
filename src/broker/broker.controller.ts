@@ -1,5 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiProperty,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { BROKER, BROKER_NAME } from './constants';
 
@@ -21,8 +27,15 @@ class ListBrokerDto {
 @ApiBearerAuth()
 @Controller('brokers')
 export class BrokerController {
-  @ApiOperation({ operationId: 'listBrokers', summary: 'List all available brokers' })
-  @ApiOkResponse({ description: 'List of available brokers', type: ListBrokerDto, isArray: true })
+  @ApiOperation({
+    operationId: 'listBrokers',
+    summary: 'List all available brokers',
+  })
+  @ApiOkResponse({
+    description: 'List of available brokers',
+    type: ListBrokerDto,
+    isArray: true,
+  })
   @Get()
   list(): ListBrokerDto[] {
     return Object.keys(BROKER).map((key) => {

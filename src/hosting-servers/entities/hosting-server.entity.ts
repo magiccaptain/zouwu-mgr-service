@@ -1,6 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { Document } from 'mongoose';
 
 import { BROKER } from 'src/broker';
@@ -95,6 +101,11 @@ export class HostingServerDoc {
   home_dir?: string;
 }
 
-export const HostingServerSchema = helper(SchemaFactory.createForClass(HostingServerDoc));
-export class HostingServer extends IntersectionType(HostingServerDoc, MongoEntity) {}
+export const HostingServerSchema = helper(
+  SchemaFactory.createForClass(HostingServerDoc)
+);
+export class HostingServer extends IntersectionType(
+  HostingServerDoc,
+  MongoEntity
+) {}
 export type HostingServerDocument = HostingServer & Document;

@@ -1,13 +1,8 @@
-import { getModelToken } from '@nestjs/mongoose';
 import { Test, TestingModule } from '@nestjs/testing';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import { connect, Connection, Model } from 'mongoose';
 
 import { BROKER } from 'src/broker';
-import { settings } from 'src/config';
 
-import { CreateHostingServerDto } from './dto/create-hosting-server.dto';
-import { HostingServer, HostingServerSchema, MARKET } from './entities/hosting-server.entity';
+import { HostingServer, MARKET } from './entities/hosting-server.entity';
 import { HostingServerController } from './hosting-server.controller';
 import { HostingServerService } from './hosting-server.service';
 

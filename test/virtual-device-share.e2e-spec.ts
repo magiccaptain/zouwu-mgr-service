@@ -40,19 +40,25 @@ describe('Virtual device share (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true })
+    );
     await app.init();
 
     authService = moduleFixture.get<AuthService>(AuthService);
     userService = moduleFixture.get<UserService>(UserService);
     characterService = moduleFixture.get<CharacterService>(CharacterService);
-    virtualDeviceService = moduleFixture.get<VirtualDeviceService>(VirtualDeviceService);
+    virtualDeviceService =
+      moduleFixture.get<VirtualDeviceService>(VirtualDeviceService);
     ttsModelService = moduleFixture.get<TtsModelService>(TtsModelService);
     voiceService = moduleFixture.get<VoiceService>(VoiceService);
     tunedLLMService = moduleFixture.get<TunedLLMService>(TunedLLMService);
 
     user = await userService.upsert({ username: 'xxxxx', ns: 'xxx' });
-    token = await authService.signAccessToken({ sub: user.id }, { expiresIn: '10s' });
+    token = await authService.signAccessToken(
+      { sub: user.id },
+      { expiresIn: '10s' }
+    );
 
     ttsModel = await ttsModelService.create({
       driver: 'xxx',
@@ -136,7 +142,9 @@ describe('Virtual device share (e2e)', () => {
 
     // 接受邀请
     familyMemberResp = await request(app.getHttpServer())
-      .patch(`/virtual-devices/${virtualDevice.id}/family-members/${familyMember.id}`)
+      .patch(
+        `/virtual-devices/${virtualDevice.id}/family-members/${familyMember.id}`
+      )
       .send({
         relationship: 'Relationship with kids',
         status: VdFamilyMemberStatus.ACCEPTED,
@@ -164,7 +172,9 @@ describe('Virtual device share (e2e)', () => {
 
     //移除家庭成员
     const deletefamilyMemberResp = await request(app.getHttpServer())
-      .delete(`/virtual-devices/${virtualDevice.id}/family-members/${familyMember.id}`)
+      .delete(
+        `/virtual-devices/${virtualDevice.id}/family-members/${familyMember.id}`
+      )
       .set('Authorization', `Bearer ${token}`)
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json');

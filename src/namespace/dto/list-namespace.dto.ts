@@ -1,4 +1,9 @@
-import { ApiProperty, IntersectionType, OmitType, PickType } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  IntersectionType,
+  OmitType,
+  PickType,
+} from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
 import { QueryDto } from 'src/common';

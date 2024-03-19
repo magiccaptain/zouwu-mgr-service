@@ -13,7 +13,8 @@ import { Namespace, NamespaceDocument } from './entities/namespace.entity';
 @Injectable()
 export class NamespaceService implements OnModuleInit {
   constructor(
-    @InjectModel(Namespace.name) private readonly namespaceModel: Model<NamespaceDocument>
+    @InjectModel(Namespace.name)
+    private readonly namespaceModel: Model<NamespaceDocument>
   ) {}
   onModuleInit() {
     this.init().catch((err) => {
@@ -42,21 +43,36 @@ export class NamespaceService implements OnModuleInit {
 
   list(query: ListNamespaceQuery): Promise<NamespaceDocument[]> {
     const { limit = 10, sort, offset = 0, filter } = buildMongooseQuery(query);
-    return this.namespaceModel.find(filter).sort(sort).skip(offset).limit(limit).exec();
+    return this.namespaceModel
+      .find(filter)
+      .sort(sort)
+      .skip(offset)
+      .limit(limit)
+      .exec();
   }
 
   get(idOrNs: string): Promise<NamespaceDocument> {
-    const filter = isObjectIdOrHexString(idOrNs) ? { _id: idOrNs } : { ns: idOrNs };
+    const filter = isObjectIdOrHexString(idOrNs)
+      ? { _id: idOrNs }
+      : { ns: idOrNs };
     return this.namespaceModel.findOne(filter).exec();
   }
 
-  update(id: string, updateDto: UpdateNamespaceDto): Promise<NamespaceDocument> {
-    return this.namespaceModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
+  update(
+    id: string,
+    updateDto: UpdateNamespaceDto
+  ): Promise<NamespaceDocument> {
+    return this.namespaceModel
+      .findByIdAndUpdate(id, updateDto, { new: true })
+      .exec();
   }
 
   upsert(namespace: CreateNamespaceDto) {
     return this.namespaceModel
-      .findOneAndUpdate({ ns: namespace.ns }, namespace, { upsert: true, new: true })
+      .findOneAndUpdate({ ns: namespace.ns }, namespace, {
+        upsert: true,
+        new: true,
+      })
       .exec();
   }
 

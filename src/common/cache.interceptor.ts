@@ -32,18 +32,29 @@ export class UnsetCacheInterceptor implements NestInterceptor {
     private reflector: Reflector
   ) {}
 
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
-    let cacheKey = this.reflector.getAllAndOverride<string>(CACHE_KEY_METADATA, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+  async intercept(
+    context: ExecutionContext,
+    next: CallHandler
+  ): Promise<Observable<any>> {
+    let cacheKey = this.reflector.getAllAndOverride<string>(
+      CACHE_KEY_METADATA,
+      [context.getHandler(), context.getClass()]
+    );
 
     // cacheKey 不存在时，用 url 作为 key
     if (context.getType() === 'http') {
       const request = context.switchToHttp().getRequest();
       const { query, body, params, url } = request;
       if (!cacheKey) cacheKey = url;
-      else cacheKey = compileKey(cacheKey, { query, body, params, ...query, ...body, ...params });
+      else
+        cacheKey = compileKey(cacheKey, {
+          query,
+          body,
+          params,
+          ...query,
+          ...body,
+          ...params,
+        });
     }
 
     if (context.getType() === 'rpc') {
@@ -68,10 +79,10 @@ export class UnsetCacheInterceptor implements NestInterceptor {
 export class SetCacheInterceptor extends CacheInterceptor {
   trackBy(context: ExecutionContext): string | undefined {
     //@ts-ignore
-    let cacheKey = this.reflector.getAllAndOverride<string>(CACHE_KEY_METADATA, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    let cacheKey = this.reflector.getAllAndOverride<string>(
+      CACHE_KEY_METADATA,
+      [context.getHandler(), context.getClass()]
+    );
 
     if (context.getType() === 'http') {
       const request = context.switchToHttp().getRequest();
@@ -84,7 +95,15 @@ export class SetCacheInterceptor extends CacheInterceptor {
       }
 
       if (!cacheKey) cacheKey = url;
-      else cacheKey = compileKey(cacheKey, { query, body, params, ...query, ...body, ...params });
+      else
+        cacheKey = compileKey(cacheKey, {
+          query,
+          body,
+          params,
+          ...query,
+          ...body,
+          ...params,
+        });
     }
 
     if (context.getType() === 'rpc') {

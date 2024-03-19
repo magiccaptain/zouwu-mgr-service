@@ -6,7 +6,11 @@ import { connect, Connection, Model } from 'mongoose';
 import { BROKER } from 'src/broker';
 
 import { CreateHostingServerDto } from './dto/create-hosting-server.dto';
-import { HostingServer, HostingServerSchema, MARKET } from './entities/hosting-server.entity';
+import {
+  HostingServer,
+  HostingServerSchema,
+  MARKET,
+} from './entities/hosting-server.entity';
 import { HostingServerService } from './hosting-server.service';
 
 const mockHostingServer = (name: string): CreateHostingServerDto => {
@@ -32,7 +36,10 @@ describe('HostingServerService', () => {
     mongod = await MongoMemoryServer.create();
     const uri = mongod.getUri();
     mongoConnection = (await connect(uri)).connection;
-    hostingServerModel = mongoConnection.model<HostingServer>('HostingServer', HostingServerSchema);
+    hostingServerModel = mongoConnection.model<HostingServer>(
+      'HostingServer',
+      HostingServerSchema
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -44,7 +51,8 @@ describe('HostingServerService', () => {
       ],
     }).compile();
 
-    hostingServerService = module.get<HostingServerService>(HostingServerService);
+    hostingServerService =
+      module.get<HostingServerService>(HostingServerService);
   });
 
   afterAll(async () => {
@@ -74,11 +82,11 @@ describe('HostingServerService', () => {
     it('should return an array of hosting servers', async () => {
       const toBeCreated = mockHostingServer('中泰上海12702');
       await hostingServerService.create(toBeCreated);
-      const allHostingServers = await hostingServerService.list({});
-      expect(allHostingServers).toBeInstanceOf(Array);
-      expect(allHostingServers.length).toBeGreaterThan(0);
+      const lists = await hostingServerService.list({});
+      expect(lists).toBeInstanceOf(Array);
+      expect(lists.length).toBeGreaterThan(0);
 
-      expect(allHostingServers[0]).toMatchObject(toBeCreated);
+      expect(lists[0]).toMatchObject(toBeCreated);
     });
   });
 
@@ -87,9 +95,9 @@ describe('HostingServerService', () => {
       const toBeCreated = mockHostingServer('中泰上海12702');
       const hostingServer = await hostingServerService.create(toBeCreated);
 
-      const foundHostingServer = await hostingServerService.get(hostingServer.id);
-      expect(foundHostingServer).toBeDefined();
-      expect(foundHostingServer).toMatchObject(toBeCreated);
+      const found = await hostingServerService.get(hostingServer.id);
+      expect(found).toBeDefined();
+      expect(found).toMatchObject(toBeCreated);
     });
   });
 
@@ -98,11 +106,11 @@ describe('HostingServerService', () => {
       const toBeCreated = mockHostingServer('中泰上海12702');
       const hostingServer = await hostingServerService.create(toBeCreated);
 
-      const updatedHostingServer = await hostingServerService.update(hostingServer.id, {
+      const updated = await hostingServerService.update(hostingServer.id, {
         desc: '中泰上海12702服务器(更新)',
       });
-      expect(updatedHostingServer).toBeDefined();
-      expect(updatedHostingServer.desc).toBe('中泰上海12702服务器(更新)');
+      expect(updated).toBeDefined();
+      expect(updated.desc).toBe('中泰上海12702服务器(更新)');
     });
   });
 

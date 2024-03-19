@@ -1,4 +1,9 @@
-import { ApiProperty, IntersectionType, OmitType, PickType } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  IntersectionType,
+  OmitType,
+  PickType,
+} from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
 
 import { QueryDto } from 'src/common';
@@ -11,7 +16,14 @@ import { UpdateUserDto } from './update-user.dto';
 const sortParams = getSortParams(UserDoc);
 
 export class ListUserQuery extends IntersectionType(
-  PickType(UpdateUserDto, ['email', 'name', 'phone', 'district', 'ns', 'roles'] as const),
+  PickType(UpdateUserDto, [
+    'email',
+    'name',
+    'phone',
+    'district',
+    'ns',
+    'roles',
+  ] as const),
   OmitType(QueryDto, ['_sort'])
 ) {
   /**

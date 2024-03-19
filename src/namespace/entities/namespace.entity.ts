@@ -61,6 +61,8 @@ export class NamespaceDoc {
   parent?: string;
 }
 
-export const NamespaceSchema = helper(SchemaFactory.createForClass(NamespaceDoc));
+export const NamespaceSchema = helper(
+  SchemaFactory.createForClass(NamespaceDoc)
+);
 export class Namespace extends IntersectionType(NamespaceDoc, MongoEntity) {}
 export type NamespaceDocument = Namespace & Document;

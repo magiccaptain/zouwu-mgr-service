@@ -15,7 +15,10 @@ function wrapFilter(filter: any) {
   if (filter.district && isNumber(filter.district)) {
     const c = countTailZero(Number(filter.district));
     if (c > 0) {
-      filter.district = { $gte: filter.district, $lt: String(Number(filter.district) + 10 ** c) };
+      filter.district = {
+        $gte: filter.district,
+        $lt: String(Number(filter.district) + 10 ** c),
+      };
     }
   }
   return filter;
@@ -23,7 +26,9 @@ function wrapFilter(filter: any) {
 
 @Injectable()
 export class UserService implements OnModuleInit {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>
+  ) {}
 
   onModuleInit() {
     this.init().catch((err) => {
@@ -55,7 +60,12 @@ export class UserService implements OnModuleInit {
 
   list(query: ListUserQuery): Promise<UserDocument[]> {
     const { limit = 10, sort, offset = 0, filter } = buildMongooseQuery(query);
-    return this.userModel.find(wrapFilter(filter)).sort(sort).skip(offset).limit(limit).exec();
+    return this.userModel
+      .find(wrapFilter(filter))
+      .sort(sort)
+      .skip(offset)
+      .limit(limit)
+      .exec();
   }
 
   get(id: string): Promise<UserDocument> {
@@ -63,12 +73,17 @@ export class UserService implements OnModuleInit {
   }
 
   update(id: string, updateDto: UpdateUserDto): Promise<UserDocument> {
-    return this.userModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
+    return this.userModel
+      .findByIdAndUpdate(id, updateDto, { new: true })
+      .exec();
   }
 
   upsert(user: CreateUserDto) {
     return this.userModel
-      .findOneAndUpdate({ username: user.username }, user, { upsert: true, new: true })
+      .findOneAndUpdate({ username: user.username }, user, {
+        upsert: true,
+        new: true,
+      })
       .exec();
   }
 
@@ -82,7 +97,9 @@ export class UserService implements OnModuleInit {
    * @returns
    */
   findByLogin(login: string): Promise<UserDocument> {
-    return this.userModel.findOne({ $or: [{ username: login }, { email: login }] }).exec();
+    return this.userModel
+      .findOne({ $or: [{ username: login }, { email: login }] })
+      .exec();
   }
 
   /**

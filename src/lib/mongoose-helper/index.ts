@@ -117,7 +117,9 @@ const getDateGroupId = (field, scope) => {
     case 'week':
       return { week: { $week: { date: `$${field}`, timezone: '+08:00' } } };
     case 'day':
-      return { day: { $dayOfMonth: { date: `$${field}`, timezone: '+08:00' } } };
+      return {
+        day: { $dayOfMonth: { date: `$${field}`, timezone: '+08:00' } },
+      };
     case 'hour':
       return { hour: { $hour: { date: `$${field}`, timezone: '+08:00' } } };
   }

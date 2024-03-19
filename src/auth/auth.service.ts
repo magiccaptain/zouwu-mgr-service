@@ -10,7 +10,10 @@ interface SignAccessTokenOption {
 
 @Injectable()
 export class AuthService {
-  constructor(private userService: UserService, private jwtService: JwtService) {}
+  constructor(
+    private userService: UserService,
+    private jwtService: JwtService
+  ) {}
 
   async validateUser(login: string, pass: string): Promise<UserDocument> {
     const user = await this.userService.findByLoginWithPassword(login);

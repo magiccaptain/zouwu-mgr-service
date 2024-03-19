@@ -12,7 +12,10 @@ export function IsNonPrimitiveArray(validationOptions?: ValidationOptions) {
         validate(value: any) {
           return (
             Array.isArray(value) &&
-            value.reduce((a, b) => a && typeof b === 'object' && !Array.isArray(b), true)
+            value.reduce(
+              (a, b) => a && typeof b === 'object' && !Array.isArray(b),
+              true
+            )
           );
         },
       },

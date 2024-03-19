@@ -14,7 +14,10 @@ import { Session, SessionDocument } from './entities/session.entity';
 
 @Injectable()
 export class SessionService {
-  constructor(@InjectModel(Session.name) private readonly sessionModel: Model<SessionDocument>) {}
+  constructor(
+    @InjectModel(Session.name)
+    private readonly sessionModel: Model<SessionDocument>
+  ) {}
 
   create(createDto: CreateSessionDto) {
     const key = nanoid();
@@ -29,7 +32,12 @@ export class SessionService {
 
   list(query: ListSessionQuery) {
     const { limit = 10, sort, offset = 0, filter } = buildMongooseQuery(query);
-    return this.sessionModel.find(filter).sort(sort).skip(offset).limit(limit).exec();
+    return this.sessionModel
+      .find(filter)
+      .sort(sort)
+      .skip(offset)
+      .limit(limit)
+      .exec();
   }
 
   get(id: string): Promise<SessionDocument> {
@@ -37,7 +45,9 @@ export class SessionService {
   }
 
   update(id: string, updateDto: UpdateSessionDto): Promise<SessionDocument> {
-    return this.sessionModel.findByIdAndUpdate(id, updateDto, { new: true }).exec();
+    return this.sessionModel
+      .findByIdAndUpdate(id, updateDto, { new: true })
+      .exec();
   }
 
   async delete(id: string) {
@@ -54,7 +64,10 @@ export class SessionService {
    * @param key
    * @returns
    */
-  async findAndMaybeRefreshKey(key: string, refreshBefore = '1d'): Promise<SessionDocument> {
+  async findAndMaybeRefreshKey(
+    key: string,
+    refreshBefore = '1d'
+  ): Promise<SessionDocument> {
     const session = await this.sessionModel.findOne({ key }).exec();
     if (!session) {
       return null;

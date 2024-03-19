@@ -103,7 +103,10 @@ export class HostingServerController {
     @Param('hostingServerId') hostingServerId: string,
     @Body() updateDto: UpdateHostingServerDto
   ) {
-    const hostingServer = await this.hostingServerService.update(hostingServerId, updateDto);
+    const hostingServer = await this.hostingServerService.update(
+      hostingServerId,
+      updateDto
+    );
     if (!hostingServer) {
       throw new NotFoundException({
         code: errCodes.NOT_FOUND,

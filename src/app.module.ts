@@ -12,6 +12,7 @@ import { BrokerModule } from './broker';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
+import { FundAccountModule } from './fund_account';
 import { HelloController } from './hello.controller';
 import { HostingServerModule } from './hosting-servers';
 import { SessionModule } from './session';
@@ -42,6 +43,7 @@ import { UserModule } from './user/user.module';
     UserModule,
     BrokerModule,
     HostingServerModule,
+    FundAccountModule,
   ],
   controllers: [HelloController],
   providers: [

@@ -3,7 +3,8 @@ import crypto from 'crypto';
 const SALT_LENGTH = 13;
 
 function generateSalt(len) {
-  const set = '0123456789abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQURSTUVWXYZ';
+  const set =
+    '0123456789abcdefghijklmnopqurstuvwxyzABCDEFGHIJKLMNOPQURSTUVWXYZ';
   const setLen = set.length;
 
   let salt = '';

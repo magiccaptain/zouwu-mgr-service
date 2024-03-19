@@ -14,14 +14,18 @@ export type IsAny<T, True, False = never> =
  *
  * @internal
  */
-export type IsUnknown<T, True, False = never> = unknown extends T ? IsAny<T, False, True> : False;
+export type IsUnknown<T, True, False = never> = unknown extends T
+  ? IsAny<T, False, True>
+  : False;
 
 export type FallbackIfUnknown<T, Fallback> = IsUnknown<T, Fallback, T>;
 
 /**
  * @internal
  */
-export type IfMaybeUndefined<P, True, False> = [undefined] extends [P] ? True : False;
+export type IfMaybeUndefined<P, True, False> = [undefined] extends [P]
+  ? True
+  : False;
 
 /**
  * @internal
@@ -45,7 +49,11 @@ export type IsEmptyObj<T, True, False = never> = T extends any
  *
  * @internal
  */
-export type AtLeastTS35<True, False> = [True, False][IsUnknown<ReturnType<<T>() => T>, 0, 1>];
+export type AtLeastTS35<True, False> = [True, False][IsUnknown<
+  ReturnType<<T>() => T>,
+  0,
+  1
+>];
 
 /**
  * @internal
@@ -66,9 +74,9 @@ export type ExcludeFromTuple<T, E, Acc extends unknown[] = []> = T extends [
 /**
  * Convert a Union type `(A|B)` to an intersection type `(A&B)`
  */
-export type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I
-) => void
+export type UnionToIntersection<U> = (
+  U extends any ? (k: U) => void : never
+) extends (k: infer I) => void
   ? I
   : never;
 
@@ -93,7 +101,9 @@ export interface HasMatchFunction<T> {
   match: TypeGuard<T>;
 }
 
-export const hasMatchFunction = <T>(v: Matcher<T>): v is HasMatchFunction<T> => {
+export const hasMatchFunction = <T>(
+  v: Matcher<T>
+): v is HasMatchFunction<T> => {
   return v && typeof (v as HasMatchFunction<T>).match === 'function';
 };
 
@@ -101,7 +111,11 @@ export const hasMatchFunction = <T>(v: Matcher<T>): v is HasMatchFunction<T> => 
 export type Matcher<T> = HasMatchFunction<T> | TypeGuard<T>;
 
 /** @public */
-export type ActionFromMatcher<M extends Matcher<any>> = M extends Matcher<infer T> ? T : never;
+export type ActionFromMatcher<M extends Matcher<any>> = M extends Matcher<
+  infer T
+>
+  ? T
+  : never;
 
 // Inlined / shortened version of `kindOf` from https://github.com/jonschlinkert/kind-of
 export function miniKindOf(val: any): string {
@@ -135,7 +149,11 @@ export function miniKindOf(val: any): string {
   }
 
   // other
-  return Object.prototype.toString.call(val).slice(8, -1).toLowerCase().replace(/\s/g, '');
+  return Object.prototype.toString
+    .call(val)
+    .slice(8, -1)
+    .toLowerCase()
+    .replace(/\s/g, '');
 }
 
 function ctorName(val: any): string | null {

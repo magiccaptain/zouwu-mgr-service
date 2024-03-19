@@ -8,7 +8,10 @@ import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 
 @Module({
-  imports: [AuthModule, MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }])],
+  imports: [
+    AuthModule,
+    MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
+  ],
   controllers: [SessionController],
   providers: [SessionService],
   exports: [SessionService],

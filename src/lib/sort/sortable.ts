@@ -9,7 +9,8 @@ export const METADATA_KEY_SORT_FIELDS = 'sortFields';
 /**
  * 可排序字段的装饰器
  */
-export const SortFields = (flelds: string[]) => SetMetadata(METADATA_KEY_SORT_FIELDS, flelds);
+export const SortFields = (flelds: string[]) =>
+  SetMetadata(METADATA_KEY_SORT_FIELDS, flelds);
 
 /**
  * 获取一个schema中设置的可排序字段
@@ -41,5 +42,7 @@ export const toSortParams = (sortableFileds: string[]): string[] => {
  * @returns string[] 携带排序方向的参数列表
  */
 export const getSortParams = (target: any): string[] => {
-  return toSortParams(concat(['createAt', 'updateAt'], getSortableFields(target)));
+  return toSortParams(
+    concat(['createAt', 'updateAt'], getSortableFields(target))
+  );
 };

@@ -6,7 +6,11 @@ import { NamespaceController } from './namespace.controller';
 import { NamespaceService } from './namespace.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([{ name: Namespace.name, schema: NamespaceSchema }])],
+  imports: [
+    MongooseModule.forFeature([
+      { name: Namespace.name, schema: NamespaceSchema },
+    ]),
+  ],
   controllers: [NamespaceController],
   providers: [NamespaceService],
   exports: [NamespaceService],

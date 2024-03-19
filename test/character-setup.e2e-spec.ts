@@ -44,7 +44,9 @@ describe('character-setup (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ transform: true, whitelist: true })
+    );
     await app.init();
 
     authService = moduleFixture.get<AuthService>(AuthService);
@@ -56,7 +58,10 @@ describe('character-setup (e2e)', () => {
     tunedLLMService = moduleFixture.get<TunedLLMService>(TunedLLMService);
 
     user = await userService.upsert({ username: 'xxxxx', ns: 'xxx' });
-    token = await authService.signAccessToken({ sub: user.id }, { expiresIn: '10s' });
+    token = await authService.signAccessToken(
+      { sub: user.id },
+      { expiresIn: '10s' }
+    );
 
     ttsModel = await ttsModelService.create({
       driver: 'xxx',

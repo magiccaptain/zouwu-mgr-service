@@ -1,4 +1,9 @@
-import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  Injectable,
+  NestInterceptor,
+} from '@nestjs/common';
 import { get } from 'lodash';
 import { Observable } from 'rxjs';
 
@@ -10,7 +15,8 @@ export class ByWhoInterceptor implements NestInterceptor {
     const userId = get(request, 'user.id');
     if (userId && request.body) {
       if (request.method === 'POST') request.body.createBy = userId;
-      if (request.method === 'PUT' || request.method === 'PATCH') request.body.updateBy = userId;
+      if (request.method === 'PUT' || request.method === 'PATCH')
+        request.body.updateBy = userId;
       if (request.method === 'DELETE') request.body.deleteBy = userId;
     }
     return next.handle();

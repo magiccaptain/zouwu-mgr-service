@@ -1,6 +1,11 @@
 import { Prop, Schema } from '@nestjs/mongoose';
 
-import { getSortableFields, getSortParams, SortFields, toSortParams } from './sortable';
+import {
+  getSortableFields,
+  getSortParams,
+  SortFields,
+  toSortParams,
+} from './sortable';
 
 @Schema()
 @SortFields(['filed2', 'filed3'])
@@ -24,7 +29,12 @@ describe('getSortableFields', () => {
 
 describe('toSortParams', () => {
   it('should return an array of fields with the sorting direction', () => {
-    expect(toSortParams(['filed2', 'filed3'])).toEqual(['filed2', '-filed2', 'filed3', '-filed3']);
+    expect(toSortParams(['filed2', 'filed3'])).toEqual([
+      'filed2',
+      '-filed2',
+      'filed3',
+      '-filed3',
+    ]);
   });
 });
 

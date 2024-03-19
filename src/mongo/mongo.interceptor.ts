@@ -37,7 +37,9 @@ export class MongoErrorsInterceptor implements NestInterceptor {
                   })
               );
             default:
-              return throwError(() => new InternalServerErrorException(err.message));
+              return throwError(
+                () => new InternalServerErrorException(err.message)
+              );
           }
         }
         if (isCastError(err)) {

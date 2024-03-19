@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
 
 import { BROKER } from 'src/broker';
@@ -34,8 +34,19 @@ export class FundAccountDoc {
   @ApiProperty({ enum: BROKER, enumName: 'BROKER' })
   @Prop({ required: true })
   broker: BROKER;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({ description: '产品名称' })
+  @Prop()
+  product?: string;
 }
 
-export const FundAccountSchema = helper(SchemaFactory.createForClass(FundAccountDoc));
-export class FundAccount extends IntersectionType(MongoEntity, FundAccountDoc) {}
+export const FundAccountSchema = helper(
+  SchemaFactory.createForClass(FundAccountDoc)
+);
+export class FundAccount extends IntersectionType(
+  MongoEntity,
+  FundAccountDoc
+) {}
 export type FundAccountDocument = Document & FundAccountDoc;

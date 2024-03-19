@@ -24,7 +24,10 @@ describe('NamespaceService', () => {
     mongod = await MongoMemoryServer.create();
     const uri = mongod.getUri();
     mongoConnection = (await connect(uri)).connection;
-    namespaceModel = mongoConnection.model<Namespace>(Namespace.name, NamespaceSchema);
+    namespaceModel = mongoConnection.model<Namespace>(
+      Namespace.name,
+      NamespaceSchema
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -41,7 +44,9 @@ describe('NamespaceService', () => {
 
   it('should be init', async () => {
     expect(service).toBeDefined();
-    jest.spyOn(NamespaceService.prototype, 'init').mockReturnValueOnce(Promise.resolve());
+    jest
+      .spyOn(NamespaceService.prototype, 'init')
+      .mockReturnValueOnce(Promise.resolve());
     await service.init();
     expect(service.init).toBeCalledTimes(1);
 

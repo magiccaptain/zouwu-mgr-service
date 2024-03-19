@@ -95,8 +95,14 @@ export class NamespaceController {
     type: Namespace,
   })
   @Patch(':namespaceId')
-  async update(@Param('namespaceId') namespaceId: string, @Body() updateDto: UpdateNamespaceDto) {
-    const namespace = await this.namespaceService.update(namespaceId, updateDto);
+  async update(
+    @Param('namespaceId') namespaceId: string,
+    @Body() updateDto: UpdateNamespaceDto
+  ) {
+    const namespace = await this.namespaceService.update(
+      namespaceId,
+      updateDto
+    );
     if (!namespace)
       throw new NotFoundException({
         code: errCodes.NOT_FOUND,

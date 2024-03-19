@@ -31,7 +31,9 @@ describe('SessionController', () => {
             delete: jest.fn().mockResolvedValue(undefined),
             get: jest.fn().mockResolvedValue(mockSession()),
             findByKey: jest.fn().mockResolvedValue(mockSession().key),
-            findAndMaybeRefreshKey: jest.fn().mockResolvedValue(mockSession().key),
+            findAndMaybeRefreshKey: jest
+              .fn()
+              .mockResolvedValue(mockSession().key),
           },
         },
         {

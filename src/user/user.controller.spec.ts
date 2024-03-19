@@ -26,12 +26,20 @@ describe('UserController', () => {
         {
           provide: UserService,
           useValue: {
-            list: jest.fn().mockResolvedValue([mockUser('kitty', 'xxx', '123456')]),
-            create: jest.fn().mockResolvedValue(mockUser('kitty', 'xxx', '123456')),
+            list: jest
+              .fn()
+              .mockResolvedValue([mockUser('kitty', 'xxx', '123456')]),
+            create: jest
+              .fn()
+              .mockResolvedValue(mockUser('kitty', 'xxx', '123456')),
             count: jest.fn().mockResolvedValue(1),
-            update: jest.fn().mockResolvedValue(mockUser('kitty', 'xxx', '123456')),
+            update: jest
+              .fn()
+              .mockResolvedValue(mockUser('kitty', 'xxx', '123456')),
             delete: jest.fn().mockResolvedValue(undefined),
-            get: jest.fn().mockResolvedValue(mockUser('kitty', 'xxx', '123456')),
+            get: jest
+              .fn()
+              .mockResolvedValue(mockUser('kitty', 'xxx', '123456')),
           },
         },
       ],
