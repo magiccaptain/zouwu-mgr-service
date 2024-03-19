@@ -1210,6 +1210,251 @@
           }
         ]
       }
+    },
+    "/fund-account": {
+      "post": {
+        "operationId": "createFundAccount",
+        "summary": "Create a fund account",
+        "description": "create fund account",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFundAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fund account created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundAccount"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "FundAccount"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listFundAccounts",
+        "summary": "List fund accounts",
+        "description": "List fund accounts",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": false,
+            "in": "query",
+            "description": "资金账号",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
+            }
+          },
+          {
+            "name": "broker",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/BROKER"
+            }
+          },
+          {
+            "name": "product",
+            "required": false,
+            "in": "query",
+            "description": "产品名称",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "_sort",
+            "required": false,
+            "in": "query",
+            "description": "排序参数",
+            "schema": {
+              "enum": [
+                "createAt",
+                "-createAt",
+                "updateAt",
+                "-updateAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "_limit",
+            "required": false,
+            "in": "query",
+            "description": "分页大小",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "_offset",
+            "required": false,
+            "in": "query",
+            "description": "分页偏移",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fund accounts listed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FundAccount"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "FundAccount"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/fund-account/{fundAccountId}": {
+      "get": {
+        "operationId": "getFundAccountById",
+        "summary": "Get fund account by id",
+        "description": "Get fund account by id",
+        "parameters": [
+          {
+            "name": "fundAccountId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fund account found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundAccount"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "FundAccount"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "updateFundAccountById",
+        "summary": "Update fund account by id",
+        "description": "Update fund account by id",
+        "parameters": [
+          {
+            "name": "fundAccountId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFundAccountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fund account updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FundAccount"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "FundAccount"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "deleteFundAccountById",
+        "summary": "Delete fund account by id",
+        "description": "delete fund account by id",
+        "parameters": [
+          {
+            "name": "fundAccountId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Fund account deleted successfully"
+          }
+        },
+        "tags": [
+          "FundAccount"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -1990,6 +2235,103 @@
           "home_dir": {
             "type": "string",
             "description": "home路径"
+          }
+        }
+      },
+      "FUND_ACCOUNT_STATUS": {
+        "type": "string",
+        "enum": [
+          "TRADING",
+          "CLOSED"
+        ]
+      },
+      "CreateFundAccountDto": {
+        "type": "object",
+        "properties": {
+          "fund_account": {
+            "type": "string",
+            "description": "资金账号"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
+          },
+          "broker": {
+            "$ref": "#/components/schemas/BROKER"
+          },
+          "product": {
+            "type": "string",
+            "description": "产品名称"
+          }
+        },
+        "required": [
+          "fund_account",
+          "status",
+          "broker"
+        ]
+      },
+      "FundAccount": {
+        "type": "object",
+        "properties": {
+          "fund_account": {
+            "type": "string",
+            "description": "资金账号"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
+          },
+          "broker": {
+            "$ref": "#/components/schemas/BROKER"
+          },
+          "product": {
+            "type": "string",
+            "description": "产品名称"
+          },
+          "id": {
+            "type": "string",
+            "description": "Entity id"
+          },
+          "createAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Entity created at when"
+          },
+          "updateAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Entity updated at when"
+          },
+          "createBy": {
+            "type": "string",
+            "description": "Entity created by who"
+          },
+          "updateBy": {
+            "type": "string",
+            "description": "Entity updated by who"
+          }
+        },
+        "required": [
+          "fund_account",
+          "status",
+          "broker",
+          "id"
+        ]
+      },
+      "UpdateFundAccountDto": {
+        "type": "object",
+        "properties": {
+          "fund_account": {
+            "type": "string",
+            "description": "资金账号"
+          },
+          "status": {
+            "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
+          },
+          "broker": {
+            "$ref": "#/components/schemas/BROKER"
+          },
+          "product": {
+            "type": "string",
+            "description": "产品名称"
           }
         }
       }
