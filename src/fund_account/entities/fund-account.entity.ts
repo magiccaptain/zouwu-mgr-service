@@ -37,7 +37,7 @@ export class FundAccountDoc {
 
   @IsOptional()
   @IsString()
-  @ApiProperty({ description: '产品名称' })
+  @ApiProperty({ description: '对应的产品' })
   @Prop()
   product?: string;
 }

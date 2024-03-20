@@ -13,6 +13,7 @@ export enum PRODUCT_TYPE {
   ZZ1000_NEUTRAL = 'ZZ1000_NEUTRAL',
   HS300_ENHANCE = 'HS300_ENHANCE',
   QUANT = 'QUANT',
+  QUANT_BULL = 'QUANT_BULL',
 }
 
 export const PRODUCT_TYPE_I18N = {
@@ -22,6 +23,7 @@ export const PRODUCT_TYPE_I18N = {
   ZZ1000_NEUTRAL: 'zz1000中性',
   HS300_ENHANCE: '沪深300增强',
   QUANT: '量化选股',
+  QUANT_BULL: '量化多头',
 };
 
 @Schema()

@@ -1,0 +1,233 @@
+[
+	{
+		"name": "致邃投资-智慧矩阵1号",
+		"type": "ZZ500_ENHANCE",
+		"accounts": [
+			{
+				"broker": "xtp",
+				"fund_account": "106110005821",
+				"status": "CLOSED"
+			},
+			{
+				"broker": "xtp",
+				"fund_account": "109277002626",
+				"status": "TRADING"
+			},
+			{
+				"broker": "guojun",
+				"fund_account": "52010000638571",
+				"status": "CLOSED"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-智慧矩阵2号",
+		"type": "GZ2000_ENHANCE",
+		"accounts": [
+			{
+				"broker": "guoxin",
+				"fund_account": "330200062400",
+				"status": "TRADING"
+			},
+			{
+				"broker": "guoxin",
+				"fund_account": "190000613731",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-智慧矩阵3号",
+		"type": "ZZ500_ENHANCE",
+		"accounts": [
+			{
+				"broker": "guoxin",
+				"fund_account": "330200062401",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-智慧矩阵4号",
+		"type": "ZZ1000_NEUTRAL",
+		"accounts": [
+			{
+				"broker": "zhongjin",
+				"fund_account": "6687802443",
+				"status": "TRADING"
+			},
+			{
+				"broker": "guojun",
+				"fund_account": "0344080218196888",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-智慧矩阵5号",
+		"type": "QUANT",
+		"accounts": [
+			{
+				"broker": "xtp",
+				"fund_account": "109277002803",
+				"status": "CLOSED"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-智慧矩阵7号",
+		"type": "GZ2000_ENHANCE",
+		"accounts": [
+			{
+				"broker": "zhongjin",
+				"fund_account": "6687803026",
+				"status": "TRADING"
+			},
+			{
+				"broker": "guojun",
+				"fund_account": "0311040018566660",
+				"status": "TRADING"
+			},
+			{
+				"broker": "guoxin",
+				"fund_account": "330200063628",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-致盈1号",
+		"type": "GZ2000_ENHANCE",
+		"accounts": [
+			{
+				"broker": "guojun",
+				"fund_account": "0333010018328888",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-致盈3号",
+		"type": "HS300_ENHANCE",
+		"accounts": [
+			{
+				"broker": "guojun",
+				"fund_account": "0311040018568066",
+				"status": "CLOSED"
+			},
+			{
+				"broker": "fangzheng",
+				"fund_account": "9858015718",
+				"status": "CLOSED"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-致盈10号",
+		"type": "ZZ500_ENHANCE",
+		"accounts": [
+			{
+				"broker": "xtp",
+				"fund_account": "106110006463",
+				"status": "TRADING"
+			},
+			{
+				"broker": "zhongjin_eq",
+				"fund_account": "802500026883",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-致盈11号",
+		"type": "ZZ500_ENHANCE",
+		"accounts": [
+			{
+				"broker": "xtp",
+				"fund_account": "109277002421",
+				"status": "TRADING"
+			},
+			{
+				"broker": "guojun",
+				"fund_account": "0343010010883355",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-致轩1号",
+		"type": "ZZ500_ENHANCE",
+		"accounts": [
+			{
+				"broker": "xtp",
+				"fund_account": "106110007069",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-致悦3号",
+		"type": "QUANT_BULL",
+		"accounts": [
+			{
+				"broker": "zhongxin",
+				"fund_account": "5600009991",
+				"status": "CLOSED"
+			},
+			{
+				"broker": "xtp",
+				"fund_account": "109233002533",
+				"status": "CLOSED"
+			},
+			{
+				"broker": "fangzheng",
+				"fund_account": "9858015590",
+				"status": "CLOSED"
+			}
+		]
+	},
+	{
+		"name": "致邃投资-雪香1号",
+		"type": "ZZ1000_NEUTRAL",
+		"accounts": [
+			{
+				"broker": "guojun",
+				"fund_account": "0311010000172308",
+				"status": "TRADING"
+			}
+		]
+	},
+	{
+		"name": "雪香11号",
+		"type": "GZ2000_ENHANCE",
+		"accounts": [
+			{
+				"broker": "zhongjin_eq",
+				"fund_account": "100034100",
+				"status": "CLOSED"
+			}
+		]
+	},
+	{
+		"name": "雪香2号",
+		"type": "ZZ1000_NEUTRAL",
+		"accounts": [
+			{
+				"broker": "zhaoshang_dma",
+				"fund_account": "S8000022923",
+				"status": "CLOSED"
+			}
+		]
+	},
+	{
+		"name": "雪香11号",
+		"type": "HS300_ENHANCE",
+		"accounts": [
+			{
+				"broker": "zhongjin_eq",
+				"fund_account": "100035882",
+				"status": "CLOSED"
+			}
+		]
+	}
+]
