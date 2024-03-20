@@ -17,6 +17,7 @@ import { HelloController } from './hello.controller';
 import { HostingServerModule } from './hosting-servers';
 import { ProductModule } from './product';
 import { SessionModule } from './session';
+import { TradeDayModule } from './trade-day';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -46,6 +47,7 @@ import { UserModule } from './user/user.module';
     HostingServerModule,
     FundAccountModule,
     ProductModule,
+    TradeDayModule,
   ],
   controllers: [HelloController],
   providers: [

@@ -18,6 +18,7 @@ import {
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiProperty,
   ApiTags,
 } from '@nestjs/swagger';
 import { Response } from 'express';
@@ -27,8 +28,26 @@ import { errCodes } from 'src/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductQuery } from './dto/list-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { Product } from './entities/product.entity';
+import {
+  Product,
+  PRODUCT_TYPE,
+  PRODUCT_TYPE_I18N,
+} from './entities/product.entity';
 import { ProductService } from './product.service';
+
+class ListProductTypeDto {
+  @ApiProperty({
+    name: 'type',
+    type: 'string',
+  })
+  type: string;
+
+  @ApiProperty({
+    name: 'name',
+    type: 'string',
+  })
+  name: string;
+}
 
 @ApiTags('Product')
 @ApiBearerAuth()
@@ -37,14 +56,14 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   /**
-   * create fund account
+   * create product
    */
   @ApiOperation({
     operationId: 'createProduct',
-    summary: 'Create a fund account',
+    summary: 'Create a product',
   })
   @ApiCreatedResponse({
-    description: 'Fund account created successfully',
+    description: 'Product created successfully',
     type: Product,
   })
   @Post()
@@ -53,14 +72,14 @@ export class ProductController {
   }
 
   /**
-   * List fund accounts
+   * List products
    */
   @ApiOperation({
     operationId: 'listProducts',
-    summary: 'List fund accounts',
+    summary: 'List products',
   })
   @ApiOkResponse({
-    description: 'Fund accounts listed successfully',
+    description: 'Products listed successfully',
     type: [Product],
   })
   @Get()
@@ -72,14 +91,14 @@ export class ProductController {
   }
 
   /**
-   * Get fund account by id
+   * Get product by id
    */
   @ApiOperation({
     operationId: 'getProductById',
-    summary: 'Get fund account by id',
+    summary: 'Get product by id',
   })
   @ApiOkResponse({
-    description: 'Fund account found successfully',
+    description: 'Product found successfully',
     type: Product,
   })
   @Get(':productId')
@@ -88,7 +107,7 @@ export class ProductController {
     if (!product) {
       throw new NotFoundException({
         code: errCodes.NOT_FOUND,
-        message: 'Fund account not found',
+        message: 'Product not found',
         keyPattern: 'productId',
         keyValue: productId,
       });
@@ -97,14 +116,14 @@ export class ProductController {
   }
 
   /**
-   * Update fund account by id
+   * Update product by id
    */
   @ApiOperation({
     operationId: 'updateProductById',
-    summary: 'Update fund account by id',
+    summary: 'Update product by id',
   })
   @ApiOkResponse({
-    description: 'Fund account updated successfully',
+    description: 'Product updated successfully',
     type: Product,
   })
   @Patch(':productId')
@@ -116,7 +135,7 @@ export class ProductController {
     if (!product) {
       throw new NotFoundException({
         code: errCodes.NOT_FOUND,
-        message: 'Fund account not found',
+        message: 'Product not found',
         keyPattern: 'productId',
         keyValue: productId,
       });
@@ -125,18 +144,38 @@ export class ProductController {
   }
 
   /**
-   * delete fund account by id
+   * delete product by id
    */
   @ApiOperation({
     operationId: 'deleteProductById',
-    summary: 'Delete fund account by id',
+    summary: 'Delete product by id',
   })
   @ApiNoContentResponse({
-    description: 'Fund account deleted successfully',
+    description: 'Product deleted successfully',
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   @Delete(':productId')
   async delete(@Param('productId') productId: string) {
     await this.productService.delete(productId);
+  }
+
+  /**
+   * 获取product 类型列表
+   */
+  @ApiOperation({
+    operationId: 'listProductTypes',
+    summary: 'List all available product types',
+  })
+  @ApiOkResponse({
+    description: 'List of available product types',
+    type: ListProductTypeDto,
+    isArray: true,
+  })
+  @Get('/product-types')
+  listTypes(): ListProductTypeDto[] {
+    return Object.values(PRODUCT_TYPE).map((type) => ({
+      type,
+      name: PRODUCT_TYPE_I18N[type],
+    }));
   }
 }

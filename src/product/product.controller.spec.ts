@@ -85,4 +85,13 @@ describe('ProductController', () => {
       expect(gotten).toMatchObject(toBeGotten);
     });
   });
+
+  describe('get product types', () => {
+    it('should get product types', async () => {
+      const productTypes = controller.listTypes();
+
+      expect(productTypes).toBeDefined();
+      expect(productTypes.length).toBeGreaterThan(0);
+    });
+  });
 });
