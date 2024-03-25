@@ -20,6 +20,9 @@ export const settings = env({
     port: 6379,
     password: 'zhisui',
   },
+  ssh: {
+    local_private_key_path: '/root/.ssh/id_rsa',
+  },
   init: {
     namespace: {
       name: 'zouwufund',

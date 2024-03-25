@@ -16,7 +16,12 @@ import { UpdateHostingServerDto } from './update-hosting-server.dto';
 const sortParams = getSortParams(HostingServerDoc);
 
 export class ListHostingServerQuery extends IntersectionType(
-  PickType(UpdateHostingServerDto, ['name', 'broker', 'market'] as const),
+  PickType(UpdateHostingServerDto, [
+    'name',
+    'broker',
+    'market',
+    'host_ip',
+  ] as const),
   OmitType(QueryDto, ['_sort'])
 ) {
   /**

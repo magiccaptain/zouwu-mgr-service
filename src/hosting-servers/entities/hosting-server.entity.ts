@@ -1,6 +1,9 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { ApiProperty, IntersectionType } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  IsBoolean,
+  IsDate,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -11,6 +14,7 @@ import { Document } from 'mongoose';
 
 import { BROKER } from 'src/broker';
 import { helper } from 'src/lib/mongoose-helper';
+import { SortFields } from 'src/lib/sort';
 import { MongoEntity } from 'src/mongo';
 
 /**
@@ -25,6 +29,7 @@ export enum MARKET {
  * 托管机
  */
 @Schema()
+@SortFields(['broker'])
 export class HostingServerDoc {
   /**
    * 名称
@@ -99,6 +104,39 @@ export class HostingServerDoc {
   @IsString()
   @Prop()
   home_dir?: string;
+
+  /**
+   * 上次检查时间
+   */
+  @IsOptional()
+  @IsDate()
+  @Type(() => Date)
+  @Prop()
+  last_check_at?: Date;
+
+  /**
+   * 联通状态
+   */
+  @IsOptional()
+  @IsBoolean()
+  @Prop()
+  connect_status?: boolean;
+
+  /**
+   * 磁盘总容量 GB
+   */
+  @IsOptional()
+  @IsNumber()
+  @Prop()
+  disk_total?: number;
+
+  /**
+   * 磁盘剩余容量 GB
+   */
+  @IsOptional()
+  @IsNumber()
+  @Prop()
+  disk_free?: number;
 }
 
 export const HostingServerSchema = helper(

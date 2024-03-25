@@ -130,4 +130,31 @@ export class HostingServerController {
   async delete(@Param('hostingServerId') hostingServerId: string) {
     await this.hostingServerService.delete(hostingServerId);
   }
+
+  /**
+   * check hosting server
+   */
+  @ApiOperation({ operationId: 'checkHostingServer' })
+  @ApiOkResponse({
+    description: 'The hosting server has been successfully checked.',
+    type: HostingServer,
+  })
+  @HttpCode(HttpStatus.OK)
+  @Post(':hostingServerId/@check')
+  async check(@Param('hostingServerId') hostingServerId: string) {
+    const hostingServer = await this.hostingServerService.check(
+      hostingServerId
+    );
+
+    if (!hostingServer) {
+      throw new NotFoundException({
+        code: errCodes.NOT_FOUND,
+        message: `HostingServer with id ${hostingServerId} not found`,
+        keyPattern: 'hostingServerId',
+        keyValue: { hostingServerId },
+      });
+    }
+
+    return hostingServer;
+  }
 }

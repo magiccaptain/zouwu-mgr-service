@@ -1034,7 +1034,9 @@
                 "createAt",
                 "-createAt",
                 "updateAt",
-                "-updateAt"
+                "-updateAt",
+                "broker",
+                "-broker"
               ],
               "type": "string"
             }
@@ -1053,6 +1055,15 @@
             "required": false,
             "in": "query",
             "description": "名称",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "host_ip",
+            "required": false,
+            "in": "query",
+            "description": "在托管机房的主机ip",
             "schema": {
               "type": "string"
             }
@@ -1211,6 +1222,43 @@
         ]
       }
     },
+    "/hosting-server/{hostingServerId}/@check": {
+      "post": {
+        "operationId": "checkHostingServer",
+        "summary": "",
+        "description": "check hosting server",
+        "parameters": [
+          {
+            "name": "hostingServerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The hosting server has been successfully checked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostingServer"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "HostingServer"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/fund-account": {
       "post": {
         "operationId": "createFundAccount",
@@ -1282,7 +1330,7 @@
             "name": "product",
             "required": false,
             "in": "query",
-            "description": "产品名称",
+            "description": "对应的产品",
             "schema": {
               "type": "string"
             }
@@ -1509,7 +1557,8 @@
                 "GZ2000_ENHANCE",
                 "ZZ1000_NEUTRAL",
                 "HS300_ENHANCE",
-                "QUANT"
+                "QUANT",
+                "QUANT_BULL"
               ],
               "type": "string"
             }
@@ -2620,6 +2669,23 @@
             "type": "string",
             "description": "home路径"
           },
+          "last_check_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "上次检查时间"
+          },
+          "connect_status": {
+            "type": "boolean",
+            "description": "联通状态"
+          },
+          "disk_total": {
+            "type": "number",
+            "description": "磁盘总容量 GB"
+          },
+          "disk_free": {
+            "type": "number",
+            "description": "磁盘剩余容量 GB"
+          },
           "id": {
             "type": "string",
             "description": "Entity id"
@@ -2711,7 +2777,7 @@
           },
           "product": {
             "type": "string",
-            "description": "产品名称"
+            "description": "对应的产品"
           }
         },
         "required": [
@@ -2735,7 +2801,7 @@
           },
           "product": {
             "type": "string",
-            "description": "产品名称"
+            "description": "对应的产品"
           },
           "id": {
             "type": "string",
@@ -2782,7 +2848,7 @@
           },
           "product": {
             "type": "string",
-            "description": "产品名称"
+            "description": "对应的产品"
           }
         }
       },
@@ -2796,7 +2862,8 @@
               "GZ2000_ENHANCE",
               "ZZ1000_NEUTRAL",
               "HS300_ENHANCE",
-              "QUANT"
+              "QUANT",
+              "QUANT_BULL"
             ],
             "type": "string"
           },
@@ -2819,7 +2886,8 @@
               "GZ2000_ENHANCE",
               "ZZ1000_NEUTRAL",
               "HS300_ENHANCE",
-              "QUANT"
+              "QUANT",
+              "QUANT_BULL"
             ],
             "type": "string"
           },
@@ -2865,7 +2933,8 @@
               "GZ2000_ENHANCE",
               "ZZ1000_NEUTRAL",
               "HS300_ENHANCE",
-              "QUANT"
+              "QUANT",
+              "QUANT_BULL"
             ],
             "type": "string"
           },
