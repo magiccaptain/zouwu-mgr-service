@@ -1,0 +1,266 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Market {
+  SH // 上海
+  SZ // 深圳
+}
+
+// 用户
+model User {
+  id           Int       @id @default(autoincrement())
+  name         String
+  username     String    @unique()
+  password     String
+  phone        String?   @unique()
+  email        String?   @unique()
+  roles        String[]  @default(["USER"])
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @default(now()) @updatedAt
+  Session      Session[]
+  needResetPwd Boolean?  @default(true) // 是否需要重置密码
+}
+
+// 会话
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  expireAt  DateTime // 过期时间
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([token])
+}
+
+// 券商
+model Broker {
+  id   Int    @id @default(autoincrement())
+  name String
+  key  String @unique()
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  FundAccount FundAccount[]
+  HostServer  HostServer[]
+}
+
+// 公司
+model Company {
+  id   Int    @id @default(autoincrement())
+  name String
+  key  String @unique()
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  HostServer HostServer[]
+  Product    Product[]
+}
+
+// 托管机
+model HostServer {
+  id   Int     @id @default(autoincrement())
+  name String
+  desc String?
+
+  market Market
+
+  // 在托管机房的主机ip
+  host_ip  String?
+  // ssh 登录的地址, 用户，端口
+  ssh_host String?
+  ssh_user String?
+  ssh_port Int?
+
+  // 主目录
+  home_dir      String?
+  // 是否启用
+  active        Boolean   @default(true)
+  // 是否为管理机器(用于查询数据, 一般一个券商上海和深圳各一台)
+  is_master     Boolean   @default(false)
+  // 上次检查时间
+  last_check_at DateTime?
+
+  brokerKey  String
+  companyKey String
+
+  // 备注
+  remark String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // 展开
+  broker  Broker  @relation(fields: [brokerKey], references: [key])
+  company Company @relation(fields: [companyKey], references: [key])
+}
+
+// 产品
+model Product {
+  id          Int           @id @default(autoincrement())
+  key         String        @unique()
+  name        String
+  short_name  String?
+  type        String
+  companyKey  String
+  FundAccount FundAccount[]
+  // 是否在运营
+  active      Boolean       @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  company Company @relation(fields: [companyKey], references: [key])
+}
+
+enum FundAccountType {
+  STOCK // 股票
+  FUTURES // 期货
+}
+
+// 资金账号
+model FundAccount {
+  id         Int             @id @default(autoincrement())
+  account    String          @unique()
+  brokerKey  String
+  productKey String
+  type       FundAccountType @default(STOCK)
+  active     Boolean         @default(true)
+
+  branch String? // 营业部
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // 展开
+  broker             Broker              @relation(fields: [brokerKey], references: [key])
+  product            Product             @relation(fields: [productKey], references: [key])
+  InnerFundSnapshot  InnerFundSnapshot[]
+  ExternalFundDatail ExternalFundDatail?
+}
+
+enum InnerFundSnapshotReason {
+  // 盘前查询
+  BEFORE_TRADING_DAY
+  // 盘后查询
+  AFTER_TRADING_DAY
+  // 同步
+  SYNC
+  // 柜台内转账
+  INNSER_TRANSFER
+  // 出金
+  WITHDRAW
+  // 入金
+  DEPOSIT
+}
+
+// xtp 资金明细
+model XTPFundDetail {
+  id                        Int                @id @default(autoincrement())
+  total_asset               Float // 总资产
+  buying_power              Float // 可用资金
+  security_asset            Float // 证券资产
+  fund_buy_amount           Float // 累计买入成交证券占用资金
+  fund_buy_fee              Float // 累计买入成交交易费用
+  fund_sell_amount          Float // 累计卖出成交证券所得资金
+  fund_sell_fee             Float // 累计卖出成交交易费用
+  withholding_amount        Float // XTP系统预扣的资金
+  account_type              Int // 账户类型
+  frozen_margin             Float // 冻结的保证金
+  frozen_exec_cash          Float // 行权冻结资金
+  frozen_exec_fee           Float // 行权费用
+  pay_later                 Float // 垫付资金
+  preadva_pay               Float // 预垫付资金
+  orig_banlance             Float // 昨日余额
+  banlance                  Float // 当前余额
+  deposit_withdraw          Float // 当天出入金
+  trade_netting             Float // 当日交易资金轧差
+  captial_asset             Float // 资金资产
+  force_freeze_amount       Float // 强锁资金
+  preferred_amount          Float // 可取资金
+  repay_stock_aval_banlance Float // 融券卖出所得资金余额
+  fund_order_data_charges   Float // 累计订单流量费
+  fund_cancel_data_charges  Float // 累计撤单流量费
+  exchange_cur_risk_degree  Float // 交易所实时风险度
+  company_cur_risk_degree   Float // 公司实时风险度
+  InnerFundSnapshot         InnerFundSnapshot?
+}
+
+// atp 资金明细
+model ATPFundDetail {
+  id                       Int    @id @default(autoincrement())
+  cust_id                  String
+  fund_account_id          String
+  branch_id                String
+  account_id               String
+  leaves_value             Float
+  init_leaves_value        Float
+  available_t0             Float
+  available_t1             Float
+  available_t2             Float
+  available_t3             Float
+  available_tall           Float
+  frozen_all               Float
+  te_partition_no          Int
+  credit_sell_frozen       Float
+  credit_sell_occupied     Float
+  credit_sell_pre_occupied Float
+  init_credit_sell         Float
+
+  InnerFundSnapshot InnerFundSnapshot?
+}
+
+// 极速柜台内资金快照
+model InnerFundSnapshot {
+  id           Int                     @id @default(autoincrement())
+  market       Market
+  fund_account String
+  reason       InnerFundSnapshotReason
+
+  // 资金余额
+  balance      Float
+  // 可用资金
+  buying_power Float
+  // 冻结资金
+  frozen       Float
+
+  xtpFundDetailId Int? @unique
+  atpFundDetailId Int? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // 展开
+  fundAccount     FundAccount    @relation(fields: [fund_account], references: [account])
+  xtp_fund_detail XTPFundDetail? @relation(fields: [xtpFundDetailId], references: [id])
+  atp_fund_detail ATPFundDetail? @relation(fields: [atpFundDetailId], references: [id])
+
+  // 索引
+  @@index([fund_account, market, createdAt(sort: Desc)])
+}
+
+// 外部（普通柜台资金）
+model ExternalFundDatail {
+  id           Int    @id @default(autoincrement())
+  fund_account String @unique
+
+  balance Float
+
+  fundAccount FundAccount @relation(fields: [fund_account], references: [account])
+}

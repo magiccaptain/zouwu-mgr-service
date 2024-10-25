@@ -24,7 +24,7 @@
 		"broker": "guojun",
 		"market": "SH",
 		"home_dir": "/root",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"share_op_dir": "/root/share_op"
 	},
 	{
@@ -63,7 +63,7 @@
 		"broker": "guojun",
 		"market": "SZ",
 		"home_dir": "/root",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"share_op_dir": "/root/share_op"
 	},
 	{
@@ -86,7 +86,7 @@
 		"broker": "xtp",
 		"market": "SH",
 		"home_dir": "/home/admin",
-		"trade_date_dir": "/home/admin/trade_data",
+		"trade_data_dir": "/home/admin/trade_data",
 		"share_op_dir": "/home/admin/share_op"
 	},
 	{
@@ -114,7 +114,7 @@
 		"home_dir": "/home/admin",
 		"remote_dir": "/home/admin/zhisui_trader",
 		"account": "106110007130",
-		"trade_date_dir": "/home/admin/trade_data",
+		"trade_data_dir": "/home/admin/trade_data",
 		"share_op_dir": "/home/admin/share_op"
 	},
 	{
@@ -216,7 +216,7 @@
 		"ip": "10.129.145.34",
 		"broker": "zhongjin",
 		"market": "SH",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"home_dir": "/root",
 		"share_op_dir": "/root/share_op",
 		"op_data_dir": "/root/share_op/data",
@@ -242,7 +242,7 @@
 		"home_dir": "/root",
 		"broker": "guoxin",
 		"market": "SZ",
-		"trade_date_dir": "/root/trade_data"
+		"trade_data_dir": "/root/trade_data"
 	},
 	{
 		"name": "国信-深圳-12734",
@@ -305,7 +305,7 @@
 		"home_dir": "/root",
 		"broker": "zhongjin_eq",
 		"market": "SZ",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"op_data_dir": "/root/share_op/data"
 	},
 	{
@@ -327,7 +327,7 @@
 		"home_dir": "/root",
 		"broker": "zhongjin_eq",
 		"market": "SH",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"op_data_dir": "/root/share_op/data"
 	},
 	{
@@ -349,7 +349,7 @@
 		"home_dir": "/home/zszb",
 		"broker": "fangzheng",
 		"market": "SZ",
-		"trade_date_dir": "/home/zszb/trade_data"
+		"trade_data_dir": "/home/zszb/trade_data"
 	},
 	{
 		"name": "方正-深圳-12814",
@@ -379,7 +379,7 @@
 		"ip": "10.236.27.181",
 		"home_dir": "/root",
 		"broker": "zhaoshang_dma",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"market": "SH"
 	},
 	{
@@ -390,7 +390,7 @@
 		"ip": "10.237.30.208",
 		"home_dir": "/root",
 		"broker": "zhaoshang_dma",
-		"trade_date_dir": "/root/trade_data",
+		"trade_data_dir": "/root/trade_data",
 		"market": "SH"
 	},
 	{

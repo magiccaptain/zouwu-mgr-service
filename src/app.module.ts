@@ -8,17 +8,15 @@ import memcachedStore from 'cache-manager-memcached-store';
 import MemCache from 'memcache-pp';
 
 import { AuthModule, JwtAuthGuard } from './auth';
-import { BrokerModule } from './broker';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
-import { FundAccountModule } from './fund_account';
+// import { TradeDayModule } from './trade-day';
+// import { UserModule } from './user/user.module';
+import { FundAccountModule } from './fund_account/fund_account.module';
 import { HelloController } from './hello.controller';
-import { HostingServerModule } from './hosting-servers';
-import { ProductModule } from './product';
-import { SessionModule } from './session';
-import { TradeDayModule } from './trade-day';
-import { UserModule } from './user/user.module';
+import { HostServerModule } from './host_server/host_server.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -39,23 +37,24 @@ import { UserModule } from './user/user.module';
         hosts: [settings.memcached.url],
       },
     }),
-    AuthModule,
+    // AuthModule,
     EventEmitterModule.forRoot(),
-    SessionModule,
-    UserModule,
-    BrokerModule,
-    HostingServerModule,
+    // SessionModule,
+    // UserModule,
+    // HostingServerModule,
     FundAccountModule,
-    ProductModule,
-    TradeDayModule,
+    PrismaModule,
+    HostServerModule,
+    // TradeDayModule,
+    // OpsRecordModule,
   ],
   controllers: [HelloController],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-  ],
+  // providers: [
+  //   {
+  //     provide: APP_GUARD,
+  //     useClass: JwtAuthGuard,
+  //   },
+  // ],
 })
 export class AppModule implements NestModule {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: any) {}

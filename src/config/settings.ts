@@ -23,6 +23,15 @@ export const settings = env({
   ssh: {
     local_private_key_path: '/root/.ssh/id_rsa',
   },
+  clickhouse: {
+    url: 'http://172.16.2.65',
+    port: 8123,
+    basicAuth: {
+      username: 'zouwu',
+      password: 'zouwu@stocker2024!',
+    },
+  },
+  trade_data_dir: '/data/trade_data',
   init: {
     namespace: {
       name: 'zouwufund',

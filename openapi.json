@@ -1259,6 +1259,215 @@
         ]
       }
     },
+    "/hosting-server/{hostingServerId}/@pullTradeData": {
+      "post": {
+        "operationId": "pullTradeData",
+        "summary": "",
+        "description": "pull trade data",
+        "parameters": [
+          {
+            "name": "hostingServerId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The trade data has been successfully pulled.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HostingServer"
+                }
+              }
+            }
+          },
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "HostingServer"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/ops-record": {
+      "post": {
+        "operationId": "createOpsRecord",
+        "summary": "Create a opsrecord",
+        "description": "create opsrecord",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOpsRecordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "OpsRecord created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsRecord"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "OpsRecord"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "get": {
+        "operationId": "listOpsRecords",
+        "summary": "List ops records",
+        "description": "List opsrecords",
+        "parameters": [
+          {
+            "name": "_sort",
+            "required": false,
+            "in": "query",
+            "description": "排序参数",
+            "schema": {
+              "enum": [
+                "createAt",
+                "-createAt",
+                "updateAt",
+                "-updateAt"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "_limit",
+            "required": false,
+            "in": "query",
+            "description": "分页大小",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "_offset",
+            "required": false,
+            "in": "query",
+            "description": "分页偏移",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OpsRecords listed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OpsRecord"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "OpsRecord"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/ops-record/{opsRecordId}": {
+      "get": {
+        "operationId": "getOpsRecordById",
+        "summary": "Get opsrecord by id",
+        "description": "Get opsrecord by id",
+        "parameters": [
+          {
+            "name": "opsRecordId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OpsRecord found successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsRecord"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "OpsRecord"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/ops-record/ops-record-types": {
+      "get": {
+        "operationId": "listOpsRecordTypes",
+        "summary": "List all available opsrecord types",
+        "description": "获取opsrecord 类型列表",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "List of available opsrecord types",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListOpsRecordTypeDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "OpsRecord"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/fund-account": {
       "post": {
         "operationId": "createFundAccount",
@@ -2624,6 +2833,14 @@
           "home_dir": {
             "type": "string",
             "description": "home路径"
+          },
+          "trade_data_dir": {
+            "type": "string",
+            "description": "交易数据路径"
+          },
+          "op_data_dir": {
+            "type": "string",
+            "description": "预测值数据路径"
           }
         },
         "required": [
@@ -2685,6 +2902,14 @@
           "disk_free": {
             "type": "number",
             "description": "磁盘剩余容量 GB"
+          },
+          "trade_data_dir": {
+            "type": "string",
+            "description": "交易数据路径"
+          },
+          "op_data_dir": {
+            "type": "string",
+            "description": "预测值数据路径"
           },
           "id": {
             "type": "string",
@@ -2752,8 +2977,124 @@
           "home_dir": {
             "type": "string",
             "description": "home路径"
+          },
+          "trade_data_dir": {
+            "type": "string",
+            "description": "交易数据路径"
+          },
+          "op_data_dir": {
+            "type": "string",
+            "description": "预测值数据路径"
           }
         }
+      },
+      "OPS_RECORD_TYPE": {
+        "type": "string",
+        "enum": [
+          "CHECK_SERVER",
+          "PULL_TRADE_DATA",
+          "PULL_OP_DATA"
+        ]
+      },
+      "RECORD_LEVEL": {
+        "type": "string",
+        "enum": [
+          "INFO",
+          "SUCCESS",
+          "ERROR"
+        ]
+      },
+      "CreateOpsRecordDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "操作类型",
+            "$ref": "#/components/schemas/OPS_RECORD_TYPE"
+          },
+          "level": {
+            "description": "记录登记",
+            "$ref": "#/components/schemas/RECORD_LEVEL"
+          },
+          "hosting_server": {
+            "type": "string",
+            "description": "关联的托管机"
+          },
+          "message": {
+            "type": "string",
+            "description": "记录内容"
+          }
+        },
+        "required": [
+          "type",
+          "level",
+          "hosting_server",
+          "message"
+        ]
+      },
+      "OpsRecord": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "description": "操作类型",
+            "$ref": "#/components/schemas/OPS_RECORD_TYPE"
+          },
+          "level": {
+            "description": "记录登记",
+            "$ref": "#/components/schemas/RECORD_LEVEL"
+          },
+          "hosting_server": {
+            "type": "string",
+            "description": "关联的托管机"
+          },
+          "message": {
+            "type": "string",
+            "description": "记录内容"
+          },
+          "id": {
+            "type": "string",
+            "description": "Entity id"
+          },
+          "createAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Entity created at when"
+          },
+          "updateAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Entity updated at when"
+          },
+          "createBy": {
+            "type": "string",
+            "description": "Entity created by who"
+          },
+          "updateBy": {
+            "type": "string",
+            "description": "Entity updated by who"
+          }
+        },
+        "required": [
+          "type",
+          "level",
+          "hosting_server",
+          "message",
+          "id"
+        ]
+      },
+      "ListOpsRecordTypeDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ]
       },
       "FUND_ACCOUNT_STATUS": {
         "type": "string",
@@ -2778,6 +3119,13 @@
           "product": {
             "type": "string",
             "description": "对应的产品"
+          },
+          "hosting_servers": {
+            "description": "关联的托管机",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -2802,6 +3150,13 @@
           "product": {
             "type": "string",
             "description": "对应的产品"
+          },
+          "hosting_servers": {
+            "description": "关联的托管机",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "id": {
             "type": "string",
@@ -2849,6 +3204,13 @@
           "product": {
             "type": "string",
             "description": "对应的产品"
+          },
+          "hosting_servers": {
+            "description": "关联的托管机",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },

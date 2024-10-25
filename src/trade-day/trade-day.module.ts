@@ -13,5 +13,6 @@ import { TradeDayService } from './trade-day.service';
   ],
   controllers: [TradeDayController],
   providers: [TradeDayService],
+  exports: [TradeDayService],
 })
 export class TradeDayModule {}

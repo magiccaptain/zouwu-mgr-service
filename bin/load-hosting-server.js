@@ -23,6 +23,8 @@ async function main() {
       market: server.market,
       broker: server.broker,
       home_dir: server.home_dir,
+      trade_data_dir: server.trade_data_dir,
+      op_data_dir: server.op_data_dir,
     });
   }
 
