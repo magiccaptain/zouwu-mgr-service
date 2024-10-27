@@ -48,6 +48,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SH',
       home_dir: '/root',
       company: zhisui_company,
+      is_master: true,
     },
     {
       name: '国君(上海)-12722',
@@ -59,7 +60,6 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SH',
       home_dir: '/root',
       company: zhisui_company,
-      is_master: true,
     },
     {
       name: '国君(深圳)-12766',
@@ -116,7 +116,6 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SH',
       home_dir: '/home/admin',
       company: zhisui_company,
-      is_master: true,
     },
     {
       name: '中泰(上海)-12730',
@@ -128,6 +127,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SH',
       home_dir: '/home/admin',
       company: zhisui_company,
+      is_master: true,
     },
     {
       name: '中泰(上海)-驺吾-12714',
@@ -139,6 +139,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SH',
       home_dir: '/home/admin',
       company: zouwu_company,
+      is_master: true,
     },
     {
       name: '中泰(深圳)-12706',
@@ -150,7 +151,6 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SZ',
       home_dir: '/home/admin',
       company: zhisui_company,
-      is_master: true,
     },
     {
       name: '中泰(深圳)-12712',
@@ -184,6 +184,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SZ',
       home_dir: '/home/admin',
       company: zhisui_company,
+      is_master: true,
     },
     {
       name: '中泰(深圳)-12703',
@@ -206,6 +207,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       market: 'SZ',
       home_dir: '/home/admin',
       company: zouwu_company,
+      is_master: true,
     },
     {
       name: '中金-深圳-12772',
@@ -288,7 +290,6 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       broker: brokerMap['guoxin'],
       market: 'SZ',
       company: zhisui_company,
-      is_master: true,
     },
     {
       name: '国信-深圳-12734',
@@ -322,6 +323,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       broker: brokerMap['guoxin'],
       market: 'SZ',
       company: zhisui_company,
+      is_master: true,
     },
     {
       name: '国信-上海-12736',
@@ -333,7 +335,6 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       broker: brokerMap['guoxin'],
       market: 'SH',
       company: zhisui_company,
-      is_master: true,
     },
     {
       name: '国信-上海-12744',
@@ -345,6 +346,7 @@ const cookServers = (brokers: Broker[]): Prisma.HostServerCreateInput[] => {
       broker: brokerMap['guoxin'],
       market: 'SH',
       company: zhisui_company,
+      is_master: true,
     },
     {
       name: '中金EQ-深圳-50',
