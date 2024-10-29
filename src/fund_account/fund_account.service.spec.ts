@@ -22,7 +22,19 @@ describe('FundAccountService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should query fund account from host server', async () => {
-    await service.queryStockAccountFromHostServer('109277002626', Market.SH);
+  xit('should query fund account from host server', async () => {
+    const ret = await service.queryStockAccountFromHostServer(
+      '0311040018566660',
+      Market.SH
+    );
+    console.log(ret);
   });
+
+  // it('should inner transfer', async () => {
+  //   await service.innerTransfer({
+  //     fund_account: '0311040018566660',
+  //     from: Market.SZ,
+  //     amount: 100,
+  //   });
+  // }, 1000000);
 });

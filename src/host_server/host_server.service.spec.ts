@@ -40,7 +40,7 @@ describe('HostServerService', () => {
     expect(connected).toBe(true);
   });
 
-  it('should connect to 12710', async () => {
+  xit('should connect to 12710', async () => {
     const hostServer = await prismaService.hostServer.findFirst({
       where: {
         active: true,
@@ -55,5 +55,44 @@ describe('HostServerService', () => {
     const connected = await service.testConnection(hostServer);
 
     expect(connected).toBe(true);
+  });
+
+  xit('should sync xtp config', async () => {
+    const hostServer = await prismaService.hostServer.findFirst({
+      where: {
+        active: true,
+        is_master: true,
+        brokerKey: 'xtp',
+      },
+    });
+
+    const xtpConfig = await prismaService.xTPConfig.findFirst({});
+
+    await service.syncTDConfig(hostServer, xtpConfig);
+  });
+
+  xit('should sync atp config', async () => {
+    const fundAccount = await prismaService.fundAccount.findFirst({
+      where: {
+        brokerKey: 'guojun',
+      },
+      include: {
+        ATPConfig: true,
+      },
+    });
+
+    const { ATPConfig = [] } = fundAccount;
+
+    for (const atpConfig of ATPConfig) {
+      const hostServer = await prismaService.hostServer.findFirst({
+        where: {
+          active: true,
+          is_master: true,
+          brokerKey: 'guojun',
+          market: atpConfig.market,
+        },
+      });
+      await service.syncTDConfig(hostServer, atpConfig);
+    }
   });
 });

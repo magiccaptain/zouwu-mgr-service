@@ -24,1392 +24,120 @@
         ]
       }
     },
-    "/users": {
+    "/fund-account/{fund_account}/@inner-transfer": {
       "post": {
-        "operationId": "createUser",
+        "operationId": "innerTransfer",
         "summary": "",
-        "description": "Create user",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateUserDto"
+                "$ref": "#/components/schemas/TransferDto"
               }
             }
           }
         },
         "responses": {
+          "200": {
+            "description": "inner transfer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferRecordEntity"
+                }
+              }
+            }
+          },
           "201": {
-            "description": "The user has been successfully created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listUsers",
-        "summary": "",
-        "description": "List users",
-        "parameters": [
-          {
-            "name": "_sort",
-            "required": false,
-            "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "name_like",
-            "required": false,
-            "in": "query",
-            "description": "名称 模糊查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "nickname_like",
-            "required": false,
-            "in": "query",
-            "description": "昵称 模糊查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ns_start",
-            "required": false,
-            "in": "query",
-            "description": "所属命名空间 模糊查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "email",
-            "required": false,
-            "in": "query",
-            "description": "邮箱",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "name",
-            "required": false,
-            "in": "query",
-            "description": "真实姓名",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "phone",
-            "required": false,
-            "in": "query",
-            "description": "手机号",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "district",
-            "required": false,
-            "in": "query",
-            "description": "用户所在地区，存地区编号",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ns",
-            "required": false,
-            "in": "query",
-            "description": "所属命名空间",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "roles",
-            "required": false,
-            "in": "query",
-            "description": "角色",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A paged array of users.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/User"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/users/{userId}": {
-      "get": {
-        "operationId": "getUser",
-        "summary": "",
-        "description": "Find user by id",
-        "parameters": [
-          {
-            "name": "userId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The user with expected id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "updateUser",
-        "summary": "",
-        "description": "Update user",
-        "parameters": [
-          {
-            "name": "userId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateUserDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The user updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteUser",
-        "summary": "",
-        "description": "Delete user",
-        "parameters": [
-          {
-            "name": "userId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No content."
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/namespaces": {
-      "post": {
-        "operationId": "createNamespace",
-        "summary": "",
-        "description": "Create namespace",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateNamespaceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The namespace has been successfully created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Namespace"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listNamespaces",
-        "summary": "",
-        "description": "List namespaces",
-        "parameters": [
-          {
-            "name": "_sort",
-            "required": false,
-            "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "name_like",
-            "required": false,
-            "in": "query",
-            "description": "名称 模糊查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "ns_like",
-            "required": false,
-            "in": "query",
-            "description": "名称 模糊查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "labels",
-            "required": false,
-            "in": "query",
-            "description": "标签",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A paged array of namespaces.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Namespace"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/namespaces/{namespaceIdOrNs}": {
-      "get": {
-        "operationId": "getNamespace",
-        "summary": "",
-        "description": "Find namespace by id or ns",
-        "parameters": [
-          {
-            "name": "namespaceIdOrNs",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The namespace with expected id or ns.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Namespace"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/namespaces/{namespaceId}": {
-      "patch": {
-        "operationId": "updateNamespace",
-        "summary": "",
-        "description": "Update namespace",
-        "parameters": [
-          {
-            "name": "namespaceId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateNamespaceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The namespace updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Namespace"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteNamespace",
-        "summary": "",
-        "description": "Delete namespace",
-        "parameters": [
-          {
-            "name": "namespaceId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No content."
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/sessions": {
-      "post": {
-        "operationId": "createSession",
-        "summary": "",
-        "description": "Create session",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSessionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The session has been successfully created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Session"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listSessions",
-        "summary": "",
-        "description": "List sessions",
-        "parameters": [
-          {
-            "name": "_sort",
-            "required": false,
-            "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "key",
-            "required": false,
-            "in": "query",
-            "description": "用 key 进行查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "subject",
-            "required": false,
-            "in": "query",
-            "description": "根据 sub 查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "client",
-            "required": false,
-            "in": "query",
-            "description": "客户端",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A paged array of sessions.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Session"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/sessions/{sessionId}": {
-      "get": {
-        "operationId": "getSession",
-        "summary": "",
-        "description": "Find session by id",
-        "parameters": [
-          {
-            "name": "sessionId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The session with expected id.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Session"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "updateSession",
-        "summary": "",
-        "description": "Update session",
-        "parameters": [
-          {
-            "name": "sessionId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateSessionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The session updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Session"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteSession",
-        "summary": "",
-        "description": "Delete session",
-        "parameters": [
-          {
-            "name": "sessionId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No content."
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/sessions/@login": {
-      "post": {
-        "operationId": "login",
-        "summary": "",
-        "description": "通过 username、email / password 登录",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/LoginSessionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SessionWithToken"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "The session which is created by login.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Session"
+                  "type": "object"
                 }
               }
             }
           }
-        },
-        "tags": [
-          "auth"
-        ]
+        }
       }
     },
-    "/sessions/@refresh": {
+    "/fund-account/{fund_account}/@external-transfer": {
       "post": {
-        "operationId": "refreshSession",
+        "operationId": "externalTransfer",
         "summary": "",
-        "description": "根据 key 刷新 Session\n\nkey 是用户的授权令牌，token 是用户访问资源的凭证",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RefreshSessionDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SessionWithToken"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "The session has been successfully refreshed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Session"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ]
-      }
-    },
-    "/sessions/@restrictToken": {
-      "post": {
-        "operationId": "restictToken",
-        "summary": "",
-        "description": "返回一个 token\n\n一般用于给设备等提供临时访问凭证",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RestrictTokenDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OnlyToken"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "The restricted token.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OnlyToken"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "auth"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/brokers": {
-      "get": {
-        "operationId": "listBrokers",
-        "summary": "List all available brokers",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of available brokers",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ListBrokerDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "broker"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/hosting-server": {
-      "post": {
-        "operationId": "createHostingServer",
-        "summary": "",
-        "description": "create hosting server",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateHostingServerDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "The hosting server has been successfully created.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HostingServer"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listHostingServers",
-        "summary": "",
-        "description": "List hosting servers",
         "parameters": [
           {
-            "name": "broker",
-            "required": false,
-            "in": "query",
-            "description": "所属券商",
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
             "schema": {
-              "$ref": "#/components/schemas/BROKER"
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "external transfer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferRecordEntity"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fund-account/{fund_account}/@query": {
+      "get": {
+        "operationId": "queryStockAccountFromHostServer",
+        "summary": "",
+        "description": "query fund account from host server",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
             }
           },
           {
             "name": "market",
-            "required": false,
-            "in": "query",
-            "description": "所属市场",
-            "schema": {
-              "$ref": "#/components/schemas/MARKET"
-            }
-          },
-          {
-            "name": "_sort",
-            "required": false,
-            "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt",
-                "broker",
-                "-broker"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "name_like",
-            "required": false,
-            "in": "query",
-            "description": "名称 模糊查询",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "name",
-            "required": false,
-            "in": "query",
-            "description": "名称",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "host_ip",
-            "required": false,
-            "in": "query",
-            "description": "在托管机房的主机ip",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The hosting servers have been successfully listed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/HostingServer"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/hosting-server/{hostingServerId}": {
-      "get": {
-        "operationId": "getHostingServer",
-        "summary": "",
-        "description": "Get hosting server by id",
-        "parameters": [
-          {
-            "name": "hostingServerId",
             "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The hosting server has been successfully retrieved.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HostingServer"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "updateHostingServer",
-        "summary": "",
-        "description": "update hosting server by id",
-        "parameters": [
-          {
-            "name": "hostingServerId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateHostingServerDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The hosting server has been successfully updated.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HostingServer"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteHostingServer",
-        "summary": "",
-        "description": "delete hosting server by id",
-        "parameters": [
-          {
-            "name": "hostingServerId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "The hosting server has been successfully deleted."
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/hosting-server/{hostingServerId}/@check": {
-      "post": {
-        "operationId": "checkHostingServer",
-        "summary": "",
-        "description": "check hosting server",
-        "parameters": [
-          {
-            "name": "hostingServerId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The hosting server has been successfully checked.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HostingServer"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/hosting-server/{hostingServerId}/@pullTradeData": {
-      "post": {
-        "operationId": "pullTradeData",
-        "summary": "",
-        "description": "pull trade data",
-        "parameters": [
-          {
-            "name": "hostingServerId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The trade data has been successfully pulled.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HostingServer"
-                }
-              }
-            }
-          },
-          "204": {
-            "description": ""
-          }
-        },
-        "tags": [
-          "HostingServer"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/ops-record": {
-      "post": {
-        "operationId": "createOpsRecord",
-        "summary": "Create a opsrecord",
-        "description": "create opsrecord",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateOpsRecordDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "OpsRecord created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OpsRecord"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "OpsRecord"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listOpsRecords",
-        "summary": "List ops records",
-        "description": "List opsrecords",
-        "parameters": [
-          {
-            "name": "_sort",
-            "required": false,
             "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OpsRecords listed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/OpsRecord"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "OpsRecord"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/ops-record/{opsRecordId}": {
-      "get": {
-        "operationId": "getOpsRecordById",
-        "summary": "Get opsrecord by id",
-        "description": "Get opsrecord by id",
-        "parameters": [
-          {
-            "name": "opsRecordId",
-            "required": true,
-            "in": "path",
             "schema": {
               "type": "string"
             }
@@ -1417,752 +145,76 @@
         ],
         "responses": {
           "200": {
-            "description": "OpsRecord found successfully",
+            "description": "query fund account from host server",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpsRecord"
+                  "$ref": "#/components/schemas/InnerSnapshotFromServer"
                 }
               }
             }
           }
-        },
-        "tags": [
-          "OpsRecord"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/ops-record/ops-record-types": {
-      "get": {
-        "operationId": "listOpsRecordTypes",
-        "summary": "List all available opsrecord types",
-        "description": "获取opsrecord 类型列表",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of available opsrecord types",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ListOpsRecordTypeDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "OpsRecord"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     },
     "/fund-account": {
-      "post": {
-        "operationId": "createFundAccount",
-        "summary": "Create a fund account",
-        "description": "create fund account",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateFundAccountDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Fund account created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FundAccount"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "FundAccount"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
       "get": {
         "operationId": "listFundAccounts",
-        "summary": "List fund accounts",
-        "description": "List fund accounts",
+        "summary": "",
+        "description": "list fund accounts",
         "parameters": [
           {
-            "name": "fund_account",
+            "name": "brokerKey",
             "required": false,
             "in": "query",
-            "description": "资金账号",
+            "description": "券商key, eg: xtp, guojun",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "status",
+            "name": "companyKey",
             "required": false,
             "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
-            }
-          },
-          {
-            "name": "broker",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "$ref": "#/components/schemas/BROKER"
-            }
-          },
-          {
-            "name": "product",
-            "required": false,
-            "in": "query",
-            "description": "对应的产品",
+            "description": "公司key, eg: zouwu, zhisui",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "_sort",
+            "name": "productKey",
             "required": false,
             "in": "query",
-            "description": "排序参数",
+            "description": "产品key, eg: zy1",
             "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt"
-              ],
               "type": "string"
             }
           },
           {
-            "name": "_limit",
+            "name": "active",
             "required": false,
             "in": "query",
-            "description": "分页大小",
+            "description": "是否启用, 默认为 true",
             "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
+              "type": "boolean"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Fund accounts listed successfully",
+            "description": "list fund accounts",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/FundAccount"
+                    "$ref": "#/components/schemas/FundAccountEntity"
                   }
                 }
               }
             }
           }
-        },
-        "tags": [
-          "FundAccount"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/fund-account/{fundAccountId}": {
-      "get": {
-        "operationId": "getFundAccountById",
-        "summary": "Get fund account by id",
-        "description": "Get fund account by id",
-        "parameters": [
-          {
-            "name": "fundAccountId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Fund account found successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FundAccount"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "FundAccount"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "updateFundAccountById",
-        "summary": "Update fund account by id",
-        "description": "Update fund account by id",
-        "parameters": [
-          {
-            "name": "fundAccountId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateFundAccountDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Fund account updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FundAccount"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "FundAccount"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteFundAccountById",
-        "summary": "Delete fund account by id",
-        "description": "delete fund account by id",
-        "parameters": [
-          {
-            "name": "fundAccountId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Fund account deleted successfully"
-          }
-        },
-        "tags": [
-          "FundAccount"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/product": {
-      "post": {
-        "operationId": "createProduct",
-        "summary": "Create a product",
-        "description": "create product",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateProductDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Product created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Product"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listProducts",
-        "summary": "List products",
-        "description": "List products",
-        "parameters": [
-          {
-            "name": "type",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "enum": [
-                "ZZ500_ENHANCE",
-                "ZZ1000_ENHANCE",
-                "GZ2000_ENHANCE",
-                "ZZ1000_NEUTRAL",
-                "HS300_ENHANCE",
-                "QUANT",
-                "QUANT_BULL"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "_sort",
-            "required": false,
-            "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "name",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Products listed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Product"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/product/{productId}": {
-      "get": {
-        "operationId": "getProductById",
-        "summary": "Get product by id",
-        "description": "Get product by id",
-        "parameters": [
-          {
-            "name": "productId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Product found successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Product"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "patch": {
-        "operationId": "updateProductById",
-        "summary": "Update product by id",
-        "description": "Update product by id",
-        "parameters": [
-          {
-            "name": "productId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateProductDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Product updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Product"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteProductById",
-        "summary": "Delete product by id",
-        "description": "delete product by id",
-        "parameters": [
-          {
-            "name": "productId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Product deleted successfully"
-          }
-        },
-        "tags": [
-          "Product"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/product/product-types": {
-      "get": {
-        "operationId": "listProductTypes",
-        "summary": "List all available product types",
-        "description": "获取product 类型列表",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "List of available product types",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ListProductTypeDto"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "Product"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/tradeday": {
-      "post": {
-        "operationId": "createTradeDay",
-        "summary": "Create a trade day",
-        "description": "create trade day",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateTradeDayDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Trade day created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeDay"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "TradeDay"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "get": {
-        "operationId": "listTradeDays",
-        "summary": "List trade days",
-        "description": "List trade days",
-        "parameters": [
-          {
-            "name": "_sort",
-            "required": false,
-            "in": "query",
-            "description": "排序参数",
-            "schema": {
-              "enum": [
-                "createAt",
-                "-createAt",
-                "updateAt",
-                "-updateAt",
-                "date",
-                "-date"
-              ],
-              "type": "string"
-            }
-          },
-          {
-            "name": "date_gte",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "date_lte",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "date-time",
-              "type": "string"
-            }
-          },
-          {
-            "name": "_limit",
-            "required": false,
-            "in": "query",
-            "description": "分页大小",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "_offset",
-            "required": false,
-            "in": "query",
-            "description": "分页偏移",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Trade days listed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TradeDay"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "TradeDay"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      }
-    },
-    "/tradeday/{tradedayId}": {
-      "get": {
-        "operationId": "getTradeDayById",
-        "summary": "Get trade day by id",
-        "description": "Get trade day by id",
-        "parameters": [
-          {
-            "name": "tradedayId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Trade day found successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TradeDay"
-                }
-              }
-            }
-          }
-        },
-        "tags": [
-          "TradeDay"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
-      },
-      "delete": {
-        "operationId": "deleteTradeDayById",
-        "summary": "Delete trade day by id",
-        "description": "delete trade day by id",
-        "parameters": [
-          {
-            "name": "tradedayId",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Trade day deleted successfully"
-          }
-        },
-        "tags": [
-          "TradeDay"
-        ],
-        "security": [
-          {
-            "bearer": []
-          }
-        ]
+        }
       }
     }
   },
@@ -2207,1164 +259,217 @@
           "message"
         ]
       },
-      "CreateUserDto": {
+      "TransferDto": {
         "type": "object",
         "properties": {
-          "password": {
-            "type": "string",
-            "description": "密码",
-            "writeOnly": true
+          "market": {
+            "type": "string"
           },
-          "roles": {
-            "description": "角色",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
+          "direction": {
+            "enum": [
+              "IN",
+              "OUT"
+            ],
+            "type": "string"
           },
-          "avatar": {
-            "type": "string",
-            "description": "头像"
-          },
-          "data": {
-            "type": "string",
-            "description": "额外数据"
-          },
-          "district": {
-            "type": "string",
-            "description": "用户所在地区，存地区编号"
-          },
-          "email": {
-            "type": "string",
-            "description": "邮箱"
-          },
-          "language": {
-            "type": "string",
-            "description": "使用语言"
-          },
-          "name": {
-            "type": "string",
-            "description": "真实姓名"
-          },
-          "nickname": {
-            "type": "string",
-            "description": "昵称"
-          },
-          "ns": {
-            "type": "string",
-            "description": "所属命名空间"
-          },
-          "phone": {
-            "type": "string",
-            "description": "手机号"
-          },
-          "super": {
-            "type": "boolean",
-            "description": "是否超级管理员"
-          },
-          "username": {
-            "type": "string",
-            "description": "用户名"
+          "amount": {
+            "type": "number"
           }
         },
         "required": [
-          "ns"
+          "market",
+          "direction",
+          "amount"
         ]
       },
-      "User": {
+      "FundSnapshotEntity": {
         "type": "object",
         "properties": {
-          "password": {
-            "type": "string",
-            "description": "密码",
-            "writeOnly": true
-          },
-          "avatar": {
-            "type": "string",
-            "description": "头像"
-          },
-          "data": {
-            "type": "string",
-            "description": "额外数据"
-          },
-          "district": {
-            "type": "string",
-            "description": "用户所在地区，存地区编号"
-          },
-          "email": {
-            "type": "string",
-            "description": "邮箱"
-          },
-          "language": {
-            "type": "string",
-            "description": "使用语言"
-          },
-          "lastSeeAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "最后活跃时间"
-          },
-          "lastLoginIp": {
-            "type": "string",
-            "description": "最后登录 IP"
-          },
-          "name": {
-            "type": "string",
-            "description": "真实姓名"
-          },
-          "nickname": {
-            "type": "string",
-            "description": "昵称"
-          },
-          "ns": {
-            "type": "string",
-            "description": "所属命名空间"
-          },
-          "phone": {
-            "type": "string",
-            "description": "手机号"
-          },
-          "registerIp": {
-            "type": "string",
-            "description": "注册 IP"
-          },
-          "roles": {
-            "description": "角色",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "super": {
-            "type": "boolean",
-            "description": "是否超级管理员"
-          },
-          "username": {
-            "type": "string",
-            "description": "用户名"
-          },
           "id": {
-            "type": "string",
-            "description": "Entity id"
+            "type": "number"
           },
-          "createAt": {
+          "market": {
+            "type": "string"
+          },
+          "fund_account": {
+            "type": "string"
+          },
+          "trade_day": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "number"
+          },
+          "buying_power": {
+            "type": "number"
+          },
+          "frozen": {
+            "type": "number"
+          },
+          "createdAt": {
             "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
+            "type": "string"
           },
-          "updateAt": {
+          "updatedAt": {
             "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
+            "type": "string"
           },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
+          "xtp_account": {
+            "type": "object",
+            "nullable": true
           },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
+          "atp_account": {
+            "type": "object",
+            "nullable": true
           }
         },
         "required": [
-          "ns",
-          "roles",
-          "id"
-        ]
-      },
-      "UpdateUserDto": {
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string",
-            "description": "密码",
-            "writeOnly": true
-          },
-          "avatar": {
-            "type": "string",
-            "description": "头像"
-          },
-          "data": {
-            "type": "string",
-            "description": "额外数据"
-          },
-          "district": {
-            "type": "string",
-            "description": "用户所在地区，存地区编号"
-          },
-          "email": {
-            "type": "string",
-            "description": "邮箱"
-          },
-          "language": {
-            "type": "string",
-            "description": "使用语言"
-          },
-          "name": {
-            "type": "string",
-            "description": "真实姓名"
-          },
-          "nickname": {
-            "type": "string",
-            "description": "昵称"
-          },
-          "ns": {
-            "type": "string",
-            "description": "所属命名空间"
-          },
-          "phone": {
-            "type": "string",
-            "description": "手机号"
-          },
-          "super": {
-            "type": "boolean",
-            "description": "是否超级管理员"
-          },
-          "username": {
-            "type": "string",
-            "description": "用户名"
-          },
-          "roles": {
-            "description": "角色",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "CreateNamespaceDto": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "string",
-            "description": "额外数据"
-          },
-          "desc": {
-            "type": "string",
-            "description": "描述"
-          },
-          "labels": {
-            "description": "标签",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "name": {
-            "type": "string",
-            "description": "名称"
-          },
-          "ns": {
-            "type": "string",
-            "description": "所属命名空间\n\nns 允许 . 分割，表示命名空间的层级关系\n\n字母开头，允许的字符集 [a-zA-Z0-9-_.]"
-          },
-          "parent": {
-            "type": "string",
-            "description": "父级命名空间"
-          }
-        },
-        "required": [
-          "name",
-          "ns"
-        ]
-      },
-      "Namespace": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "string",
-            "description": "额外数据"
-          },
-          "desc": {
-            "type": "string",
-            "description": "描述"
-          },
-          "labels": {
-            "description": "标签",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "name": {
-            "type": "string",
-            "description": "名称"
-          },
-          "ns": {
-            "type": "string",
-            "description": "所属命名空间\n\nns 允许 . 分割，表示命名空间的层级关系\n\n字母开头，允许的字符集 [a-zA-Z0-9-_.]"
-          },
-          "parent": {
-            "type": "string",
-            "description": "父级命名空间"
-          },
-          "id": {
-            "type": "string",
-            "description": "Entity id"
-          },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          }
-        },
-        "required": [
-          "name",
-          "ns",
-          "id"
-        ]
-      },
-      "UpdateNamespaceDto": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "string",
-            "description": "额外数据"
-          },
-          "desc": {
-            "type": "string",
-            "description": "描述"
-          },
-          "labels": {
-            "description": "标签",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "name": {
-            "type": "string",
-            "description": "名称"
-          }
-        }
-      },
-      "CreateSessionDto": {
-        "type": "object",
-        "properties": {
-          "expireAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "会话过期时间"
-          },
-          "subject": {
-            "type": "string",
-            "description": "用户"
-          },
-          "client": {
-            "type": "string",
-            "description": "客户端"
-          }
-        },
-        "required": [
-          "expireAt",
-          "subject"
-        ]
-      },
-      "Session": {
-        "type": "object",
-        "properties": {
-          "expireAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "会话过期时间"
-          },
-          "key": {
-            "type": "string",
-            "description": "refresh token key"
-          },
-          "subject": {
-            "type": "string",
-            "description": "用户"
-          },
-          "client": {
-            "type": "string",
-            "description": "客户端"
-          },
-          "id": {
-            "type": "string",
-            "description": "Entity id"
-          },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          }
-        },
-        "required": [
-          "expireAt",
-          "key",
-          "subject",
-          "id"
-        ]
-      },
-      "UpdateSessionDto": {
-        "type": "object",
-        "properties": {
-          "expireAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "会话过期时间"
-          },
-          "subject": {
-            "type": "string",
-            "description": "用户"
-          },
-          "client": {
-            "type": "string",
-            "description": "客户端"
-          }
-        }
-      },
-      "LoginSessionDto": {
-        "type": "object",
-        "properties": {
-          "login": {
-            "type": "string",
-            "description": "用户名 或者 Email"
-          },
-          "password": {
-            "type": "string",
-            "description": "密码"
-          }
-        },
-        "required": [
-          "login",
-          "password"
-        ]
-      },
-      "SessionWithToken": {
-        "type": "object",
-        "properties": {
-          "expireAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "会话过期时间"
-          },
-          "key": {
-            "type": "string",
-            "description": "refresh token key"
-          },
-          "subject": {
-            "type": "string",
-            "description": "用户"
-          },
-          "client": {
-            "type": "string",
-            "description": "客户端"
-          },
-          "id": {
-            "type": "string",
-            "description": "Entity id"
-          },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          },
-          "token": {
-            "type": "string",
-            "description": "token"
-          },
-          "tokenExpireAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "token 过期时间"
-          }
-        },
-        "required": [
-          "expireAt",
-          "key",
-          "subject",
           "id",
-          "token",
-          "tokenExpireAt"
-        ]
-      },
-      "RefreshSessionDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "key"
-        ]
-      },
-      "RestrictTokenDto": {
-        "type": "object",
-        "properties": {
-          "expiresIn": {
-            "type": "string",
-            "description": "short time span string\n\nrefs: https://github.com/vercel/ms\n\neg: \"2 days\", \"10h\", \"7d\", \"120s\", \"2.5 hrs\", \"2h\", \"1m\", \"5s\", \"1y\", \"100\", \"1y1m1d\"\n\nm => minute\nh => hour\nd => day\nw => week\nM => month\ny => year\ns => second\nms => millisecond\n无单位 => millisecond"
-          }
-        },
-        "required": [
-          "expiresIn"
-        ]
-      },
-      "OnlyToken": {
-        "type": "object",
-        "properties": {
-          "token": {
-            "type": "string",
-            "description": "token"
-          },
-          "tokenExpireAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "token 过期时间"
-          }
-        },
-        "required": [
-          "token",
-          "tokenExpireAt"
-        ]
-      },
-      "ListBrokerDto": {
-        "type": "object",
-        "properties": {
-          "broker": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "broker",
-          "name"
-        ]
-      },
-      "BROKER": {
-        "type": "string",
-        "enum": [
-          "guojun",
-          "guoxin",
-          "zhongjin",
-          "zhongjin_eq",
-          "zhaoshang",
-          "fangzheng",
-          "xtp"
-        ]
-      },
-      "MARKET": {
-        "type": "string",
-        "enum": [
-          "SH",
-          "SZ"
-        ]
-      },
-      "CreateHostingServerDto": {
-        "type": "object",
-        "properties": {
-          "broker": {
-            "description": "所属券商",
-            "$ref": "#/components/schemas/BROKER"
-          },
-          "market": {
-            "description": "所属市场",
-            "$ref": "#/components/schemas/MARKET"
-          },
-          "name": {
-            "type": "string",
-            "description": "名称"
-          },
-          "desc": {
-            "type": "string",
-            "description": "描述"
-          },
-          "host_ip": {
-            "type": "string",
-            "description": "在托管机房的主机ip"
-          },
-          "ssh_host": {
-            "type": "string",
-            "description": "ssh 登录host"
-          },
-          "ssh_user": {
-            "type": "string",
-            "description": "ssh 登录用户名"
-          },
-          "ssh_port": {
-            "type": "number",
-            "description": "ssh 登录端口"
-          },
-          "home_dir": {
-            "type": "string",
-            "description": "home路径"
-          },
-          "trade_data_dir": {
-            "type": "string",
-            "description": "交易数据路径"
-          },
-          "op_data_dir": {
-            "type": "string",
-            "description": "预测值数据路径"
-          }
-        },
-        "required": [
-          "name"
-        ]
-      },
-      "HostingServer": {
-        "type": "object",
-        "properties": {
-          "broker": {
-            "description": "所属券商",
-            "$ref": "#/components/schemas/BROKER"
-          },
-          "market": {
-            "description": "所属市场",
-            "$ref": "#/components/schemas/MARKET"
-          },
-          "name": {
-            "type": "string",
-            "description": "名称"
-          },
-          "desc": {
-            "type": "string",
-            "description": "描述"
-          },
-          "host_ip": {
-            "type": "string",
-            "description": "在托管机房的主机ip"
-          },
-          "ssh_host": {
-            "type": "string",
-            "description": "ssh 登录host"
-          },
-          "ssh_user": {
-            "type": "string",
-            "description": "ssh 登录用户名"
-          },
-          "ssh_port": {
-            "type": "number",
-            "description": "ssh 登录端口"
-          },
-          "home_dir": {
-            "type": "string",
-            "description": "home路径"
-          },
-          "last_check_at": {
-            "format": "date-time",
-            "type": "string",
-            "description": "上次检查时间"
-          },
-          "connect_status": {
-            "type": "boolean",
-            "description": "联通状态"
-          },
-          "disk_total": {
-            "type": "number",
-            "description": "磁盘总容量 GB"
-          },
-          "disk_free": {
-            "type": "number",
-            "description": "磁盘剩余容量 GB"
-          },
-          "trade_data_dir": {
-            "type": "string",
-            "description": "交易数据路径"
-          },
-          "op_data_dir": {
-            "type": "string",
-            "description": "预测值数据路径"
-          },
-          "id": {
-            "type": "string",
-            "description": "Entity id"
-          },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          }
-        },
-        "required": [
-          "name",
-          "id"
-        ]
-      },
-      "UpdateHostingServerDto": {
-        "type": "object",
-        "properties": {
-          "broker": {
-            "description": "所属券商",
-            "$ref": "#/components/schemas/BROKER"
-          },
-          "market": {
-            "description": "所属市场",
-            "$ref": "#/components/schemas/MARKET"
-          },
-          "name": {
-            "type": "string",
-            "description": "名称"
-          },
-          "desc": {
-            "type": "string",
-            "description": "描述"
-          },
-          "host_ip": {
-            "type": "string",
-            "description": "在托管机房的主机ip"
-          },
-          "ssh_host": {
-            "type": "string",
-            "description": "ssh 登录host"
-          },
-          "ssh_user": {
-            "type": "string",
-            "description": "ssh 登录用户名"
-          },
-          "ssh_port": {
-            "type": "number",
-            "description": "ssh 登录端口"
-          },
-          "home_dir": {
-            "type": "string",
-            "description": "home路径"
-          },
-          "trade_data_dir": {
-            "type": "string",
-            "description": "交易数据路径"
-          },
-          "op_data_dir": {
-            "type": "string",
-            "description": "预测值数据路径"
-          }
-        }
-      },
-      "OPS_RECORD_TYPE": {
-        "type": "string",
-        "enum": [
-          "CHECK_SERVER",
-          "PULL_TRADE_DATA",
-          "PULL_OP_DATA"
-        ]
-      },
-      "RECORD_LEVEL": {
-        "type": "string",
-        "enum": [
-          "INFO",
-          "SUCCESS",
-          "ERROR"
-        ]
-      },
-      "CreateOpsRecordDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "操作类型",
-            "$ref": "#/components/schemas/OPS_RECORD_TYPE"
-          },
-          "level": {
-            "description": "记录登记",
-            "$ref": "#/components/schemas/RECORD_LEVEL"
-          },
-          "hosting_server": {
-            "type": "string",
-            "description": "关联的托管机"
-          },
-          "message": {
-            "type": "string",
-            "description": "记录内容"
-          }
-        },
-        "required": [
-          "type",
-          "level",
-          "hosting_server",
-          "message"
-        ]
-      },
-      "OpsRecord": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "description": "操作类型",
-            "$ref": "#/components/schemas/OPS_RECORD_TYPE"
-          },
-          "level": {
-            "description": "记录登记",
-            "$ref": "#/components/schemas/RECORD_LEVEL"
-          },
-          "hosting_server": {
-            "type": "string",
-            "description": "关联的托管机"
-          },
-          "message": {
-            "type": "string",
-            "description": "记录内容"
-          },
-          "id": {
-            "type": "string",
-            "description": "Entity id"
-          },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          }
-        },
-        "required": [
-          "type",
-          "level",
-          "hosting_server",
-          "message",
-          "id"
-        ]
-      },
-      "ListOpsRecordTypeDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "name"
-        ]
-      },
-      "FUND_ACCOUNT_STATUS": {
-        "type": "string",
-        "enum": [
-          "TRADING",
-          "CLOSED"
-        ]
-      },
-      "CreateFundAccountDto": {
-        "type": "object",
-        "properties": {
-          "fund_account": {
-            "type": "string",
-            "description": "资金账号"
-          },
-          "status": {
-            "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
-          },
-          "broker": {
-            "$ref": "#/components/schemas/BROKER"
-          },
-          "product": {
-            "type": "string",
-            "description": "对应的产品"
-          },
-          "hosting_servers": {
-            "description": "关联的托管机",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "required": [
+          "market",
           "fund_account",
-          "status",
-          "broker"
+          "trade_day",
+          "reason",
+          "balance",
+          "buying_power",
+          "frozen",
+          "createdAt",
+          "updatedAt"
         ]
       },
-      "FundAccount": {
+      "TransferRecordEntity": {
         "type": "object",
         "properties": {
-          "fund_account": {
-            "type": "string",
-            "description": "资金账号"
-          },
-          "status": {
-            "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
-          },
-          "broker": {
-            "$ref": "#/components/schemas/BROKER"
-          },
-          "product": {
-            "type": "string",
-            "description": "对应的产品"
-          },
-          "hosting_servers": {
-            "description": "关联的托管机",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
           "id": {
-            "type": "string",
-            "description": "Entity id"
+            "type": "number"
           },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          }
-        },
-        "required": [
-          "fund_account",
-          "status",
-          "broker",
-          "id"
-        ]
-      },
-      "UpdateFundAccountDto": {
-        "type": "object",
-        "properties": {
           "fund_account": {
-            "type": "string",
-            "description": "资金账号"
+            "type": "string"
           },
-          "status": {
-            "$ref": "#/components/schemas/FUND_ACCOUNT_STATUS"
+          "trade_day": {
+            "type": "string"
           },
-          "broker": {
-            "$ref": "#/components/schemas/BROKER"
+          "market": {
+            "type": "string"
           },
-          "product": {
-            "type": "string",
-            "description": "对应的产品"
-          },
-          "hosting_servers": {
-            "description": "关联的托管机",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "CreateProductDto": {
-        "type": "object",
-        "properties": {
-          "type": {
+          "direction": {
             "enum": [
-              "ZZ500_ENHANCE",
-              "ZZ1000_ENHANCE",
-              "GZ2000_ENHANCE",
-              "ZZ1000_NEUTRAL",
-              "HS300_ENHANCE",
-              "QUANT",
-              "QUANT_BULL"
+              "IN",
+              "OUT"
             ],
             "type": "string"
           },
-          "name": {
+          "amount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
             "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FundSnapshotEntity"
+            }
           }
         },
         "required": [
-          "type",
-          "name"
-        ]
-      },
-      "Product": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "enum": [
-              "ZZ500_ENHANCE",
-              "ZZ1000_ENHANCE",
-              "GZ2000_ENHANCE",
-              "ZZ1000_NEUTRAL",
-              "HS300_ENHANCE",
-              "QUANT",
-              "QUANT_BULL"
-            ],
-            "type": "string"
-          },
-          "id": {
-            "type": "string",
-            "description": "Entity id"
-          },
-          "createAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
-          },
-          "updateAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
-          },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
           "id",
-          "name"
+          "fund_account",
+          "trade_day",
+          "market",
+          "direction",
+          "amount",
+          "createdAt",
+          "updatedAt",
+          "snapshots"
         ]
       },
-      "UpdateProductDto": {
+      "InnerSnapshotFromServer": {
         "type": "object",
         "properties": {
-          "type": {
-            "enum": [
-              "ZZ500_ENHANCE",
-              "ZZ1000_ENHANCE",
-              "GZ2000_ENHANCE",
-              "ZZ1000_NEUTRAL",
-              "HS300_ENHANCE",
-              "QUANT",
-              "QUANT_BULL"
-            ],
-            "type": "string"
+          "balance": {
+            "type": "number"
           },
-          "name": {
-            "type": "string"
-          }
-        }
-      },
-      "ListProductTypeDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
+          "buying_power": {
+            "type": "number"
           },
-          "name": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "type",
-          "name"
-        ]
-      },
-      "CreateTradeDayDto": {
-        "type": "object",
-        "properties": {
-          "date": {
-            "type": "string",
-            "description": "交易日期 YYYYMMDD"
+          "frozen": {
+            "type": "number"
+          },
+          "market": {
+            "type": "number",
+            "description": "1: 深圳 2: 上海"
+          },
+          "xtp_account": {
+            "type": "object"
+          },
+          "atp_account": {
+            "type": "object"
           }
         },
         "required": [
-          "date"
+          "balance",
+          "buying_power",
+          "frozen",
+          "market"
         ]
       },
-      "TradeDay": {
+      "FundAccountEntity": {
         "type": "object",
         "properties": {
-          "date": {
-            "type": "string",
-            "description": "交易日期 YYYYMMDD"
-          },
           "id": {
-            "type": "string",
-            "description": "Entity id"
+            "type": "number"
           },
-          "createAt": {
+          "account": {
+            "type": "string"
+          },
+          "brokerKey": {
+            "type": "string"
+          },
+          "productKey": {
+            "type": "string"
+          },
+          "companyKey": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "remark": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "createdAt": {
             "format": "date-time",
-            "type": "string",
-            "description": "Entity created at when"
+            "type": "string"
           },
-          "updateAt": {
+          "updatedAt": {
             "format": "date-time",
-            "type": "string",
-            "description": "Entity updated at when"
-          },
-          "createBy": {
-            "type": "string",
-            "description": "Entity created by who"
-          },
-          "updateBy": {
-            "type": "string",
-            "description": "Entity updated by who"
+            "type": "string"
           }
         },
         "required": [
-          "date",
-          "id"
+          "id",
+          "account",
+          "brokerKey",
+          "productKey",
+          "companyKey",
+          "type",
+          "active",
+          "createdAt",
+          "updatedAt"
         ]
       }
     }

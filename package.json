@@ -78,6 +78,7 @@
     "@nestjs/testing": "^9.0.0",
     "@types/cache-manager-memcached-store": "^3.0.3",
     "@types/express": "^4.17.13",
+    "@types/ini": "^4.1.1",
     "@types/jest": "29.5.1",
     "@types/lodash": "^4.14.202",
     "@types/node": "18.16.12",

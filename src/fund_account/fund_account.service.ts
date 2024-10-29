@@ -1,11 +1,21 @@
-import path from 'path';
-
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { FundAccountType, Market } from '@prisma/client';
+import {
+  FundAccountType,
+  InnerFundSnapshotReason,
+  Market,
+  TransferType,
+} from '@prisma/client';
+import dayjs from 'dayjs';
 
 import { HostServerService } from 'src/host_server/host_server.service';
-import { tryParseJSON } from 'src/lib/lang/json';
 import { PrismaService } from 'src/prisma/prisma.service';
+
+import {
+  FundAccountEntity,
+  InnerSnapshotFromServer,
+  ListFundAccountQueryDto,
+  TransferDto,
+} from './fund_account.dto';
 
 @Injectable()
 export class FundAccountService {
@@ -14,24 +24,35 @@ export class FundAccountService {
     private readonly hostServerService: HostServerService
   ) {}
 
-  // 从托管服务器上查询股票账户资金信息
-  async queryStockAccountFromHostServer(
-    account: string,
-    market: Market
-  ): Promise<any> {
+  async listStockAccount(
+    query: ListFundAccountQueryDto
+  ): Promise<FundAccountEntity[]> {
+    const accounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        type: FundAccountType.STOCK,
+        brokerKey: query.brokerKey,
+        companyKey: query.companyKey,
+        productKey: query.productKey,
+        active: query.active === undefined ? true : query.active,
+      },
+    });
+
+    return accounts;
+  }
+
+  async findMasterServer(fund_account: string, market: Market) {
     const fundAccount = await this.prismaService.fundAccount.findFirst({
       where: {
-        account: account,
-        type: FundAccountType.STOCK,
+        account: fund_account,
       },
     });
 
     if (!fundAccount) {
-      throw new NotFoundException('Fund account not found');
+      throw new NotFoundException(`Fund account: ${fund_account} not found`);
     }
 
     if (!fundAccount.active) {
-      throw new NotFoundException('Fund account not active');
+      throw new NotFoundException(`Fund account: ${fund_account} not active`);
     }
 
     const hostServer = await this.prismaService.hostServer.findFirst({
@@ -43,38 +64,269 @@ export class FundAccountService {
     });
 
     if (!hostServer) {
-      throw new NotFoundException('Host server not found');
+      throw new NotFoundException(
+        `${fundAccount.brokerKey} ${fundAccount.account}:  Host server not found`
+      );
     }
 
-    const zhisui_tool_path = path.join(hostServer.home_dir, 'zhisui_tools');
+    return hostServer;
+  }
 
-    const ret = await this.hostServerService.execCommand(
+  // 从托管服务器上查询股票账户资金信息
+  async queryStockAccountFromHostServer(
+    account: string,
+    market: Market
+  ): Promise<InnerSnapshotFromServer> {
+    const hostServer = await this.findMasterServer(account, market);
+    const accountInfo = await this.hostServerService.queryAccountCommand(
       hostServer,
-      `LD_LIBRARY_PATH=. ./trader_tools query_account -a ${account}`,
-      {
-        cwd: zhisui_tool_path,
-      }
+      account,
+      market
     );
 
-    if (ret.code !== 0) {
-      console.error(ret.stderr, ret.stdout);
+    await this.hostServerService.freeSSH(hostServer);
 
-      throw new Error('query fund account failed');
-    }
+    return accountInfo;
+  }
 
-    const data = ret.stdout
-      .split('\n')
-      .map((l) => tryParseJSON(l))
-      .filter(Boolean);
+  async saveFundAccountSnapshot(
+    market: Market,
+    fund_account: string,
+    reason: InnerFundSnapshotReason,
+    snapshot: InnerSnapshotFromServer
+  ) {
+    return await this.prismaService.innerFundSnapshot.create({
+      data: {
+        market,
+        fund_account,
+        reason,
+        balance: snapshot.balance,
+        buying_power: snapshot.buying_power,
+        frozen: snapshot.frozen,
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        xtp_account: snapshot.xtp_account,
+        atp_account: snapshot.atp_account,
+      },
+    });
+  }
 
-    const marketCode = market === Market.SH ? 2 : 1;
+  async syncFundAccount(
+    fund_account: string,
+    market: Market,
+    reason: InnerFundSnapshotReason
+  ) {
+    const hostServer = await this.findMasterServer(fund_account, market);
+    const snapshot = await this.hostServerService.queryAccountCommand(
+      hostServer,
+      fund_account,
+      market
+    );
+    await this.hostServerService.freeSSH(hostServer);
+    return await this.saveFundAccountSnapshot(
+      market,
+      fund_account,
+      reason,
+      snapshot
+    );
+  }
 
-    const found = data.find((d) => d.market === marketCode);
+  async innerTransfer(fund_account: string, transferDto: TransferDto) {
+    const { market: marketStr, amount, direction } = transferDto;
+    const market = marketStr as Market;
+    const other_market: Market = market === Market.SH ? Market.SZ : Market.SH;
 
-    if (!found) {
-      throw new NotFoundException('Fund account not query from host server');
-    }
+    const hostServer = await this.findMasterServer(fund_account, market);
+    const other_server = await this.findMasterServer(
+      fund_account,
+      other_market
+    );
 
-    return found;
+    // 转账前查询
+    const before = await this.hostServerService.queryAccountCommand(
+      hostServer,
+      fund_account,
+      market
+    );
+    const before_other = await this.hostServerService.queryAccountCommand(
+      other_server,
+      fund_account,
+      other_market
+    );
+
+    // 转账
+    await this.hostServerService.innerTransferCommand(
+      hostServer,
+      fund_account,
+      direction,
+      amount
+    );
+
+    // 转账后查询
+    const after = await this.hostServerService.queryAccountCommand(
+      hostServer,
+      fund_account,
+      market
+    );
+    const after_other = await this.hostServerService.queryAccountCommand(
+      other_server,
+      fund_account,
+      other_market
+    );
+
+    await this.hostServerService.freeSSH(other_server);
+    await this.hostServerService.freeSSH(hostServer);
+
+    const { id: recordId } = await this.prismaService.transferRecord.create({
+      data: {
+        market,
+        fund_account,
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        direction,
+        amount,
+        type: TransferType.INNER,
+        snapshots: {
+          createMany: {
+            data: [
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: before.balance,
+                buying_power: before.buying_power,
+                frozen: before.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: before.xtp_account,
+                atp_account: before.atp_account,
+              },
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: after.balance,
+                buying_power: after.buying_power,
+                frozen: after.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: after.xtp_account,
+                atp_account: after.atp_account,
+              },
+              {
+                market: other_market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: before_other.balance,
+                buying_power: before_other.buying_power,
+                frozen: before_other.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: before_other.xtp_account,
+                atp_account: before_other.atp_account,
+              },
+              {
+                market: other_market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: after_other.balance,
+                buying_power: after_other.buying_power,
+                frozen: after_other.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: after_other.xtp_account,
+                atp_account: after_other.atp_account,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const record = await this.prismaService.transferRecord.findUnique({
+      where: {
+        id: recordId,
+      },
+      include: {
+        snapshots: true,
+      },
+    });
+
+    return record;
+  }
+
+  async externalTransfer(fund_account: string, transferDto: TransferDto) {
+    const { market: marketStr, amount, direction } = transferDto;
+    const market = marketStr as Market;
+
+    const hostServer = await this.findMasterServer(fund_account, market);
+
+    // 转账前查询
+    const before = await this.hostServerService.queryAccountCommand(
+      hostServer,
+      fund_account,
+      market
+    );
+
+    // 转账
+    await this.hostServerService.externalTransferCommand(
+      hostServer,
+      fund_account,
+      direction,
+      amount
+    );
+
+    // 转账后查询
+    const after = await this.hostServerService.queryAccountCommand(
+      hostServer,
+      fund_account,
+      market
+    );
+
+    await this.hostServerService.freeSSH(hostServer);
+
+    const { id: recordId } = await this.prismaService.transferRecord.create({
+      data: {
+        market,
+        fund_account,
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        direction,
+        amount,
+        type: TransferType.EXTERNAL,
+        snapshots: {
+          createMany: {
+            data: [
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: before.balance,
+                buying_power: before.buying_power,
+                frozen: before.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: before.xtp_account,
+                atp_account: before.atp_account,
+              },
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: after.balance,
+                buying_power: after.buying_power,
+                frozen: after.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: after.xtp_account,
+                atp_account: after.atp_account,
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    const record = await this.prismaService.transferRecord.findUnique({
+      where: {
+        id: recordId,
+      },
+      include: {
+        snapshots: true,
+      },
+    });
+
+    return record;
   }
 }

@@ -964,17 +964,35 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
 ];
 
 export async function seedXTPConfigs(prisma: PrismaClient) {
-  await prisma.xTPConfig.createMany({
-    data: xtpConfigs,
-  });
+  for (const config of xtpConfigs) {
+    await prisma.xTPConfig.upsert({
+      where: {
+        fund_account_market: {
+          fund_account: config.fund_account,
+          market: config.market,
+        },
+      },
+      create: config,
+      update: config,
+    });
+  }
 
   console.log('xtpConfigs seed done');
 }
 
 export async function seedATPConfigs(prisma: PrismaClient) {
-  await prisma.aTPConfig.createMany({
-    data: atpConfigs,
-  });
+  for (const config of atpConfigs) {
+    await prisma.aTPConfig.upsert({
+      where: {
+        fund_account_market: {
+          fund_account: config.fund_account,
+          market: config.market,
+        },
+      },
+      create: config,
+      update: config,
+    });
+  }
 
   console.log('atpConfigs seed done');
 }

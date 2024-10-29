@@ -26,6 +26,7 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     account: '109277002766',
     productKey: 'xx12',
     companyKey: 'zhisui',
+    active: false,
   },
   {
     brokerKey: 'xtp',
@@ -53,6 +54,7 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     account: '109180006832',
     productKey: 'xx12',
     companyKey: 'zhisui',
+    active: false,
   },
   {
     brokerKey: 'xtp',
@@ -402,16 +404,26 @@ const product_data: Prisma.ProductCreateManyInput[] = [
 
 export async function seedFundAccounts(prisma: PrismaClient) {
   // 创建产品
-  await prisma.product.createMany({
-    data: product_data,
-  });
+  for (const product of product_data) {
+    await prisma.product.upsert({
+      where: { key: product.key },
+      create: product,
+      update: product,
+    });
+  }
 
   console.log('product seed done');
 
   // 创建基金账户
-  await prisma.fundAccount.createMany({
-    data: fund_accounts_data,
-  });
+  for (const fund_account of fund_accounts_data) {
+    await prisma.fundAccount.upsert({
+      where: {
+        account: fund_account.account,
+      },
+      create: fund_account,
+      update: fund_account,
+    });
+  }
 
   console.log('fund account seed done');
 }

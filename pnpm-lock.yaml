@@ -160,6 +160,9 @@ devDependencies:
   '@types/express':
     specifier: ^4.17.13
     version: 4.17.21
+  '@types/ini':
+    specifier: ^4.1.1
+    version: 4.1.1
   '@types/jest':
     specifier: 29.5.1
     version: 29.5.1
@@ -1819,6 +1822,10 @@ packages:
 
   /@types/http-errors@2.0.4:
     resolution: {integrity: sha512-D0CFMMtydbJAegzOyHjtiKPLlvnm3iTZyZRSZoLq2mRhDdmLfIWOCYPfQJ4cu2erKghU++QvjcUjp/5h7hESpA==}
+    dev: true
+
+  /@types/ini@4.1.1:
+    resolution: {integrity: sha512-MIyNUZipBTbyUNnhvuXJTY7B6qNI78meck9Jbv3wk0OgNwRyOOVEKDutAkOs1snB/tx0FafyR6/SN4Ps0hZPeg==}
     dev: true
 
   /@types/istanbul-lib-coverage@2.0.6:

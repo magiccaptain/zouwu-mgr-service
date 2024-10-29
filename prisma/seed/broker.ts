@@ -40,9 +40,19 @@ const brokers: Prisma.BrokerCreateInput[] = [
 ];
 
 export async function seedBrokers(client: PrismaClient) {
-  await client.broker.createMany({
-    data: brokers,
-  });
+  // await client.broker.upser({
+  //   data: brokers,
+  // });
+
+  for (const broker of brokers) {
+    await client.broker.upsert({
+      where: {
+        key: broker.key,
+      },
+      create: broker,
+      update: broker,
+    });
+  }
 
   console.log('seed brokers success');
 }

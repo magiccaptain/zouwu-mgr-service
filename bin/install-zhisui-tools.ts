@@ -10,6 +10,7 @@ async function main() {
   const servers = await client.hostServer.findMany({
     where: {
       active: true,
+      is_master: true,
     },
   });
 
