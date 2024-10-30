@@ -32,6 +32,10 @@ export const settings = env({
     },
   },
   trade_data_dir: '/data/trade_data',
+  trader: {
+    start_time: '09:14',
+    end_time: '15:00',
+  },
   init: {
     namespace: {
       name: 'zouwufund',

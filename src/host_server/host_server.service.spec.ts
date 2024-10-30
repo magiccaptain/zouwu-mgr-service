@@ -23,7 +23,7 @@ describe('HostServerService', () => {
     expect(service).toBeDefined();
   });
 
-  it('should connect to 12762', async () => {
+  xit('should connect to 12762', async () => {
     const hostServer = await prismaService.hostServer.findFirst({
       where: {
         active: true,

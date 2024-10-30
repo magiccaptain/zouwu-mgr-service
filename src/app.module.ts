@@ -4,6 +4,7 @@ import { Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
+import { ScheduleModule } from '@nestjs/schedule';
 import memcachedStore from 'cache-manager-memcached-store';
 import MemCache from 'memcache-pp';
 
@@ -37,6 +38,7 @@ import { PrismaModule } from './prisma/prisma.module';
         hosts: [settings.memcached.url],
       },
     }),
+    ScheduleModule.forRoot(),
     // AuthModule,
     EventEmitterModule.forRoot(),
     // SessionModule,

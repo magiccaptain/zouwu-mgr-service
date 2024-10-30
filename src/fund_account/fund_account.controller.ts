@@ -1,6 +1,17 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
 import { Market } from '@prisma/client';
+import dayjs from 'dayjs';
+
+import { settings } from 'src/config';
 
 import {
   FundAccountEntity,
@@ -16,6 +27,25 @@ import { FundAccountService } from './fund_account.service';
 export class FundAccountController {
   constructor(private readonly fundAccountService: FundAccountService) {}
 
+  cannotDoInTradeTime() {
+    const now = dayjs();
+
+    const traderStart = dayjs(
+      now.format('YYYY-MM-DD ') + settings.trader.start_time,
+      'YYYY-MM-DD HH:mm'
+    );
+    const traderEnd = dayjs(
+      now.format('YYYY-MM-DD ') + settings.trader.end_time,
+      'YYYY-MM-DD HH:mm'
+    );
+
+    const is_trade_time = now.isAfter(traderStart) && now.isBefore(traderEnd);
+
+    if (is_trade_time) {
+      throw new ForbiddenException('Cannot do this operation in trade time');
+    }
+  }
+
   @ApiOperation({ operationId: 'innerTransfer' })
   @ApiOkResponse({
     description: 'inner transfer',
@@ -26,6 +56,8 @@ export class FundAccountController {
     @Param('fund_account') fund_account: string,
     @Body() dto: TransferDto
   ): any {
+    this.cannotDoInTradeTime();
+
     return this.fundAccountService.innerTransfer(fund_account, dto);
   }
 
@@ -39,6 +71,8 @@ export class FundAccountController {
     @Param('fund_account') fund_account: string,
     @Body() dto: TransferDto
   ): any {
+    this.cannotDoInTradeTime();
+
     return this.fundAccountService.externalTransfer(fund_account, dto);
   }
 
@@ -55,6 +89,8 @@ export class FundAccountController {
     @Param('fund_account') fund_account: string,
     @Query() query: QueryStockAccountFromServerDto
   ): Promise<InnerSnapshotFromServer> {
+    this.cannotDoInTradeTime();
+
     const { market: marketStr } = query;
     const market = marketStr as Market;
 

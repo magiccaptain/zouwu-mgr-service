@@ -7,6 +7,8 @@ dist_dir="/data/services/zhisui_mgr_core"
 echo "Building the project..."
 pnpm build
 
+pm2 stop zhisui_mgr_core
+
 # copy the dist directory to the release directory
 echo "Copying the dist directory to the release directory..."
 rm -rf $dist_dir
@@ -19,7 +21,9 @@ cp ./.env.product $dist_dir/.env
 cp -r ./prisma $dist_dir/
 cp -r ./ssl $dist_dir/
 
-cd $dist_dir && pnpm install
+cd $dist_dir && pnpm install && pnpm generate
+
+cd $dist_dir && pm2 restart ecosystem.config.js
 
 
 

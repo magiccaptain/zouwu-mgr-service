@@ -1,7 +1,7 @@
 // 同步fund account数据
 
 import { NestFactory } from '@nestjs/core';
-import { InnerFundSnapshotReason, Market } from '@prisma/client';
+import { InnerFundSnapshotReason } from '@prisma/client';
 import { isEmpty } from 'lodash';
 
 import { AppModule } from '../dist/app.module';
@@ -17,6 +17,7 @@ async function main() {
   const fundAccounts = await prismaService.fundAccount.findMany({
     where: {
       active: true,
+      account: '109277002626',
     },
     include: {
       XTPConfig: true,
@@ -33,7 +34,7 @@ async function main() {
       await fundAccountService.syncFundAccount(
         fund_account.account,
         market,
-        InnerFundSnapshotReason.MIDDLE_TRADING_DAY
+        InnerFundSnapshotReason.SYNC
       );
     }
   }
