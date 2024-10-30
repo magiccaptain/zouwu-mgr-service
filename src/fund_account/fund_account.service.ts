@@ -79,6 +79,7 @@ export class FundAccountService {
   async listStockAccount(
     query: ListFundAccountQueryDto
   ): Promise<FundAccountEntity[]> {
+    const trade_day = dayjs().format('YYYY-MM-DD');
     const accounts = await this.prismaService.fundAccount.findMany({
       where: {
         type: FundAccountType.STOCK,
@@ -87,9 +88,45 @@ export class FundAccountService {
         productKey: query.productKey,
         active: query.active === undefined ? true : query.active,
       },
+      include: {
+        InnerFundSnapshot: {
+          where: {
+            trade_day: trade_day,
+            OR: [
+              { reason: InnerFundSnapshotReason.BEFORE_TRADING_DAY },
+              { reason: InnerFundSnapshotReason.AFTER_TRADING_DAY },
+            ],
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            market: true,
+            trade_day: true,
+            reason: true,
+            balance: true,
+            buying_power: true,
+            frozen: true,
+            createdAt: true,
+            updatedAt: true,
+            xtp_account: true,
+            atp_account: true,
+          },
+        },
+      },
     });
 
-    return accounts;
+    return accounts.map((a) => {
+      const { InnerFundSnapshot = [], ...rest } = a;
+
+      const sh_snapshot = InnerFundSnapshot.find((s) => s.market === Market.SH);
+      const sz_snapshot = InnerFundSnapshot.find((s) => s.market === Market.SZ);
+
+      return {
+        ...rest,
+        snapshots: [sh_snapshot, sz_snapshot].filter(Boolean),
+      };
+    });
   }
 
   async findMasterServer(fund_account: string, market: Market) {
