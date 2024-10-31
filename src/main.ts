@@ -57,6 +57,8 @@ async function bootstrap() {
   if (process.env.NODE_ENV === 'development') {
     fs.writeFileSync(openapiPath, JSON.stringify(document, null, 2));
   }
+
+  console.log('NODE_ENV=', process.env.NODE_ENV);
 }
 
 bootstrap();

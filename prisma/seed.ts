@@ -4,11 +4,14 @@ import { seedBrokers } from './seed/broker';
 import { seedFundAccounts } from './seed/fund-account';
 import { seedHostServer } from './seed/host-server';
 import { seedATPConfigs, seedXTPConfigs } from './seed/td-config';
+import { seedUser } from './seed/users';
 
 // Initialize Prisma Client
 const prisma = new PrismaClient();
 
 async function main() {
+  await seedUser(prisma);
+
   await seedBrokers(prisma);
 
   await seedHostServer(prisma);

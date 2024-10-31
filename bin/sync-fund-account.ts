@@ -17,7 +17,6 @@ async function main() {
   const fundAccounts = await prismaService.fundAccount.findMany({
     where: {
       active: true,
-      account: '109277002626',
     },
     include: {
       XTPConfig: true,
@@ -34,7 +33,7 @@ async function main() {
       await fundAccountService.syncFundAccount(
         fund_account.account,
         market,
-        InnerFundSnapshotReason.SYNC
+        InnerFundSnapshotReason.AFTER_TRADING_DAY
       );
     }
   }

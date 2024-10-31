@@ -14,8 +14,10 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 import {
   FundAccountEntity,
+  FundSnapshotEntity,
   InnerSnapshotFromServer,
   ListFundAccountQueryDto,
+  ListFundSnapshotQueryDto,
   TransferDto,
 } from './fund_account.dto';
 
@@ -76,6 +78,23 @@ export class FundAccountService {
     console.log('After trading day sync fund account done');
   }
 
+  async listFundSnapshot(
+    fund_account: string,
+    query: ListFundSnapshotQueryDto
+  ): Promise<FundSnapshotEntity[]> {
+    const { trade_day, market } = query;
+
+    const snapshots = await this.prismaService.innerFundSnapshot.findMany({
+      where: {
+        fund_account,
+        trade_day,
+        market: market as Market,
+      },
+    });
+
+    return snapshots as FundSnapshotEntity[];
+  }
+
   async listStockAccount(
     query: ListFundAccountQueryDto
   ): Promise<FundAccountEntity[]> {
@@ -92,10 +111,6 @@ export class FundAccountService {
         InnerFundSnapshot: {
           where: {
             trade_day: trade_day,
-            OR: [
-              { reason: InnerFundSnapshotReason.BEFORE_TRADING_DAY },
-              { reason: InnerFundSnapshotReason.AFTER_TRADING_DAY },
-            ],
           },
           orderBy: {
             createdAt: 'desc',

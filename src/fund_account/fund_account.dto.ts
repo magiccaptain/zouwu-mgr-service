@@ -97,6 +97,16 @@ export class ListFundAccountQueryDto {
   active?: boolean;
 }
 
+export class ListFundSnapshotQueryDto {
+  @IsNotEmpty()
+  @IsString()
+  trade_day: string;
+
+  @IsNotEmpty()
+  @IsString()
+  market: string;
+}
+
 export class FundSnapshotEntity {
   @IsNotEmpty()
   id: number;

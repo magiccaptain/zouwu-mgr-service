@@ -15,8 +15,10 @@ import { settings } from 'src/config';
 
 import {
   FundAccountEntity,
+  FundSnapshotEntity,
   InnerSnapshotFromServer,
   ListFundAccountQueryDto,
+  ListFundSnapshotQueryDto,
   QueryStockAccountFromServerDto,
   TransferDto,
   TransferRecordEntity,
@@ -113,5 +115,21 @@ export class FundAccountController {
     @Query() query: ListFundAccountQueryDto
   ): Promise<FundAccountEntity[]> {
     return this.fundAccountService.listStockAccount(query);
+  }
+
+  /**
+   * list fund snapshots
+   */
+  @ApiOperation({ operationId: 'listFundSnapshots' })
+  @ApiOkResponse({
+    description: 'list fund snapshots',
+    type: [FundSnapshotEntity],
+  })
+  @Get(':fund_account/snapshots')
+  listFundSnapshots(
+    @Param('fund_account') fund_account: string,
+    @Query() query: ListFundSnapshotQueryDto
+  ): Promise<FundSnapshotEntity[]> {
+    return this.fundAccountService.listFundSnapshot(fund_account, query);
   }
 }

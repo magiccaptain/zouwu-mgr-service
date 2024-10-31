@@ -216,6 +216,54 @@
           }
         }
       }
+    },
+    "/fund-account/{fund_account}/snapshots": {
+      "get": {
+        "operationId": "listFundSnapshots",
+        "summary": "",
+        "description": "list fund snapshots",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "trade_day",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "market",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list fund snapshots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FundSnapshotEntity"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "info": {
