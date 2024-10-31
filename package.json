@@ -22,6 +22,7 @@
     "test:e2e": "NODE_ENV=test jest --detectOpenHandles --config ./test/jest-e2e.json",
     "prepare": "husky install",
     "syncdb": "prisma db push --force-reset",
+    "pulldb": "prisma db pull",
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate"

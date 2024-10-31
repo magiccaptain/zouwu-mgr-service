@@ -1,277 +1,227 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgresql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-enum Market {
-  SH // 上海
-  SZ // 深圳
-}
-
-// 用户
 model User {
   id           Int       @id @default(autoincrement())
   name         String
-  username     String    @unique()
+  username     String    @unique
   password     String
-  phone        String?   @unique()
-  email        String?   @unique()
+  phone        String?   @unique
+  email        String?   @unique
   roles        String[]  @default(["USER"])
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @default(now()) @updatedAt
+  needResetPwd Boolean?  @default(true)
   Session      Session[]
-  needResetPwd Boolean?  @default(true) // 是否需要重置密码
 }
 
-// 会话
 model Session {
   id        Int      @id @default(autoincrement())
   userId    Int
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-  expireAt  DateTime // 过期时间
-
-  user User @relation(fields: [userId], references: [id])
-
-  @@unique([token])
+  expireAt  DateTime
+  user      User     @relation(fields: [userId], references: [id])
 }
 
-// 券商
 model Broker {
-  id   Int    @id @default(autoincrement())
-  name String
-  key  String @unique()
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
+  id          Int           @id @default(autoincrement())
+  name        String
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
   FundAccount FundAccount[]
   HostServer  HostServer[]
 }
 
-// 公司
 model Company {
-  id   Int    @id @default(autoincrement())
-  name String
-  key  String @unique()
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
+  id          Int           @id @default(autoincrement())
+  name        String
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+  FundAccount FundAccount[]
   HostServer  HostServer[]
   Product     Product[]
-  FundAccount FundAccount[]
 }
 
-// 托管机
 model HostServer {
-  id   Int     @id @default(autoincrement())
-  name String
-  desc String?
-
-  market Market
-
-  // 在托管机房的主机ip
-  host_ip  String?
-  // ssh 登录的地址, 用户，端口
-  ssh_host String?
-  ssh_user String?
-  ssh_port Int?
-
-  // 主目录
+  id            Int       @id @default(autoincrement())
+  name          String
+  desc          String?
+  market        Market
+  host_ip       String?
+  ssh_host      String?
+  ssh_user      String?
+  ssh_port      Int?
   home_dir      String?
-  // 是否启用
   active        Boolean   @default(true)
-  // 是否为管理机器(用于查询数据, 一般一个券商上海和深圳各一台)
   is_master     Boolean   @default(false)
-  // 上次检查时间
   last_check_at DateTime?
-
-  brokerKey  String
-  companyKey String
-
-  // 备注
-  remark String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  // 展开
-  broker  Broker  @relation(fields: [brokerKey], references: [key])
-  company Company @relation(fields: [companyKey], references: [key])
+  brokerKey     String
+  companyKey    String
+  remark        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  broker        Broker    @relation(fields: [brokerKey], references: [key])
+  company       Company   @relation(fields: [companyKey], references: [key])
 
   @@unique([market, brokerKey, companyKey, ssh_host, ssh_port])
 }
 
-// 产品
 model Product {
   id          Int           @id @default(autoincrement())
-  key         String        @unique()
+  key         String        @unique
   name        String
   short_name  String?
   type        String
   companyKey  String
-  FundAccount FundAccount[]
-  // 是否在运营
   active      Boolean       @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  company Company @relation(fields: [companyKey], references: [key])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+  FundAccount FundAccount[]
+  company     Company       @relation(fields: [companyKey], references: [key])
 }
 
-enum FundAccountType {
-  STOCK // 股票
-  FUTURES // 期货
-}
-
-// 资金账号
 model FundAccount {
-  id         Int             @id @default(autoincrement())
-  account    String          @unique()
-  brokerKey  String
-  productKey String
-  companyKey String
-  type       FundAccountType @default(STOCK)
-  active     Boolean         @default(true)
-  remark     String? // 备注
-
-  branch String? // 营业部
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  // 展开
-  broker             Broker              @relation(fields: [brokerKey], references: [key])
-  product            Product             @relation(fields: [productKey], references: [key])
-  company            Company             @relation(fields: [companyKey], references: [key])
-  InnerFundSnapshot  InnerFundSnapshot[]
-  ExternalFundDatail ExternalFundDatail?
-  XTPConfig          XTPConfig[]
+  id                 Int                 @id @default(autoincrement())
+  account            String              @unique
+  brokerKey          String
+  productKey         String
+  companyKey         String
+  type               FundAccountType     @default(STOCK)
+  active             Boolean             @default(true)
+  remark             String?
+  branch             String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @default(now()) @updatedAt
   ATPConfig          ATPConfig[]
+  ExternalFundDatail ExternalFundDatail?
+  broker             Broker              @relation(fields: [brokerKey], references: [key])
+  company            Company             @relation(fields: [companyKey], references: [key])
+  product            Product             @relation(fields: [productKey], references: [key])
+  InnerFundSnapshot  InnerFundSnapshot[]
   TransferRecord     TransferRecord[]
+  XTPConfig          XTPConfig[]
 }
 
-// XTP 交易系统配置
 model XTPConfig {
-  id Int @id @default(autoincrement())
-
-  fund_account String
-  market       Market
-  ip           String
-  port         Int
-  user         String
-  password     String
-  local_ip     String? @default("")
-
-  // 日志等级 0:严重 1:错误 2:警告 3:信息 4:调试 5:跟踪
-  log_level          Int?    @default(4)
+  id                 Int         @id @default(autoincrement())
+  fund_account       String
+  market             Market
+  ip                 String
+  port               Int
+  user               String
+  password           String
+  local_ip           String?     @default("")
+  log_level          Int?        @default(4)
   account_key        String
-  save_file_path     String? @default(".")
-  software_version   String? @default("0.0.1")
-  heat_beat_interval Int?    @default(3)
-
-  fundAccount FundAccount @relation(fields: [fund_account], references: [account])
+  save_file_path     String?     @default(".")
+  software_version   String?     @default("0.0.1")
+  heat_beat_interval Int?        @default(3)
+  fundAccount        FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([fund_account, market])
 }
 
 model ATPConfig {
-  id Int @id @default(autoincrement())
-
-  fund_account String
-  market       Market
-
-  ip         String
-  port       Int
-  spare_ip   String?
-  spare_port Int?
-
-  // agw_user
-  user     String
-  // agw_password
-  password String
-
-  branch_id String // 营业部
-
-  cust_id       String // 客户号
-  cust_password String // 客户密码
-
-  sh_account_id       String // 上海资金账号
-  sz_account_id       String // 深圳资金账号
-  client_name         String // 客户名称
-  client_version      String
-  client_feature_code String
-  account_mode        Int
-  login_mode          Int
-  order_way           String
-
-  reconnect_time           Int? @default(10)
-  heartbeat_interval_milli Int? @default(5000)
-  connect_timeout_milli    Int? @default(5000)
-
-  fundAccount FundAccount @relation(fields: [fund_account], references: [account])
+  id                       Int         @id @default(autoincrement())
+  fund_account             String
+  market                   Market
+  ip                       String
+  port                     Int
+  spare_ip                 String?
+  spare_port               Int?
+  user                     String
+  password                 String
+  branch_id                String
+  cust_id                  String
+  cust_password            String
+  sh_account_id            String
+  sz_account_id            String
+  client_name              String
+  client_version           String
+  client_feature_code      String
+  account_mode             Int
+  login_mode               Int
+  order_way                String
+  reconnect_time           Int?        @default(10)
+  heartbeat_interval_milli Int?        @default(5000)
+  connect_timeout_milli    Int?        @default(5000)
+  fundAccount              FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([fund_account, market])
 }
 
-enum InnerFundSnapshotReason {
-  // 盘前查询
-  BEFORE_TRADING_DAY
-  // 盘后查询
-  AFTER_TRADING_DAY
-  // 中午查询
-  MIDDLE_TRADING_DAY
-  // 同步
-  SYNC
-  // 转账 前
-  BEFORE_TRANSFER
-  // 转账 后
-  AFTER_TRANSFER
-}
-
-// 极速柜台内资金快照
 model InnerFundSnapshot {
   id           Int                     @id @default(autoincrement())
   market       Market
   fund_account String
-  // YYYY-MM-DD
   trade_day    String
   reason       InnerFundSnapshotReason
-
-  // 资金余额
   balance      Float
-  // 可用资金
   buying_power Float
-  // 冻结资金
   frozen       Float
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @default(now()) @updatedAt
+  xtp_account  Json?
+  atp_account  Json?
+  recordId     Int?
+  fundAccount  FundAccount             @relation(fields: [fund_account], references: [account])
+  record       TransferRecord?         @relation(fields: [recordId], references: [id])
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  // 展开
-  fundAccount FundAccount @relation(fields: [fund_account], references: [account])
-
-  xtp_account Json?
-  atp_account Json?
-
-  recordId Int?
-  record   TransferRecord? @relation(fields: [recordId], references: [id])
-
-  // 索引
   @@index([fund_account, market, trade_day(sort: Desc)])
+}
+
+model TransferRecord {
+  id           Int                 @id @default(autoincrement())
+  fund_account String
+  trade_day    String
+  market       Market
+  direction    TransferDirection
+  amount       Float
+  type         TransferType
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @default(now()) @updatedAt
+  createdBy    String?
+  snapshots    InnerFundSnapshot[]
+  fundAccount  FundAccount         @relation(fields: [fund_account], references: [account])
+
+  @@index([fund_account, market, trade_day(sort: Desc)])
+}
+
+model ExternalFundDatail {
+  id           Int         @id @default(autoincrement())
+  fund_account String      @unique
+  balance      Float
+  fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
+}
+
+enum Market {
+  SH
+  SZ
+}
+
+enum FundAccountType {
+  STOCK
+  FUTURES
+}
+
+enum InnerFundSnapshotReason {
+  BEFORE_TRADING_DAY
+  AFTER_TRADING_DAY
+  MIDDLE_TRADING_DAY
+  SYNC
+  BEFORE_TRANSFER
+  AFTER_TRANSFER
 }
 
 enum TransferDirection {
@@ -280,40 +230,6 @@ enum TransferDirection {
 }
 
 enum TransferType {
-  // 内部
   INNER
-  // 外部
   EXTERNAL
-}
-
-model TransferRecord {
-  id           Int               @id @default(autoincrement())
-  fund_account String
-  // YYYY-MM-DD
-  trade_day    String
-  market       Market
-  direction    TransferDirection
-  amount       Float
-  type         TransferType
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  createdBy String?
-
-  fundAccount FundAccount         @relation(fields: [fund_account], references: [account])
-  snapshots   InnerFundSnapshot[]
-
-  // 索引
-  @@index([fund_account, market, trade_day(sort: Desc)])
-}
-
-// 外部（普通柜台资金）
-model ExternalFundDatail {
-  id           Int    @id @default(autoincrement())
-  fund_account String @unique
-
-  balance Float
-
-  fundAccount FundAccount @relation(fields: [fund_account], references: [account])
 }

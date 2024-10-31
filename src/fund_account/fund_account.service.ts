@@ -71,8 +71,8 @@ export class FundAccountService {
     console.log('Before trading day sync fund account done');
   }
 
-  // 周一到周五下午15:10 执行
-  @Cron('10 15 * * 1-5')
+  // 周一到周五下午15:5 执行
+  @Cron('5 15 * * 1-5')
   async afterTradeSyncAccount() {
     this.syncAllFundAccount();
     console.log('After trading day sync fund account done');
@@ -360,6 +360,7 @@ export class FundAccountService {
 
       return record;
     } catch (error) {
+      console.log(error);
     } finally {
       await this.hostServerService.freeSSH(other_server);
       await this.hostServerService.freeSSH(hostServer);
@@ -442,6 +443,8 @@ export class FundAccountService {
           snapshots: true,
         },
       });
+
+      console.log(record);
 
       return record;
     } catch (error) {

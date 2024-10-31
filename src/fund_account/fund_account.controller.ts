@@ -44,7 +44,9 @@ export class FundAccountController {
     const is_trade_time = now.isAfter(traderStart) && now.isBefore(traderEnd);
 
     if (is_trade_time) {
-      throw new ForbiddenException('Cannot do this operation in trade time');
+      throw new ForbiddenException(
+        `该操作禁止在 ${settings.trader.start_time} - ${settings.trader.end_time} 之间进行`
+      );
     }
   }
 
