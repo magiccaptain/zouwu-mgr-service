@@ -112,9 +112,14 @@ export class FundAccountService {
           where: {
             trade_day: trade_day,
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
+          orderBy: [
+            {
+              createdAt: 'desc',
+            },
+            {
+              id: 'desc',
+            },
+          ],
           select: {
             market: true,
             trade_day: true,
