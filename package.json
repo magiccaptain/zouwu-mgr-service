@@ -25,7 +25,8 @@
     "pulldb": "prisma db pull",
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",
-    "generate": "prisma generate"
+    "generate": "prisma generate",
+    "deploydb": "prisma migrate deploy"
   },
   "dependencies": {
     "@faker-js/faker": "^8.3.1",

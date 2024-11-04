@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ATPConfig, HostServer, Market, XTPConfig } from '@prisma/client';
 import {
   NodeSSH,

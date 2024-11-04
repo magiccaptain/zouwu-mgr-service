@@ -21,9 +21,17 @@ cp ./.env.product $dist_dir/.env
 cp -r ./prisma $dist_dir/
 cp -r ./ssl $dist_dir/
 
-cd $dist_dir && pnpm install && pnpm generate
+cd $dist_dir  
 
-cd $dist_dir && pm2 restart ecosystem.config.js
+pnpm install  
+
+pnpm generate
+
+pnpm deploydb
+
+pnpm seed
+
+pm2 restart ecosystem.config.js
 
 
 

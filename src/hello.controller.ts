@@ -6,8 +6,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { Public } from './auth';
-
 class HealthCheckResult {
   @ApiProperty({
     name: 'message',
@@ -16,7 +14,6 @@ class HealthCheckResult {
   message: string;
 }
 
-@Public()
 @ApiTags('health')
 @Controller('/hello')
 export class HelloController {

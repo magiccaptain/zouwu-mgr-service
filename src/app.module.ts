@@ -1,14 +1,12 @@
 import { BullModule } from '@nestjs/bull';
 import { CACHE_MANAGER, CacheModule } from '@nestjs/cache-manager';
 import { Inject, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MongooseModule } from '@nestjs/mongoose/dist/mongoose.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import memcachedStore from 'cache-manager-memcached-store';
 import MemCache from 'memcache-pp';
 
-import { AuthModule, JwtAuthGuard } from './auth';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
@@ -18,6 +16,7 @@ import { FundAccountModule } from './fund_account/fund_account.module';
 import { HelloController } from './hello.controller';
 import { HostServerModule } from './host_server/host_server.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { SessionModule } from './session/session.module';
 
 @Module({
   imports: [
@@ -47,6 +46,8 @@ import { PrismaModule } from './prisma/prisma.module';
     FundAccountModule,
     PrismaModule,
     HostServerModule,
+    SessionModule,
+
     // TradeDayModule,
     // OpsRecordModule,
   ],

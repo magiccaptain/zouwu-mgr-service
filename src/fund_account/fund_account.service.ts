@@ -49,7 +49,7 @@ export class FundAccountService {
 
     if (now.hour() <= 9) {
       reason = InnerFundSnapshotReason.BEFORE_TRADING_DAY;
-    } else if (now.hour() > 15) {
+    } else if (now.hour() >= 15) {
       reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
     }
 
