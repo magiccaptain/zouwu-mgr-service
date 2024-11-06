@@ -55,7 +55,7 @@ model Company {
 }
 
 model HostServer {
-  id            Int       @id @default(autoincrement())
+  id            Int             @id @default(autoincrement())
   name          String
   desc          String?
   market        Market
@@ -64,16 +64,20 @@ model HostServer {
   ssh_user      String?
   ssh_port      Int?
   home_dir      String?
-  active        Boolean   @default(true)
-  is_master     Boolean   @default(false)
+  active        Boolean         @default(true)
+  is_master     Boolean         @default(false)
   last_check_at DateTime?
-  brokerKey     String
-  companyKey    String
+  brokerKey     String?
+  companyKey    String?
   remark        String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  broker        Broker    @relation(fields: [brokerKey], references: [key])
-  company       Company   @relation(fields: [companyKey], references: [key])
+  disk_total    Int?
+  disk_used     Int?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+  broker        Broker?         @relation(fields: [brokerKey], references: [key])
+  company       Company?        @relation(fields: [companyKey], references: [key])
+  RemoteCommand RemoteCommand[]
+  OpsWarning    OpsWarning[]
 
   @@unique([market, brokerKey, companyKey, ssh_host, ssh_port])
 }
@@ -112,6 +116,7 @@ model FundAccount {
   InnerFundSnapshot  InnerFundSnapshot[]
   TransferRecord     TransferRecord[]
   XTPConfig          XTPConfig[]
+  OpsWarning         OpsWarning[]
 }
 
 model XTPConfig {
@@ -233,4 +238,107 @@ enum TransferDirection {
 enum TransferType {
   INNER
   EXTERNAL
+}
+
+enum OpsTaskType {
+  BEFORE_CHECK_HOST_SERVER_DISK
+  BEFORE_CHECK_HOST_SERVER_TIME
+  BEFORE_SYNC_FUND_ACCOUNT
+  AFTER_CHECK_HOST_SERVER_DISK
+  AFTER_CHECK_OP_VALUE
+  AFTER_ARCHIVE_TRADE_LOG
+  AFTER_SYNC_FUND_ACCOUNT
+  AFTER_SYNC_POSITIONS
+  AFTER_SYNC_ORDER
+  AFTER_SYNC_TRADE
+  AFTER_SYNC_LAST_PRICE
+  AFTER_PULL_OP_VALUE
+  AFTER_PULL_QUOTE_SNAPSHOT
+}
+
+model OpsTask {
+  id             Int             @id @default(autoincrement())
+  type           OpsTaskType
+  name           String
+  trade_day      String
+  remoteCommands RemoteCommand[]
+  opsWarnings    OpsWarning[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([trade_day(sort: Desc)])
+}
+
+enum OpsWarningStatus {
+  PENDING
+  MANUAL_DONE
+  AUTO_DONE
+  AUTO_ERROR
+}
+
+model OpsWarning {
+  id             Int              @id @default(autoincrement())
+  trade_day      String
+  status         OpsWarningStatus
+  opsTaskId      Int?
+  hostServerId   Int?
+  fund_account   String?
+  text           String
+  remoteCommands RemoteCommand[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  opsTask     OpsTask?     @relation(fields: [opsTaskId], references: [id])
+  hostServer  HostServer?  @relation(fields: [hostServerId], references: [id])
+  fundAccount FundAccount? @relation(fields: [fund_account], references: [account])
+
+  @@index([trade_day(sort: Desc)])
+}
+
+enum RemoteCommandStatus {
+  PENDING
+  DONE
+  ERROR
+}
+
+enum RemoteCommandType {
+  DISK_CHECK
+  TIME_CHECK
+  FREE_DISK
+  QUERY_ACCOUNT
+  QUERY_POSITION
+  QUERY_ORDER
+  QUERY_TRADE
+  QUERY_LAST_PRICE
+  PULL_OP_VALUE
+  PULL_QUOTE_SNAPSHOT
+  INNER_TRANSFER
+  EXTERNAL_TRANSFER
+  ARCHIVE_TRADE_LOG
+}
+
+model RemoteCommand {
+  id           Int                 @id @default(autoincrement())
+  trade_day    String
+  cmd          String
+  cwd          String?
+  code         Int?                @default(-999)
+  stdout       String?
+  stderr       String?
+  hostServerId Int
+  opsTaskId    Int?
+  opsWarningId Int?
+  status       RemoteCommandStatus @default(PENDING)
+  type         RemoteCommandType?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  hostServer HostServer  @relation(fields: [hostServerId], references: [id])
+  opsTask    OpsTask?    @relation(fields: [opsTaskId], references: [id])
+  opsWarning OpsWarning? @relation(fields: [opsWarningId], references: [id])
+
+  @@index([hostServerId, trade_day(sort: Desc)])
 }
