@@ -36,17 +36,9 @@ export const settings = env({
     start_time: '09:18',
     end_time: '15:00',
   },
-  init: {
-    namespace: {
-      name: 'zouwufund',
-      ns: 'zouwufund.com',
-    },
-    user: {
-      username: 'admin',
-      password: 'zouwu1234',
-      name: '管理员',
-      ns: 'zouwufund.com',
-      super: true,
-    },
+  warning: {
+    disk_usage: 0.9,
+    // 托管机和本机时间相差 秒数
+    time_diff: 3,
   },
 });

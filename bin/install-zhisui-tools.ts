@@ -24,6 +24,10 @@ async function main() {
   for (const server of servers) {
     const { brokerKey, ssh_host, ssh_port, ssh_user, home_dir } = server;
 
+    if (!brokerKey) {
+      return;
+    }
+
     const pkgPath = path.join(assetPath, brokerKey);
 
     if (!fs.existsSync(pkgPath)) {

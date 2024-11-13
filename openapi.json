@@ -122,7 +122,7 @@
     },
     "/fund-account/{fund_account}/@query": {
       "get": {
-        "operationId": "queryStockAccountFromHostServer",
+        "operationId": "queryStockAccount",
         "summary": "",
         "description": "query fund account from host server",
         "parameters": [

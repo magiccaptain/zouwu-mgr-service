@@ -4,6 +4,8 @@ import {
   FundAccountType,
   InnerFundSnapshotReason,
   Market,
+  RemoteCommandStatus,
+  RemoteCommandType,
   TransferType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
@@ -11,6 +13,7 @@ import { isEmpty } from 'lodash';
 
 import { HostServerService } from 'src/host_server/host_server.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RemoteCommandError, RemoteCommandService } from 'src/remote-command';
 
 import {
   FundAccountEntity,
@@ -25,58 +28,9 @@ import {
 export class FundAccountService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly hostServerService: HostServerService
+    private readonly hostServerService: HostServerService,
+    private readonly remoteCommandService: RemoteCommandService
   ) {}
-
-  async syncAllFundAccount() {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Cannot sync fund account in development environment');
-      return;
-    }
-
-    const fundAccounts = await this.prismaService.fundAccount.findMany({
-      where: {
-        active: true,
-      },
-      include: {
-        XTPConfig: true,
-        ATPConfig: true,
-      },
-    });
-
-    let reason: InnerFundSnapshotReason = InnerFundSnapshotReason.SYNC;
-    const now = dayjs();
-
-    if (now.hour() <= 9) {
-      reason = InnerFundSnapshotReason.BEFORE_TRADING_DAY;
-    } else if (now.hour() >= 15) {
-      reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
-    }
-
-    for (const fund_account of fundAccounts) {
-      const markets = !isEmpty(fund_account.XTPConfig)
-        ? fund_account.XTPConfig.map((c) => c.market)
-        : fund_account.ATPConfig.map((c) => c.market);
-
-      for (const market of markets) {
-        await this.syncFundAccount(fund_account.account, market, reason);
-      }
-    }
-  }
-
-  // 周一到周五早上8:40 执行
-  @Cron('40 8 * * 1-5')
-  async beforeTradeSyncAccount() {
-    this.syncAllFundAccount();
-    console.log('Before trading day sync fund account done');
-  }
-
-  // 周一到周五下午15:5 执行
-  @Cron('5 15 * * 1-5')
-  async afterTradeSyncAccount() {
-    this.syncAllFundAccount();
-    console.log('After trading day sync fund account done');
-  }
 
   async listFundSnapshot(
     fund_account: string,
@@ -181,24 +135,28 @@ export class FundAccountService {
     return hostServer;
   }
 
-  // 从托管服务器上查询股票账户资金信息
-  async queryStockAccountFromHostServer(
+  async queryFundAccount(
     account: string,
     market: Market
   ): Promise<InnerSnapshotFromServer> {
     const hostServer = await this.findMasterServer(account, market);
 
-    try {
-      const accountInfo = await this.hostServerService.queryAccountCommand(
-        hostServer,
-        account,
-        market
-      );
-      return accountInfo;
-    } catch (error) {
-      throw error;
-    } finally {
-      await this.hostServerService.freeSSH(hostServer);
+    let remoteCommand = await this.remoteCommandService.makeQueryAccount(
+      hostServer,
+      account
+    );
+
+    remoteCommand = await this.hostServerService.execRemoteCommand(
+      remoteCommand
+    );
+
+    if (
+      remoteCommand.code === 0 &&
+      remoteCommand.status === RemoteCommandStatus.DONE
+    ) {
+      return this.remoteCommandService.parseQueryAccountCmd(remoteCommand);
+    } else {
+      throw new RemoteCommandError(remoteCommand);
     }
   }
 
@@ -228,25 +186,141 @@ export class FundAccountService {
     market: Market,
     reason: InnerFundSnapshotReason
   ) {
-    const hostServer = await this.findMasterServer(fund_account, market);
+    const snapshot = await this.queryFundAccount(fund_account, market);
+    await this.saveFundAccountSnapshot(market, fund_account, reason, snapshot);
+  }
 
-    try {
-      const snapshot = await this.hostServerService.queryAccountCommand(
-        hostServer,
-        fund_account,
-        market
+  async innerTransfer_1(fund_account: string, transferDto: TransferDto) {
+    const { market: marketStr, amount, direction } = transferDto;
+    const market = marketStr as Market;
+    const other_market: Market = market === Market.SH ? Market.SZ : Market.SH;
+
+    const hostServer = await this.findMasterServer(fund_account, market);
+    const otherHostServer = await this.findMasterServer(
+      fund_account,
+      other_market
+    );
+
+    const beforeQueryCmd = await this.remoteCommandService.makeQueryAccount(
+      hostServer,
+      fund_account
+    );
+
+    const otherBeforeQueryCmd =
+      await this.remoteCommandService.makeQueryAccount(
+        otherHostServer,
+        fund_account
       );
-      return await this.saveFundAccountSnapshot(
+
+    const transferCmd = await this.remoteCommandService.makeInnerTrasfer(
+      hostServer,
+      fund_account,
+      direction,
+      amount
+    );
+
+    const afterQueryCmd = await this.remoteCommandService.makeQueryAccount(
+      hostServer,
+      fund_account
+    );
+
+    const otherAfterQueryCmd = await this.remoteCommandService.makeQueryAccount(
+      otherHostServer,
+      fund_account
+    );
+
+    let cmds = [
+      beforeQueryCmd,
+      otherBeforeQueryCmd,
+      transferCmd,
+      afterQueryCmd,
+      otherAfterQueryCmd,
+    ];
+
+    cmds = await this.hostServerService.batchExecRemoteCommand(cmds);
+
+    const beforeSnapshot = this.remoteCommandService.parseQueryAccountCmd(
+      cmds[0]
+    );
+    const otherBeforeSnapshot = this.remoteCommandService.parseQueryAccountCmd(
+      cmds[1]
+    );
+
+    const afterSnapshot = this.remoteCommandService.parseQueryAccountCmd(
+      cmds[3]
+    );
+
+    const otherAfterSnapshot = this.remoteCommandService.parseQueryAccountCmd(
+      cmds[4]
+    );
+
+    const today = dayjs().format('YYYY-MM-DD');
+
+    const record = await this.prismaService.transferRecord.create({
+      data: {
         market,
         fund_account,
-        reason,
-        snapshot
-      );
-    } catch (error) {
-      throw error;
-    } finally {
-      await this.hostServerService.freeSSH(hostServer);
-    }
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        direction,
+        amount,
+        type: TransferType.INNER,
+        snapshots: {
+          createMany: {
+            data: [
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: beforeSnapshot.balance,
+                buying_power: beforeSnapshot.buying_power,
+                frozen: beforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: beforeSnapshot.xtp_account,
+                atp_account: beforeSnapshot.atp_account,
+              },
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: afterSnapshot.balance,
+                buying_power: afterSnapshot.buying_power,
+                frozen: afterSnapshot.frozen,
+                trade_day: today,
+                xtp_account: afterSnapshot.xtp_account,
+                atp_account: afterSnapshot.atp_account,
+              },
+              {
+                market: other_market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: otherBeforeSnapshot.balance,
+                buying_power: otherBeforeSnapshot.buying_power,
+                frozen: otherBeforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: otherBeforeSnapshot.xtp_account,
+                atp_account: otherBeforeSnapshot.atp_account,
+              },
+              {
+                market: other_market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: otherAfterSnapshot.balance,
+                buying_power: otherAfterSnapshot.buying_power,
+                frozen: otherAfterSnapshot.frozen,
+                trade_day: dayjs().format('YYYY-MM-DD'),
+                xtp_account: otherAfterSnapshot.xtp_account,
+                atp_account: otherAfterSnapshot.atp_account,
+              },
+            ],
+          },
+        },
+      },
+      include: {
+        snapshots: true,
+      },
+    });
+
+    return record;
   }
 
   async innerTransfer(fund_account: string, transferDto: TransferDto) {
@@ -370,6 +444,88 @@ export class FundAccountService {
       await this.hostServerService.freeSSH(other_server);
       await this.hostServerService.freeSSH(hostServer);
     }
+  }
+
+  async externalTransfer_1(fund_account: string, transferDto: TransferDto) {
+    const { market: marketStr, amount, direction } = transferDto;
+    const market = marketStr as Market;
+
+    const hostServer = await this.findMasterServer(fund_account, market);
+
+    const beforeQueryCmd = await this.remoteCommandService.makeQueryAccount(
+      hostServer,
+      fund_account
+    );
+
+    const transferCmd = await this.remoteCommandService.makeExternalTrasfer(
+      hostServer,
+      fund_account,
+      direction,
+      amount
+    );
+
+    const afterQueryCmd = await this.remoteCommandService.makeQueryAccount(
+      hostServer,
+      fund_account
+    );
+
+    let cmds = [beforeQueryCmd, transferCmd, afterQueryCmd];
+
+    cmds = await this.hostServerService.batchExecRemoteCommand(cmds);
+
+    const beforeSnapshot = this.remoteCommandService.parseQueryAccountCmd(
+      cmds[0]
+    );
+
+    const afterSnapshot = this.remoteCommandService.parseQueryAccountCmd(
+      cmds[2]
+    );
+
+    const today = dayjs().format('YYYY-MM-DD');
+
+    const record = await this.prismaService.transferRecord.create({
+      data: {
+        market,
+        fund_account,
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        direction,
+        amount,
+        type: TransferType.EXTERNAL,
+        snapshots: {
+          createMany: {
+            data: [
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: beforeSnapshot.balance,
+                buying_power: beforeSnapshot.buying_power,
+                frozen: beforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: beforeSnapshot.xtp_account,
+                atp_account: beforeSnapshot.atp_account,
+              },
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: afterSnapshot.balance,
+                buying_power: afterSnapshot.buying_power,
+                frozen: afterSnapshot.frozen,
+                trade_day: today,
+                xtp_account: afterSnapshot.xtp_account,
+                atp_account: afterSnapshot.atp_account,
+              },
+            ],
+          },
+        },
+      },
+      include: {
+        snapshots: true,
+      },
+    });
+
+    return record;
   }
 
   async externalTransfer(fund_account: string, transferDto: TransferDto) {

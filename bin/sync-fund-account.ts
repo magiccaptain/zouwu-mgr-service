@@ -9,7 +9,7 @@ import { FundAccountService } from '../dist/fund_account/fund_account.service';
 import { PrismaService } from '../dist/prisma/prisma.service';
 
 async function main() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.createApplicationContext(AppModule);
 
   const prismaService = app.get(PrismaService);
   const fundAccountService = app.get(FundAccountService);

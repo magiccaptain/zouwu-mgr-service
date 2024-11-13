@@ -2,18 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { PrismaModule } from 'src/prisma/prisma.module';
 
-import { SessionService } from './session.service';
+import { RemoteCommandService } from './remote-command.service';
 
-describe('SessionService', () => {
-  let service: SessionService;
+describe('RemoteCommandService', () => {
+  let service: RemoteCommandService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [PrismaModule],
-      providers: [SessionService],
+      providers: [RemoteCommandService],
     }).compile();
 
-    service = module.get<SessionService>(SessionService);
+    service = module.get<RemoteCommandService>(RemoteCommandService);
   });
 
   it('should be defined', () => {

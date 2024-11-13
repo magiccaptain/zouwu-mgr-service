@@ -3,7 +3,14 @@ import os from 'os';
 import path from 'path';
 
 import { Injectable } from '@nestjs/common';
-import { ATPConfig, HostServer, Market, XTPConfig } from '@prisma/client';
+import {
+  ATPConfig,
+  HostServer,
+  Market,
+  RemoteCommandStatus,
+  XTPConfig,
+  type Prisma,
+} from '@prisma/client';
 import {
   NodeSSH,
   SSHExecCommandOptions,
@@ -14,6 +21,7 @@ import { settings } from 'src/config';
 import { MarketCode } from 'src/config/constants';
 import { tryParseJSON } from 'src/lib/lang/json';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { type RemoteCommand } from 'src/remote-command';
 
 class RemoteCommandException extends Error {
   constructor(data: {
@@ -35,6 +43,16 @@ export class HostServerService {
 
   constructor(private readonly prismaService: PrismaService) {}
 
+  async getMasterServer(brokerKey: string, market: Market) {
+    return await this.prismaService.hostServer.findFirst({
+      where: {
+        brokerKey,
+        market,
+        is_master: true,
+      },
+    });
+  }
+
   async connect(hostServer: HostServer) {
     const { ssh_host, ssh_port, ssh_user } = hostServer;
 
@@ -45,8 +63,6 @@ export class HostServerService {
       username: ssh_user,
       privateKeyPath: settings.ssh.local_private_key_path,
     });
-
-    console.log('连接成功');
 
     return node_ssh;
   }
@@ -71,6 +87,117 @@ export class HostServerService {
       this.ssh_cache[hostServer.id].dispose();
       delete this.ssh_cache[hostServer.id];
     }
+  }
+
+  async runRemoteCommand(
+    remoteCommand: RemoteCommand,
+    node_ssh: NodeSSH
+  ): Promise<RemoteCommand> {
+    const { cmd, cwd, id } = remoteCommand;
+
+    try {
+      const { code, stdout, stderr } = await node_ssh.execCommand(cmd, {
+        cwd,
+      });
+      return await this.prismaService.remoteCommand.update({
+        where: { id },
+        data: {
+          code,
+          stdout,
+          stderr,
+          status: RemoteCommandStatus.DONE,
+        },
+        include: {
+          hostServer: true,
+          opsTask: true,
+          fundAccount: true,
+        },
+      });
+    } catch (error) {
+      return await this.prismaService.remoteCommand.update({
+        where: { id },
+        data: {
+          code: 999,
+          stdout: '',
+          stderr: error.message,
+          status: RemoteCommandStatus.ERROR,
+        },
+        include: {
+          hostServer: true,
+          opsTask: true,
+          fundAccount: true,
+        },
+      });
+    }
+  }
+
+  /**
+   * 执行远程命令
+   * @param remoteCommand
+   */
+  async execRemoteCommand(
+    remoteCommand: RemoteCommand
+  ): Promise<RemoteCommand> {
+    const { hostServer } = remoteCommand;
+    const node_ssh = await this.connect(hostServer);
+
+    const remoteCommandUpdated = await this.runRemoteCommand(
+      remoteCommand,
+      node_ssh
+    );
+
+    // 断开 ssh 连接
+    node_ssh.dispose();
+
+    return remoteCommandUpdated;
+  }
+
+  /**
+   * 批量执行远程命令
+   * @param remoteCommands
+   */
+  async batchExecRemoteCommand(
+    remoteCommands: RemoteCommand[],
+    parallel = false
+  ): Promise<RemoteCommand[]> {
+    const ssh_pool: { [id: number]: NodeSSH } = {};
+
+    let result: RemoteCommand[] = [];
+
+    if (!parallel) {
+      for (const remoteCommand of remoteCommands) {
+        const { hostServer } = remoteCommand;
+
+        if (!ssh_pool[hostServer.id]) {
+          ssh_pool[hostServer.id] = await this.connect(hostServer);
+        }
+
+        const ret_cmd = await this.runRemoteCommand(
+          remoteCommand,
+          ssh_pool[hostServer.id]
+        );
+        result.push(ret_cmd);
+      }
+    } else {
+      result = await Promise.all(
+        remoteCommands.map(async (cmd) => {
+          const { hostServer } = cmd;
+
+          if (!ssh_pool[hostServer.id]) {
+            ssh_pool[hostServer.id] = await this.connect(hostServer);
+          }
+
+          return this.runRemoteCommand(cmd, ssh_pool[hostServer.id]);
+        })
+      );
+    }
+
+    // 断开 ssh 连接
+    for (const ssh of Object.values(ssh_pool)) {
+      ssh.dispose();
+    }
+
+    return result;
   }
 
   async execCommand(

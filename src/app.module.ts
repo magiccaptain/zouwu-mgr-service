@@ -10,12 +10,12 @@ import MemCache from 'memcache-pp';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
-// import { TradeDayModule } from './trade-day';
-// import { UserModule } from './user/user.module';
 import { FundAccountModule } from './fund_account/fund_account.module';
 import { HelloController } from './hello.controller';
 import { HostServerModule } from './host_server/host_server.module';
+import { OpsTaskModule } from './ops-task/ops-task.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { RemoteCommandModule } from './remote-command/remote-command.module';
 import { SessionModule } from './session/session.module';
 
 @Module({
@@ -38,18 +38,13 @@ import { SessionModule } from './session/session.module';
       },
     }),
     ScheduleModule.forRoot(),
-    // AuthModule,
     EventEmitterModule.forRoot(),
-    // SessionModule,
-    // UserModule,
-    // HostingServerModule,
     FundAccountModule,
     PrismaModule,
     HostServerModule,
     SessionModule,
-
-    // TradeDayModule,
-    // OpsRecordModule,
+    OpsTaskModule,
+    RemoteCommandModule,
   ],
   controllers: [HelloController],
   // providers: [

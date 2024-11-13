@@ -12,7 +12,7 @@ import {
   Min,
 } from 'class-validator';
 
-export class QueryStockAccountFromServerDto {
+export class QueryStockAccountDto {
   @IsNotEmpty()
   @IsString()
   market: string;

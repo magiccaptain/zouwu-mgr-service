@@ -55,7 +55,7 @@ model Company {
 }
 
 model HostServer {
-  id            Int             @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   name          String
   desc          String?
   market        Market
@@ -64,14 +64,29 @@ model HostServer {
   ssh_user      String?
   ssh_port      Int?
   home_dir      String?
-  active        Boolean         @default(true)
-  is_master     Boolean         @default(false)
+  active        Boolean   @default(true)
+  is_master     Boolean   @default(false)
   last_check_at DateTime?
   brokerKey     String?
   companyKey    String?
   remark        String?
+  // 磁盘总数 G
   disk_total    Int?
+  // 磁盘使用 G
   disk_used     Int?
+  // 主机名
+  hostname      String?
+  // 操作系统
+  os            String?
+  // 操作系统版本
+  os_version    String?
+  // cpu 型号
+  cpu_model     String?
+  // cpu 核数
+  cpu_cores     Int?
+  // 内存大小
+  memory_size   Int?
+
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @default(now()) @updatedAt
   broker        Broker?         @relation(fields: [brokerKey], references: [key])
@@ -117,6 +132,7 @@ model FundAccount {
   TransferRecord     TransferRecord[]
   XTPConfig          XTPConfig[]
   OpsWarning         OpsWarning[]
+  RemoteCommand      RemoteCommand[]
 }
 
 model XTPConfig {
@@ -277,22 +293,36 @@ enum OpsWarningStatus {
   AUTO_ERROR
 }
 
+enum OpsWarningType {
+  // 磁盘检查失败
+  DISK_CHECK_FAILED
+  // 磁盘空间不足
+  DISK_FULL
+  // 时间检查失败
+  TIME_CHECK_FAILED
+  // 时间误差过大
+  TIME_ERROR
+  OP_VALUE_ERROR
+}
+
 model OpsWarning {
-  id             Int              @id @default(autoincrement())
-  trade_day      String
-  status         OpsWarningStatus
-  opsTaskId      Int?
-  hostServerId   Int?
-  fund_account   String?
-  text           String
-  remoteCommands RemoteCommand[]
+  id              Int              @id @default(autoincrement())
+  trade_day       String
+  status          OpsWarningStatus @default(PENDING)
+  opsTaskId       Int?
+  hostServerId    Int?
+  remoteCommandId Int?
+  fund_account    String?
+  text            String?
+  type            OpsWarningType?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  opsTask     OpsTask?     @relation(fields: [opsTaskId], references: [id])
-  hostServer  HostServer?  @relation(fields: [hostServerId], references: [id])
-  fundAccount FundAccount? @relation(fields: [fund_account], references: [account])
+  opsTask       OpsTask?       @relation(fields: [opsTaskId], references: [id])
+  hostServer    HostServer?    @relation(fields: [hostServerId], references: [id])
+  fundAccount   FundAccount?   @relation(fields: [fund_account], references: [account])
+  remoteCommand RemoteCommand? @relation(fields: [remoteCommandId], references: [id])
 
   @@index([trade_day(sort: Desc)])
 }
@@ -329,16 +359,17 @@ model RemoteCommand {
   stderr       String?
   hostServerId Int
   opsTaskId    Int?
-  opsWarningId Int?
+  fund_account String?
   status       RemoteCommandStatus @default(PENDING)
   type         RemoteCommandType?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  hostServer HostServer  @relation(fields: [hostServerId], references: [id])
-  opsTask    OpsTask?    @relation(fields: [opsTaskId], references: [id])
-  opsWarning OpsWarning? @relation(fields: [opsWarningId], references: [id])
+  hostServer  HostServer   @relation(fields: [hostServerId], references: [id])
+  opsTask     OpsTask?     @relation(fields: [opsTaskId], references: [id])
+  fundAccount FundAccount? @relation(fields: [fund_account], references: [account])
+  OpsWarning  OpsWarning[]
 
   @@index([hostServerId, trade_day(sort: Desc)])
 }

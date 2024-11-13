@@ -512,6 +512,18 @@ const host_server_data: Prisma.HostServerCreateManyInput[] = [
     market: 'SZ',
     companyKey: 'zhisui',
   },
+  {
+    name: '127服务器',
+    ssh_host: '1.119.134.78',
+    ssh_user: 'root',
+    ssh_port: 12701,
+    host_ip: '1.119.134.78',
+    home_dir: '/root',
+    active: false,
+    market: 'SH',
+    companyKey: 'zhisui',
+    brokerKey: 'xtp',
+  },
 ];
 
 export async function seedHostServer(prisma: PrismaClient) {

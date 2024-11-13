@@ -19,7 +19,7 @@ import {
   InnerSnapshotFromServer,
   ListFundAccountQueryDto,
   ListFundSnapshotQueryDto,
-  QueryStockAccountFromServerDto,
+  QueryStockAccountDto,
   TransferDto,
   TransferRecordEntity,
 } from './fund_account.dto';
@@ -83,25 +83,22 @@ export class FundAccountController {
   /**
    * query fund account from host server
    */
-  @ApiOperation({ operationId: 'queryStockAccountFromHostServer' })
+  @ApiOperation({ operationId: 'queryStockAccount' })
   @ApiOkResponse({
     description: 'query fund account from host server',
     type: InnerSnapshotFromServer,
   })
   @Get(':fund_account/@query')
-  queryStockAccountFromHostServer(
+  queryStockAccount(
     @Param('fund_account') fund_account: string,
-    @Query() query: QueryStockAccountFromServerDto
+    @Query() query: QueryStockAccountDto
   ): Promise<InnerSnapshotFromServer> {
     this.cannotDoInTradeTime();
 
     const { market: marketStr } = query;
     const market = marketStr as Market;
 
-    return this.fundAccountService.queryStockAccountFromHostServer(
-      fund_account,
-      market
-    );
+    return this.fundAccountService.queryFundAccount(fund_account, market);
   }
 
   /**
