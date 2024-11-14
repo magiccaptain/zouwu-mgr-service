@@ -7,41 +7,29 @@ import {
   ATPConfig,
   HostServer,
   Market,
+  OpsTask,
+  OpsWarningType,
   RemoteCommandStatus,
   XTPConfig,
-  type Prisma,
 } from '@prisma/client';
-import {
-  NodeSSH,
-  SSHExecCommandOptions,
-  SSHExecCommandResponse,
-} from 'node-ssh';
+import dayjs from 'dayjs';
+import { round } from 'lodash';
+import { NodeSSH } from 'node-ssh';
 
 import { settings } from 'src/config';
 import { MarketCode } from 'src/config/constants';
 import { tryParseJSON } from 'src/lib/lang/json';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { type RemoteCommand } from 'src/remote-command';
-
-class RemoteCommandException extends Error {
-  constructor(data: {
-    message: string;
-    code: number;
-    stdout: string;
-    stderr: string;
-    cmd: string;
-    brokerKey: string;
-    ssh_port: number;
-  }) {
-    super(JSON.stringify(data));
-  }
-}
+import { RemoteCommandService, type RemoteCommand } from 'src/remote-command';
 
 @Injectable()
 export class HostServerService {
   ssh_cache: { [id: number]: NodeSSH } = {};
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly remoteCommandService: RemoteCommandService
+  ) {}
 
   async getMasterServer(brokerKey: string, market: Market) {
     return await this.prismaService.hostServer.findFirst({
@@ -65,28 +53,6 @@ export class HostServerService {
     });
 
     return node_ssh;
-  }
-
-  async getSSH(hostServer: HostServer) {
-    if (this.ssh_cache[hostServer.id]) {
-      return this.ssh_cache[hostServer.id];
-    }
-
-    console.log(`新建ssh连接: ${hostServer.brokerKey} ${hostServer.ssh_port}`);
-    const ssh = await this.connect(hostServer);
-    this.ssh_cache[hostServer.id] = ssh;
-
-    return ssh;
-  }
-
-  async freeSSH(hostServer: HostServer) {
-    if (this.ssh_cache[hostServer.id]) {
-      console.log(
-        `释放ssh连接: ${hostServer.brokerKey} ${hostServer.ssh_port}`
-      );
-      this.ssh_cache[hostServer.id].dispose();
-      delete this.ssh_cache[hostServer.id];
-    }
   }
 
   async runRemoteCommand(
@@ -131,6 +97,29 @@ export class HostServerService {
     }
   }
 
+  async connectWithRemoteCommand(remoteCommand: RemoteCommand) {
+    const { hostServer, id } = remoteCommand;
+    try {
+      const node_ssh = await this.connect(hostServer);
+      return node_ssh;
+    } catch (error) {
+      await this.prismaService.remoteCommand.update({
+        where: { id },
+        data: {
+          code: 999,
+          stdout: '',
+          stderr: error.message,
+          status: RemoteCommandStatus.ERROR,
+        },
+        include: {
+          hostServer: true,
+          opsTask: true,
+          fundAccount: true,
+        },
+      });
+    }
+  }
+
   /**
    * 执行远程命令
    * @param remoteCommand
@@ -138,8 +127,7 @@ export class HostServerService {
   async execRemoteCommand(
     remoteCommand: RemoteCommand
   ): Promise<RemoteCommand> {
-    const { hostServer } = remoteCommand;
-    const node_ssh = await this.connect(hostServer);
+    const node_ssh = await this.connectWithRemoteCommand(remoteCommand);
 
     const remoteCommandUpdated = await this.runRemoteCommand(
       remoteCommand,
@@ -169,7 +157,9 @@ export class HostServerService {
         const { hostServer } = remoteCommand;
 
         if (!ssh_pool[hostServer.id]) {
-          ssh_pool[hostServer.id] = await this.connect(hostServer);
+          ssh_pool[hostServer.id] = await this.connectWithRemoteCommand(
+            remoteCommand
+          );
         }
 
         const ret_cmd = await this.runRemoteCommand(
@@ -184,7 +174,7 @@ export class HostServerService {
           const { hostServer } = cmd;
 
           if (!ssh_pool[hostServer.id]) {
-            ssh_pool[hostServer.id] = await this.connect(hostServer);
+            ssh_pool[hostServer.id] = await this.connectWithRemoteCommand(cmd);
           }
 
           return this.runRemoteCommand(cmd, ssh_pool[hostServer.id]);
@@ -200,172 +190,94 @@ export class HostServerService {
     return result;
   }
 
-  async execCommand(
-    hostServer: HostServer,
-    command: string,
-    opt?: SSHExecCommandOptions
-  ): Promise<SSHExecCommandResponse> {
-    const node_ssh = await this.connect(hostServer);
-    const ret = await node_ssh.execCommand(command, opt);
-    node_ssh.dispose();
+  async checkDisk(hostServer: HostServer, task?: OpsTask): Promise<HostServer> {
+    let command = await this.remoteCommandService.makeCheckDisk(
+      hostServer,
+      task
+    );
 
-    return ret;
-  }
+    command = await this.execRemoteCommand(command);
+    const { code, stdout, trade_day, opsTaskId, id } = command;
+    const info = tryParseJSON(stdout);
 
-  async queryAccountCommand(
-    hostServer: HostServer,
-    fund_account: string,
-    market: Market
-  ) {
-    const { home_dir, brokerKey, ssh_port } = hostServer;
-    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
-      home_dir,
-      'td_config'
-    )} query_account -a ${fund_account}`;
+    if (code !== 0 || (code === 0 && !info)) {
+      await this.prismaService.opsWarning.create({
+        data: {
+          type: OpsWarningType.DISK_CHECK_FAILED,
+          trade_day,
+          opsTask: {
+            connect: {
+              id: opsTaskId,
+            },
+          },
+          hostServer: {
+            connect: {
+              id: hostServer.id,
+            },
+          },
+          remoteCommand: {
+            connect: {
+              id: id,
+            },
+          },
+          text: `磁盘检查失败`,
+        },
+      });
 
-    console.log(brokerKey, ssh_port, cmd);
+      return hostServer;
+    }
 
-    const ssh = await this.getSSH(hostServer);
+    const {
+      disk_total,
+      disk_free,
+      os,
+      os_version,
+      cpu_model,
+      cpu_cores,
+      mem_total,
+    } = info;
+    const disk_percent = (disk_total - disk_free) / disk_total;
 
-    await ssh.execCommand(`pkill trader_tools`);
+    if (disk_percent > settings.warning.disk_usage) {
+      await this.prismaService.opsWarning.create({
+        data: {
+          type: OpsWarningType.DISK_FULL,
+          trade_day,
+          opsTask: {
+            connect: {
+              id: opsTaskId,
+            },
+          },
+          hostServer: {
+            connect: {
+              id: hostServer.id,
+            },
+          },
+          remoteCommand: {
+            connect: {
+              id: id,
+            },
+          },
+          text: `磁盘使用率 ${round(disk_percent * 100)}%`,
+        },
+      });
+    }
 
-    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
-    const ret = await ssh.execCommand(cmd, {
-      cwd: zhisui_tool_path,
+    return await this.prismaService.hostServer.update({
+      where: {
+        id: hostServer.id,
+      },
+      data: {
+        last_check_at: dayjs().toDate(),
+        disk_total,
+        disk_used: disk_total - disk_free,
+        os,
+        os_version,
+        cpu_model,
+        cpu_cores,
+        memory_size: mem_total,
+      },
     });
-
-    if (ret.code !== 0) {
-      throw new RemoteCommandException({
-        message: 'Query fund account failed',
-        code: ret.code,
-        stdout: ret.stdout,
-        stderr: ret.stderr,
-        cmd: cmd,
-        brokerKey: brokerKey,
-        ssh_port: ssh_port,
-      });
-    }
-
-    const data = ret.stdout
-      .split('\n')
-      .map((l) => tryParseJSON(l))
-      .filter(Boolean);
-
-    const found = data.find((d) => d.market === MarketCode[market]);
-
-    if (!found) {
-      throw new RemoteCommandException({
-        message: `Fund account not query from host server`,
-        code: ret.code,
-        stdout: ret.stdout,
-        stderr: ret.stderr,
-        cmd: cmd,
-        brokerKey: brokerKey,
-        ssh_port: ssh_port,
-      });
-    }
-    return found;
-  }
-
-  async innerTransferCommand(
-    hostServer: HostServer,
-    fund_account: string,
-    direction: string,
-    amount: number
-  ) {
-    const { home_dir, brokerKey, ssh_port } = hostServer;
-    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
-      home_dir,
-      'td_config'
-    )} inner_transfer -a ${fund_account} -d ${direction.toLowerCase()} -v ${amount}`;
-
-    console.log(brokerKey, ssh_port, cmd);
-
-    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
-
-    const ssh = await this.getSSH(hostServer);
-    await ssh.execCommand(`pkill trader_tools`);
-
-    const ret = await ssh.execCommand(cmd, {
-      cwd: zhisui_tool_path,
-    });
-    if (ret.code !== 0) {
-      throw new RemoteCommandException({
-        message: 'Inner transfer failed',
-        code: ret.code,
-        stdout: ret.stdout,
-        stderr: ret.stderr,
-        cmd: cmd,
-        brokerKey: brokerKey,
-        ssh_port: ssh_port,
-      });
-    }
-  }
-
-  async externalTransferCommand(
-    hostServer: HostServer,
-    fund_account: string,
-    direction: string,
-    amount: number
-  ) {
-    const { home_dir, brokerKey, ssh_port } = hostServer;
-    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
-      home_dir,
-      'td_config'
-    )} ext_transfer -a ${fund_account} -d ${direction.toLowerCase()} -v ${amount}`;
-
-    console.log(brokerKey, ssh_port, cmd);
-
-    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
-
-    const ssh = await this.getSSH(hostServer);
-    await ssh.execCommand(`pkill trader_tools`);
-
-    const ret = await ssh.execCommand(cmd, {
-      cwd: zhisui_tool_path,
-    });
-
-    if (ret.code !== 0) {
-      throw new RemoteCommandException({
-        message: 'external transfer failed',
-        code: ret.code,
-        stdout: ret.stdout,
-        stderr: ret.stderr,
-        cmd: cmd,
-        brokerKey: brokerKey,
-        ssh_port: ssh_port,
-      });
-    }
-  }
-
-  /**
-   * 测试托管机连接
-   * @param hostServer
-   */
-  async testConnection(hostServer: HostServer): Promise<boolean> {
-    try {
-      const zhisui_tools_path = path.join(hostServer.home_dir, 'zhisui_tools');
-
-      const ret = await this.execCommand(
-        hostServer,
-        `./gom ${hostServer.home_dir}`,
-        {
-          cwd: zhisui_tools_path,
-        }
-      );
-
-      // 执行失败
-      if (ret.code !== 0) {
-        console.error(ret.stdout, ret.stderr);
-        return false;
-      } else {
-        console.log(ret.stdout);
-        return true;
-      }
-    } catch (error) {
-      console.log(error);
-      return false;
-    }
   }
 
   async syncTDConfig(hostServer: HostServer, tdConfig: XTPConfig | ATPConfig) {

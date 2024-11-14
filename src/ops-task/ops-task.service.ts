@@ -4,10 +4,11 @@ import {
   InnerFundSnapshotReason,
   OpsTask,
   OpsTaskType,
+  OpsWarningStatus,
   OpsWarningType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
-import { flatten, isEmpty, round } from 'lodash';
+import { flatten, isEmpty } from 'lodash';
 
 import { settings } from 'src/config';
 import { MarketCode } from 'src/config/constants';
@@ -16,6 +17,7 @@ import { HostServerService } from 'src/host_server/host_server.service';
 import { tryParseJSON } from 'src/lib/lang/json';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RemoteCommand, RemoteCommandService } from 'src/remote-command';
+import { WarningService } from 'src/warning/warning.service';
 
 @Injectable()
 export class OpsTaskService {
@@ -23,7 +25,8 @@ export class OpsTaskService {
     private readonly prismaService: PrismaService,
     private readonly remoteCommandService: RemoteCommandService,
     private readonly hostServerService: HostServerService,
-    private readonly fundAccountService: FundAccountService
+    private readonly fundAccountService: FundAccountService,
+    private readonly warningService: WarningService
   ) {}
 
   async checkHostServerDiskTask(task: OpsTask) {
@@ -33,99 +36,32 @@ export class OpsTaskService {
       },
     });
 
-    let commands: RemoteCommand[] = await Promise.all(
-      hostServers.map((hostServer) => {
-        return this.remoteCommandService.makeCheckDisk(hostServer, task);
-      })
-    );
-
-    commands = await this.hostServerService.batchExecRemoteCommand(
-      commands,
-      true
-    );
-
     await Promise.all(
-      commands.map(async (cmd) => {
-        const { code, stdout, trade_day, opsTaskId, id, hostServer } = cmd;
-        const info = tryParseJSON(stdout);
+      hostServers.map((hostServer) =>
+        this.hostServerService.checkDisk(hostServer, task)
+      )
+    );
 
-        if (code !== 0 || (code === 0 && !info)) {
-          return this.prismaService.opsWarning.create({
-            data: {
-              type: OpsWarningType.DISK_CHECK_FAILED,
-              trade_day,
-              opsTask: {
-                connect: {
-                  id: opsTaskId,
-                },
-              },
-              hostServer: {
-                connect: {
-                  id: hostServer.id,
-                },
-              },
-              remoteCommand: {
-                connect: {
-                  id: id,
-                },
-              },
-              text: `磁盘检查失败`,
-            },
-          });
-        }
+    const warnings = await this.prismaService.opsWarning.findMany({
+      where: {
+        opsTask: {
+          id: task.id,
+        },
+        status: OpsWarningStatus.PENDING,
+        type: OpsWarningType.DISK_FULL,
+      },
+      include: {
+        hostServer: true,
+        fundAccount: true,
+        opsTask: true,
+      },
+    });
 
-        const {
-          disk_total,
-          disk_free,
-          os,
-          os_version,
-          cpu_model,
-          cpu_cores,
-          mem_total,
-        } = info;
-        const disk_percent = (disk_total - disk_free) / disk_total;
-
-        if (disk_percent > settings.warning.disk_usage) {
-          await this.prismaService.opsWarning.create({
-            data: {
-              type: OpsWarningType.DISK_FULL,
-              trade_day,
-              opsTask: {
-                connect: {
-                  id: opsTaskId,
-                },
-              },
-              hostServer: {
-                connect: {
-                  id: hostServer.id,
-                },
-              },
-              remoteCommand: {
-                connect: {
-                  id: id,
-                },
-              },
-              text: `磁盘使用率 ${round(disk_percent * 100)}%`,
-            },
-          });
-        }
-
-        return this.prismaService.hostServer.update({
-          where: {
-            id: hostServer.id,
-          },
-          data: {
-            last_check_at: dayjs().toDate(),
-            disk_total,
-            disk_used: disk_total - disk_free,
-            os,
-            os_version,
-            cpu_model,
-            cpu_cores,
-            memory_size: mem_total,
-          },
-        });
-      })
+    // 自动处理
+    Promise.all(
+      warnings.map((warning) =>
+        this.warningService.handleDiskFullWarning(warning)
+      )
     );
   }
 

@@ -20,6 +20,7 @@ cp ./pnpm-lock.yaml $dist_dir/
 cp ./.env.product $dist_dir/.env
 cp -r ./prisma $dist_dir/
 cp -r ./ssl $dist_dir/
+cp -r ./bin $dist_dir/
 
 cd $dist_dir  
 

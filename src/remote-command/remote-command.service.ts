@@ -155,13 +155,10 @@ export class RemoteCommandService {
     amount: number
   ) {
     const { home_dir } = hostServer;
-    const cmd = [
-      `pkill trader_tools`,
-      `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
-        home_dir,
-        'td_config'
-      )} inner_transfer -a ${fund_account} -d ${direction.toLowerCase()} -v ${amount}`,
-    ].join(' && ');
+    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
+      home_dir,
+      'td_config'
+    )} inner_transfer -a ${fund_account} -d ${direction.toLowerCase()} -v ${amount}`;
 
     const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
 
@@ -173,6 +170,9 @@ export class RemoteCommandService {
         cwd: zhisui_tool_path,
         hostServer: {
           connect: { id: hostServer.id },
+        },
+        fundAccount: {
+          connect: { account: fund_account },
         },
       },
       include: { hostServer: true, opsTask: true, fundAccount: true },

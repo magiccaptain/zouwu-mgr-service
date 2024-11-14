@@ -23,40 +23,6 @@ describe('HostServerService', () => {
     expect(service).toBeDefined();
   });
 
-  xit('should connect to 12762', async () => {
-    const hostServer = await prismaService.hostServer.findFirst({
-      where: {
-        active: true,
-        market: 'SH',
-        ssh_port: 12762,
-        brokerKey: 'guojun',
-      },
-    });
-
-    expect(hostServer).not.toBeNull();
-
-    const connected = await service.testConnection(hostServer);
-
-    expect(connected).toBe(true);
-  });
-
-  xit('should connect to 12710', async () => {
-    const hostServer = await prismaService.hostServer.findFirst({
-      where: {
-        active: true,
-        market: 'SH',
-        ssh_port: 12710,
-        brokerKey: 'xtp',
-      },
-    });
-
-    expect(hostServer).not.toBeNull();
-
-    const connected = await service.testConnection(hostServer);
-
-    expect(connected).toBe(true);
-  });
-
   xit('should sync xtp config', async () => {
     const hostServer = await prismaService.hostServer.findFirst({
       where: {

@@ -12,7 +12,7 @@ async function main() {
 
   const fundAccountService = app.get(FundAccountService);
 
-  const ret = await fundAccountService.innerTransfer('106110007069', {
+  const ret = await fundAccountService.externalTransfer('106110007069', {
     market: Market.SH,
     amount: 100,
     direction: TransferDirection.IN,

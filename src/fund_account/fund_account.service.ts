@@ -1,15 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import {
   FundAccountType,
   InnerFundSnapshotReason,
   Market,
   RemoteCommandStatus,
-  RemoteCommandType,
   TransferType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
-import { isEmpty } from 'lodash';
 
 import { HostServerService } from 'src/host_server/host_server.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -190,7 +187,7 @@ export class FundAccountService {
     await this.saveFundAccountSnapshot(market, fund_account, reason, snapshot);
   }
 
-  async innerTransfer_1(fund_account: string, transferDto: TransferDto) {
+  async innerTransfer(fund_account: string, transferDto: TransferDto) {
     const { market: marketStr, amount, direction } = transferDto;
     const market = marketStr as Market;
     const other_market: Market = market === Market.SH ? Market.SZ : Market.SH;
@@ -238,6 +235,12 @@ export class FundAccountService {
     ];
 
     cmds = await this.hostServerService.batchExecRemoteCommand(cmds);
+
+    for (const cmd of cmds) {
+      if (cmd.code !== 0) {
+        throw new RemoteCommandError(cmd);
+      }
+    }
 
     const beforeSnapshot = this.remoteCommandService.parseQueryAccountCmd(
       cmds[0]
@@ -323,130 +326,7 @@ export class FundAccountService {
     return record;
   }
 
-  async innerTransfer(fund_account: string, transferDto: TransferDto) {
-    const { market: marketStr, amount, direction } = transferDto;
-    const market = marketStr as Market;
-    const other_market: Market = market === Market.SH ? Market.SZ : Market.SH;
-
-    const hostServer = await this.findMasterServer(fund_account, market);
-    const other_server = await this.findMasterServer(
-      fund_account,
-      other_market
-    );
-
-    try {
-      // 转账前查询
-      const before = await this.hostServerService.queryAccountCommand(
-        hostServer,
-        fund_account,
-        market
-      );
-      const before_other = await this.hostServerService.queryAccountCommand(
-        other_server,
-        fund_account,
-        other_market
-      );
-
-      // 转账
-      await this.hostServerService.innerTransferCommand(
-        hostServer,
-        fund_account,
-        direction,
-        amount
-      );
-
-      // 转账后查询
-      const after = await this.hostServerService.queryAccountCommand(
-        hostServer,
-        fund_account,
-        market
-      );
-      const after_other = await this.hostServerService.queryAccountCommand(
-        other_server,
-        fund_account,
-        other_market
-      );
-
-      const { id: recordId } = await this.prismaService.transferRecord.create({
-        data: {
-          market,
-          fund_account,
-          trade_day: dayjs().format('YYYY-MM-DD'),
-          direction,
-          amount,
-          type: TransferType.INNER,
-          snapshots: {
-            createMany: {
-              data: [
-                {
-                  market,
-                  fund_account,
-                  reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
-                  balance: before.balance,
-                  buying_power: before.buying_power,
-                  frozen: before.frozen,
-                  trade_day: dayjs().format('YYYY-MM-DD'),
-                  xtp_account: before.xtp_account,
-                  atp_account: before.atp_account,
-                },
-                {
-                  market,
-                  fund_account,
-                  reason: InnerFundSnapshotReason.AFTER_TRANSFER,
-                  balance: after.balance,
-                  buying_power: after.buying_power,
-                  frozen: after.frozen,
-                  trade_day: dayjs().format('YYYY-MM-DD'),
-                  xtp_account: after.xtp_account,
-                  atp_account: after.atp_account,
-                },
-                {
-                  market: other_market,
-                  fund_account,
-                  reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
-                  balance: before_other.balance,
-                  buying_power: before_other.buying_power,
-                  frozen: before_other.frozen,
-                  trade_day: dayjs().format('YYYY-MM-DD'),
-                  xtp_account: before_other.xtp_account,
-                  atp_account: before_other.atp_account,
-                },
-                {
-                  market: other_market,
-                  fund_account,
-                  reason: InnerFundSnapshotReason.AFTER_TRANSFER,
-                  balance: after_other.balance,
-                  buying_power: after_other.buying_power,
-                  frozen: after_other.frozen,
-                  trade_day: dayjs().format('YYYY-MM-DD'),
-                  xtp_account: after_other.xtp_account,
-                  atp_account: after_other.atp_account,
-                },
-              ],
-            },
-          },
-        },
-      });
-
-      const record = await this.prismaService.transferRecord.findUnique({
-        where: {
-          id: recordId,
-        },
-        include: {
-          snapshots: true,
-        },
-      });
-
-      return record;
-    } catch (error) {
-      console.log(error);
-    } finally {
-      await this.hostServerService.freeSSH(other_server);
-      await this.hostServerService.freeSSH(hostServer);
-    }
-  }
-
-  async externalTransfer_1(fund_account: string, transferDto: TransferDto) {
+  async externalTransfer(fund_account: string, transferDto: TransferDto) {
     const { market: marketStr, amount, direction } = transferDto;
     const market = marketStr as Market;
 
@@ -472,6 +352,12 @@ export class FundAccountService {
     let cmds = [beforeQueryCmd, transferCmd, afterQueryCmd];
 
     cmds = await this.hostServerService.batchExecRemoteCommand(cmds);
+
+    for (const cmd of cmds) {
+      if (cmd.code !== 0) {
+        throw new RemoteCommandError(cmd);
+      }
+    }
 
     const beforeSnapshot = this.remoteCommandService.parseQueryAccountCmd(
       cmds[0]
@@ -526,92 +412,5 @@ export class FundAccountService {
     });
 
     return record;
-  }
-
-  async externalTransfer(fund_account: string, transferDto: TransferDto) {
-    const { market: marketStr, amount, direction } = transferDto;
-    const market = marketStr as Market;
-
-    const hostServer = await this.findMasterServer(fund_account, market);
-
-    try {
-      // 转账前查询
-      const before = await this.hostServerService.queryAccountCommand(
-        hostServer,
-        fund_account,
-        market
-      );
-
-      // 转账
-      await this.hostServerService.externalTransferCommand(
-        hostServer,
-        fund_account,
-        direction,
-        amount
-      );
-
-      // 转账后查询
-      const after = await this.hostServerService.queryAccountCommand(
-        hostServer,
-        fund_account,
-        market
-      );
-
-      const { id: recordId } = await this.prismaService.transferRecord.create({
-        data: {
-          market,
-          fund_account,
-          trade_day: dayjs().format('YYYY-MM-DD'),
-          direction,
-          amount,
-          type: TransferType.EXTERNAL,
-          snapshots: {
-            createMany: {
-              data: [
-                {
-                  market,
-                  fund_account,
-                  reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
-                  balance: before.balance,
-                  buying_power: before.buying_power,
-                  frozen: before.frozen,
-                  trade_day: dayjs().format('YYYY-MM-DD'),
-                  xtp_account: before.xtp_account,
-                  atp_account: before.atp_account,
-                },
-                {
-                  market,
-                  fund_account,
-                  reason: InnerFundSnapshotReason.AFTER_TRANSFER,
-                  balance: after.balance,
-                  buying_power: after.buying_power,
-                  frozen: after.frozen,
-                  trade_day: dayjs().format('YYYY-MM-DD'),
-                  xtp_account: after.xtp_account,
-                  atp_account: after.atp_account,
-                },
-              ],
-            },
-          },
-        },
-      });
-
-      const record = await this.prismaService.transferRecord.findUnique({
-        where: {
-          id: recordId,
-        },
-        include: {
-          snapshots: true,
-        },
-      });
-
-      console.log(record);
-
-      return record;
-    } catch (error) {
-      throw error;
-    } finally {
-      await this.hostServerService.freeSSH(hostServer);
-    }
   }
 }

@@ -17,6 +17,7 @@ import { OpsTaskModule } from './ops-task/ops-task.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemoteCommandModule } from './remote-command/remote-command.module';
 import { SessionModule } from './session/session.module';
+import { WarningModule } from './warning/warning.module';
 
 @Module({
   imports: [
@@ -45,14 +46,9 @@ import { SessionModule } from './session/session.module';
     SessionModule,
     OpsTaskModule,
     RemoteCommandModule,
+    WarningModule,
   ],
   controllers: [HelloController],
-  // providers: [
-  //   {
-  //     provide: APP_GUARD,
-  //     useClass: JwtAuthGuard,
-  //   },
-  // ],
 })
 export class AppModule implements NestModule {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: any) {}
