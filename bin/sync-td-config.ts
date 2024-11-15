@@ -6,7 +6,7 @@ import { HostServerService } from '../dist/host_server/host_server.service';
 import { PrismaService } from '../dist/prisma/prisma.service';
 
 async function main() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.createApplicationContext(AppModule);
 
   const prismaService = app.get(PrismaService);
   const hostServerService = app.get(HostServerService);
@@ -14,7 +14,6 @@ async function main() {
   const fundAccounts = await prismaService.fundAccount.findMany({
     where: {
       active: true,
-      brokerKey: 'guoxin',
     },
     include: {
       XTPConfig: true,
@@ -39,6 +38,7 @@ async function main() {
         is_master: true,
         active: true,
         brokerKey: fund_account.brokerKey,
+        companyKey: fund_account.companyKey,
       },
     });
 
@@ -49,6 +49,7 @@ async function main() {
         is_master: true,
         active: true,
         brokerKey: fund_account.brokerKey,
+        companyKey: fund_account.companyKey,
       },
     });
 

@@ -120,6 +120,7 @@ export class FundAccountService {
         market: market,
         is_master: true,
         brokerKey: fundAccount.brokerKey,
+        companyKey: fundAccount.companyKey,
       },
     });
 

@@ -2,6 +2,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { InnerFundSnapshotReason } from '@prisma/client';
+import dayjs from 'dayjs';
 import { isEmpty } from 'lodash';
 
 import { AppModule } from '../dist/app.module';
@@ -21,8 +22,18 @@ async function main() {
     include: {
       XTPConfig: true,
       ATPConfig: true,
+      broker: true,
     },
   });
+
+  let reason: InnerFundSnapshotReason = InnerFundSnapshotReason.SYNC;
+  const now = dayjs();
+
+  if (now.hour() <= 9) {
+    reason = InnerFundSnapshotReason.BEFORE_TRADING_DAY;
+  } else if (now.hour() >= 15) {
+    reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
+  }
 
   for (const fund_account of fundAccounts) {
     const markets = !isEmpty(fund_account.XTPConfig)
@@ -33,7 +44,11 @@ async function main() {
       await fundAccountService.syncFundAccount(
         fund_account.account,
         market,
-        InnerFundSnapshotReason.AFTER_TRADING_DAY
+        reason
+      );
+
+      console.log(
+        `Synced fund account ${fund_account.account} for ${fund_account.broker.name} ${market}`
       );
     }
   }
