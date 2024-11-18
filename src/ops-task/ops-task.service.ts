@@ -36,11 +36,9 @@ export class OpsTaskService {
       },
     });
 
-    await Promise.all(
-      hostServers.map((hostServer) =>
-        this.hostServerService.checkDisk(hostServer, task)
-      )
-    );
+    for (const hostServer of hostServers) {
+      await this.hostServerService.checkDisk(hostServer, task);
+    }
 
     const warnings = await this.prismaService.opsWarning.findMany({
       where: {
@@ -58,11 +56,9 @@ export class OpsTaskService {
     });
 
     // 自动处理
-    Promise.all(
-      warnings.map((warning) =>
-        this.warningService.handleDiskFullWarning(warning)
-      )
-    );
+    for (const warning of warnings) {
+      await this.warningService.handleDiskFullWarning(warning);
+    }
   }
 
   // 每日早8点执行盘前磁盘检查
@@ -195,7 +191,7 @@ export class OpsTaskService {
     let commands = flatten(
       await Promise.all(
         fundAccounts.map(async (fund_account) => {
-          const { brokerKey, account } = fund_account;
+          const { brokerKey, account, companyKey } = fund_account;
 
           const markets = !isEmpty(fund_account.XTPConfig)
             ? fund_account.XTPConfig.map((c) => c.market)
@@ -206,7 +202,8 @@ export class OpsTaskService {
           for (const market of markets) {
             const masterServer = await this.hostServerService.getMasterServer(
               brokerKey,
-              market
+              market,
+              companyKey
             );
 
             if (!masterServer) {

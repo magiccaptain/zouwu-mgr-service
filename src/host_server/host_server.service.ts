@@ -31,11 +31,12 @@ export class HostServerService {
     private readonly remoteCommandService: RemoteCommandService
   ) {}
 
-  async getMasterServer(brokerKey: string, market: Market) {
+  async getMasterServer(brokerKey: string, market: Market, companyKey: string) {
     return await this.prismaService.hostServer.findFirst({
       where: {
         brokerKey,
         market,
+        companyKey,
         is_master: true,
       },
     });
