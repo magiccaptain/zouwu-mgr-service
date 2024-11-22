@@ -211,6 +211,9 @@ export class RemoteCommandService {
         hostServer: {
           connect: { id: hostServer.id },
         },
+        fundAccount: {
+          connect: { account: fund_account },
+        },
       },
       include: { hostServer: true, opsTask: true, fundAccount: true },
     });

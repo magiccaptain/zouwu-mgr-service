@@ -37,7 +37,12 @@ export class OpsTaskService {
     });
 
     for (const hostServer of hostServers) {
-      await this.hostServerService.checkDisk(hostServer, task);
+      try {
+        await this.hostServerService.checkDisk(hostServer, task);
+      } catch (error) {
+        console.log(error);
+        continue;
+      }
     }
 
     const warnings = await this.prismaService.opsWarning.findMany({

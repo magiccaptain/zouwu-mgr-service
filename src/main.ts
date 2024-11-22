@@ -2,7 +2,6 @@ import fs from 'fs';
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import compression from 'compression';
 import dayjs from 'dayjs';
@@ -42,13 +41,13 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: false, transform: true }));
   app.useGlobalInterceptors(new MongoErrorsInterceptor());
   // app.useGlobalInterceptors(new ByWhoInterceptor());
-  app.connectMicroservice<MicroserviceOptions>(
-    {
-      transport: Transport.MQTT,
-      options: settings.mqtt,
-    },
-    { inheritAppConfig: true }
-  );
+  // app.connectMicroservice<MicroserviceOptions>(
+  //   {
+  //     transport: Transport.MQTT,
+  //     options: settings.mqtt,
+  //   },
+  //   { inheritAppConfig: true }
+  // );
 
   await app.startAllMicroservices();
   await app.listen(settings.port);
