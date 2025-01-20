@@ -136,7 +136,7 @@ export class HostServerService {
     );
 
     // 断开 ssh 连接
-    node_ssh.dispose();
+    node_ssh?.dispose();
 
     return remoteCommandUpdated;
   }

@@ -35,7 +35,15 @@ async function main() {
     reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
   }
 
+  console.log(fundAccounts)
+
   for (const fund_account of fundAccounts) {
+    // if (fund_account.account !== '0331040028136983') {
+    //   continue;
+    // }
+
+    console.log("begin sync account", fund_account.account);
+
     const markets = !isEmpty(fund_account.XTPConfig)
       ? fund_account.XTPConfig.map((c) => c.market)
       : fund_account.ATPConfig.map((c) => c.market);

@@ -125,6 +125,7 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zy1',
     branch: '杭分',
     companyKey: 'zhisui',
+    active: false,
   },
   {
     brokerKey: 'guojun',
@@ -147,6 +148,13 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zh2',
     branch: '大渡河',
     active: false,
+    companyKey: 'zhisui',
+  },
+  {
+    brokerKey: 'guojun',
+    account: '0331040028136983',
+    productKey: 'xx12',
+    branch: '上分江苏路',
     companyKey: 'zhisui',
   },
   {
