@@ -336,6 +336,13 @@ export class HostServerService {
         return;
     }
 
+    // tdConfig 中去掉 为 None 的字段
+    for (const key in tdConfig) {
+      if (tdConfig[key] === null || tdConfig[key] === undefined) {
+        delete tdConfig[key];
+      }
+    }
+
     const data = {
       trader,
       [section_key]: {

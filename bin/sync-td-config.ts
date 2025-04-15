@@ -24,6 +24,10 @@ async function main() {
   // console.log(fundAccounts);
 
   for (const fund_account of fundAccounts) {
+    // if (fund_account.brokerKey !== 'fangzheng') {
+    //   continue;
+    // }
+
     if (
       fund_account.XTPConfig.length === 0 &&
       fund_account.ATPConfig.length === 0

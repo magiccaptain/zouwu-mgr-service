@@ -155,30 +155,32 @@ model XTPConfig {
 }
 
 model ATPConfig {
-  id                       Int         @id @default(autoincrement())
-  fund_account             String
-  market                   Market
-  ip                       String
-  port                     Int
-  spare_ip                 String?
-  spare_port               Int?
-  user                     String
-  password                 String
-  branch_id                String
-  cust_id                  String
-  cust_password            String
-  sh_account_id            String
-  sz_account_id            String
-  client_name              String
-  client_version           String
-  client_feature_code      String
-  account_mode             Int
-  login_mode               Int
-  order_way                String
-  reconnect_time           Int?        @default(10)
-  heartbeat_interval_milli Int?        @default(5000)
-  connect_timeout_milli    Int?        @default(5000)
-  fundAccount              FundAccount @relation(fields: [fund_account], references: [account])
+  id                        Int         @id @default(autoincrement())
+  fund_account              String
+  market                    Market
+  ip                        String
+  port                      Int
+  spare_ip                  String?
+  spare_port                Int?
+  user                      String
+  password                  String
+  branch_id                 String
+  cust_id                   String
+  cust_password             String
+  sh_account_id             String
+  sz_account_id             String
+  client_name               String
+  client_version            String
+  client_feature_code       String
+  account_mode              Int
+  login_mode                Int
+  order_way                 String
+  reconnect_time            Int?        @default(10)
+  heartbeat_interval_milli  Int?        @default(5000)
+  connect_timeout_milli     Int?        @default(5000)
+  rsa_public_key_path       String?
+  encrypt_password_lib_path String?
+  fundAccount               FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([fund_account, market])
 }

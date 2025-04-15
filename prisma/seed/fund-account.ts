@@ -76,6 +76,12 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     active: false,
   },
   {
+    brokerKey: 'xtp',
+    account: '109180010410',
+    productKey: 'zw1',
+    companyKey: 'zouwu',
+  },
+  {
     brokerKey: 'zhongxin',
     account: '101800002107',
     productKey: 'zh1',
@@ -270,6 +276,27 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     account: '802500026883',
     productKey: 'zy10',
     active: false,
+    companyKey: 'zhisui',
+  },
+  {
+    brokerKey: 'xtp',
+    account: '100202016316',
+    productKey: 'zy1',
+    active: true,
+    companyKey: 'zhisui',
+  },
+  {
+    brokerKey: 'fangzheng',
+    account: '9858016666',
+    productKey: 'zy10',
+    active: true,
+    companyKey: 'zhisui',
+  },
+  {
+    brokerKey: 'zhongjin',
+    account: '6699806238',
+    productKey: 'zy10',
+    active: true,
     companyKey: 'zhisui',
   },
 ];
