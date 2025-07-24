@@ -35,29 +35,49 @@ async function main() {
     reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
   }
 
-  console.log(fundAccounts)
+  console.log(fundAccounts);
 
   for (const fund_account of fundAccounts) {
-    // if (fund_account.account !== '0331040028136983') {
+    // if (fund_account.account !== '100202016316') {
     //   continue;
     // }
 
-    console.log("begin sync account", fund_account.account);
+    if (fund_account.brokerKey !== 'guoxin') {
+      continue;
+    }
+
+    // if (fund_account.brokerKey === 'fangzheng') {
+    //   continue;
+    // }
+
+    // if (fund_account.account === '106110006463') {
+    //   continue;
+    // }
+
+    // if (fund_account.account !== '9858016666') {
+    //   continue;
+    // }
+
+    console.log('begin sync account', fund_account.account);
 
     const markets = !isEmpty(fund_account.XTPConfig)
       ? fund_account.XTPConfig.map((c) => c.market)
       : fund_account.ATPConfig.map((c) => c.market);
 
     for (const market of markets) {
-      await fundAccountService.syncFundAccount(
-        fund_account.account,
-        market,
-        reason
-      );
+      try {
+        await fundAccountService.syncFundAccount(
+          fund_account.account,
+          market,
+          reason
+        );
 
-      console.log(
-        `Synced fund account ${fund_account.account} for ${fund_account.broker.name} ${market}`
-      );
+        console.log(
+          `Synced fund account ${fund_account.account} for ${fund_account.broker.name} ${market}`
+        );
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
 

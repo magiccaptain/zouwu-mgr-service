@@ -153,14 +153,15 @@
 		"pull_op_data": true
 	},
 	{
-		"name": "中泰(深圳)-12703",
+		"name": "中泰(上海)-12703",
 		"host": "localhost",
 		"user": "admin",
 		"port": 12703,
 		"ip": " 10.101.2.89",
 		"broker": "xtp",
 		"market": "SZ",
-		"home_dir": "/home/admin"
+		"home_dir": "/home/admin",
+		"remark": "已下架"
 	},
 	{
 		"name": "中金-深圳-12772",
