@@ -25,6 +25,13 @@ export const users: Prisma.UserCreateManyInput[] = [
     homePage: '/fund-account',
   },
   {
+    name: '赵佩',
+    username: 'zhaopei',
+    password: bcryptjs.hashSync('zhaopei@12345', 10),
+    permissions: ['fund-account/*'],
+    homePage: '/fund-account',
+  },
+  {
     name: '孙亚博',
     username: 'sunyabo',
     password: bcryptjs.hashSync('sunyabo@12345', 10),
@@ -39,10 +46,17 @@ export const users: Prisma.UserCreateManyInput[] = [
     homePage: '/fund-account',
   },
   {
+    name: '汪家伟',
+    username: 'wangjiawei',
+    password: bcryptjs.hashSync('wangjiawei@12345', 10),
+    permissions: ['host-server/*'],
+    homePage: '/host-server',
+  },
+  {
     name: '测试',
     username: 'test',
     password: bcryptjs.hashSync('test@12345', 10),
-    permissions: ['fund-account/*'],
+    permissions: ['fund-account/*', 'host-server/*'],
     homePage: '/fund-account',
   },
 ];

@@ -2,7 +2,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   ATPConfig,
   HostServer,
@@ -25,6 +25,7 @@ import { RemoteCommandService, type RemoteCommand } from 'src/remote-command';
 @Injectable()
 export class HostServerService {
   ssh_cache: { [id: number]: NodeSSH } = {};
+  private readonly logger = new Logger(HostServerService.name);
 
   constructor(
     private readonly prismaService: PrismaService,
@@ -95,6 +96,26 @@ export class HostServerService {
           fundAccount: true,
         },
       });
+    }
+  }
+
+  async pullRemoteFile(
+    hostServer: HostServer,
+    remote_file: string,
+    local_file: string
+  ) {
+    const node_ssh = await this.connect(hostServer);
+
+    try {
+      await node_ssh.getFile(local_file, remote_file);
+    } catch (error) {
+      this.logger.error({
+        ...hostServer,
+        error,
+        remote_file,
+      });
+    } finally {
+      node_ssh?.dispose();
     }
   }
 
@@ -184,7 +205,7 @@ export class HostServerService {
 
     // 断开 ssh 连接
     for (const ssh of Object.values(ssh_pool)) {
-      ssh.dispose();
+      ssh?.dispose();
     }
 
     return result;
@@ -383,10 +404,27 @@ export class HostServerService {
 
     // 删除临时文件
     fs.unlinkSync(temp_file_path);
-    ssh.dispose();
+    ssh?.dispose();
 
     console.log(
       `${hostServer.brokerKey} ${hostServer.ssh_port}: ${tdConfig.fund_account} 配置上传成功`
     );
+  }
+
+  async listHostServers() {
+    // 获取所有数据
+    const data = await this.prismaService.hostServer.findMany({
+      where: {
+        active: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return {
+      data,
+      total: data.length,
+    };
   }
 }

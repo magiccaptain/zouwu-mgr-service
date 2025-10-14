@@ -265,6 +265,29 @@
         }
       }
     },
+    "/host-server": {
+      "get": {
+        "operationId": "listHostServers",
+        "summary": "获取主机服务器列表",
+        "description": "获取所有主机服务器列表",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "主机服务器列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListHostServersResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "host-server"
+        ]
+      }
+    },
     "/session/{token}": {
       "get": {
         "operationId": "getSession",
@@ -539,6 +562,143 @@
           "active",
           "createdAt",
           "updatedAt"
+        ]
+      },
+      "HostServerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "主机服务器ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "主机服务器名称"
+          },
+          "desc": {
+            "type": "string",
+            "description": "描述"
+          },
+          "market": {
+            "type": "string",
+            "description": "市场"
+          },
+          "host_ip": {
+            "type": "string",
+            "description": "主机IP"
+          },
+          "ssh_host": {
+            "type": "string",
+            "description": "SSH主机"
+          },
+          "ssh_user": {
+            "type": "string",
+            "description": "SSH用户"
+          },
+          "ssh_port": {
+            "type": "number",
+            "description": "SSH端口"
+          },
+          "home_dir": {
+            "type": "string",
+            "description": "主目录"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "是否激活"
+          },
+          "is_master": {
+            "type": "boolean",
+            "description": "是否为主服务器"
+          },
+          "last_check_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "最后检查时间"
+          },
+          "brokerKey": {
+            "type": "string",
+            "description": "券商密钥"
+          },
+          "companyKey": {
+            "type": "string",
+            "description": "公司密钥"
+          },
+          "remark": {
+            "type": "string",
+            "description": "备注"
+          },
+          "disk_total": {
+            "type": "number",
+            "description": "磁盘总数(GB)"
+          },
+          "disk_used": {
+            "type": "number",
+            "description": "磁盘使用量(GB)"
+          },
+          "hostname": {
+            "type": "string",
+            "description": "主机名"
+          },
+          "os": {
+            "type": "string",
+            "description": "操作系统"
+          },
+          "os_version": {
+            "type": "string",
+            "description": "操作系统版本"
+          },
+          "cpu_model": {
+            "type": "string",
+            "description": "CPU型号"
+          },
+          "cpu_cores": {
+            "type": "number",
+            "description": "CPU核数"
+          },
+          "memory_size": {
+            "type": "number",
+            "description": "内存大小(MB)"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "market",
+          "active",
+          "is_master",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ListHostServersResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "主机服务器列表",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HostServerDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "总数"
+          }
+        },
+        "required": [
+          "data",
+          "total"
         ]
       }
     }

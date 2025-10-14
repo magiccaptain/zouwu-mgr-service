@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "OpsTaskType" ADD VALUE 'AFTER_CALC_PNL';

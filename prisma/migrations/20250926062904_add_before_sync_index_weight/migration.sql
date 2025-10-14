@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "OpsTaskType" ADD VALUE 'BEFORE_SYNC_INDEX_WEIGHT';

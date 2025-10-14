@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "MarketValue" ADD COLUMN     "buy_order_amount" DOUBLE PRECISION,
+ADD COLUMN     "buy_order_count" INTEGER,
+ADD COLUMN     "buy_order_qty" INTEGER,
+ADD COLUMN     "buy_trade_amount" DOUBLE PRECISION,
+ADD COLUMN     "buy_trade_count" INTEGER,
+ADD COLUMN     "buy_trade_qty" INTEGER,
+ADD COLUMN     "sell_order_amount" DOUBLE PRECISION,
+ADD COLUMN     "sell_order_count" INTEGER,
+ADD COLUMN     "sell_order_qty" INTEGER,
+ADD COLUMN     "sell_trade_amount" DOUBLE PRECISION,
+ADD COLUMN     "sell_trade_count" INTEGER,
+ADD COLUMN     "sell_trade_qty" INTEGER,
+ALTER COLUMN "close_price" DROP NOT NULL,
+ALTER COLUMN "close_price_date" DROP NOT NULL;

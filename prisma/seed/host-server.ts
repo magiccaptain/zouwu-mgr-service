@@ -45,6 +45,7 @@ const host_server_data: Prisma.HostServerCreateManyInput[] = [
     market: 'SZ',
     home_dir: '/root',
     companyKey: 'zhisui',
+    is_master: true
   },
   {
     name: '国君(深圳)-12724',
@@ -67,7 +68,6 @@ const host_server_data: Prisma.HostServerCreateManyInput[] = [
     market: 'SZ',
     home_dir: '/root',
     companyKey: 'zhisui',
-    is_master: true,
   },
   {
     name: '国君(深圳)-12764',

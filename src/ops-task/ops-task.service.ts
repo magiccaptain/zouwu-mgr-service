@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import {
   InnerFundSnapshotReason,
@@ -15,18 +15,24 @@ import { MarketCode } from 'src/config/constants';
 import { FundAccountService, InnerSnapshotFromServer } from 'src/fund_account';
 import { HostServerService } from 'src/host_server/host_server.service';
 import { tryParseJSON } from 'src/lib/lang/json';
+import { MarketValueService } from 'src/market-value/market-value.service';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { QuoteService } from 'src/quote/quote.service';
 import { RemoteCommand, RemoteCommandService } from 'src/remote-command';
 import { WarningService } from 'src/warning/warning.service';
 
 @Injectable()
 export class OpsTaskService {
+  private readonly logger = new Logger(OpsTaskService.name);
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly remoteCommandService: RemoteCommandService,
     private readonly hostServerService: HostServerService,
     private readonly fundAccountService: FundAccountService,
-    private readonly warningService: WarningService
+    private readonly warningService: WarningService,
+    private readonly quoteService: QuoteService,
+    private readonly marketValueService: MarketValueService
   ) {}
 
   async checkHostServerDiskTask(task: OpsTask) {
@@ -40,7 +46,7 @@ export class OpsTaskService {
       try {
         await this.hostServerService.checkDisk(hostServer, task);
       } catch (error) {
-        console.log(error);
+        this.logger.error(error);
         continue;
       }
     }
@@ -78,6 +84,7 @@ export class OpsTaskService {
     });
 
     await this.checkHostServerDiskTask(task);
+    this.logger.log('盘前磁盘检查完成');
   }
 
   // 每日下午 15:30 执行盘后磁盘检查
@@ -92,6 +99,7 @@ export class OpsTaskService {
     });
 
     await this.checkHostServerDiskTask(task);
+    this.logger.log('盘后磁盘检查完成');
   }
 
   async startBeforeCheckTimeTask() {
@@ -231,7 +239,7 @@ export class OpsTaskService {
 
     commands = await this.hostServerService.batchExecRemoteCommand(
       commands,
-      true
+      false
     );
 
     await Promise.all(
@@ -348,6 +356,36 @@ export class OpsTaskService {
     );
   }
 
+  // 周一到周五下午15:40 执行计算市值
+  @Cron('40 15 * * 1-5')
+  async startAfterCalcMarketValueTask() {
+    const fundAccounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        active: true,
+      },
+    });
+
+    for (const fundAccount of fundAccounts) {
+      await this.marketValueService.calcMarketValue(
+        fundAccount,
+        dayjs().format('YYYY-MM-DD')
+      );
+      this.logger.log(
+        `盘后市值计算完成 ${fundAccount.brokerKey} ${fundAccount.account}`
+      );
+    }
+
+    await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后市值计算',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_CALC_MARKET_VALUE,
+      },
+    });
+
+    this.logger.log('盘后市值计算完成');
+  }
+
   // 周一到周五早上8:40 执行
   @Cron('40 8 * * 1-5')
   async startBeforeSyncFundAccountTask() {
@@ -361,7 +399,7 @@ export class OpsTaskService {
 
     await this.startSyncFundAccountTask(task);
 
-    console.log('盘前资金账户同步完成');
+    this.logger.log('盘前资金账户同步完成');
     return;
   }
 
@@ -378,7 +416,229 @@ export class OpsTaskService {
 
     await this.startSyncFundAccountTask(task);
 
-    console.log('盘后资金账户同步完成');
+    this.logger.log('盘后资金账户同步完成');
+    return;
+  }
+
+  // 周一到周五下午15:30 执行 同步行情数据
+  @Cron('30 15 * * 1-5')
+  async startAfterSyncQuoteTask() {
+    await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后行情brief数据同步',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_SYNC_LAST_PRICE,
+      },
+    });
+
+    await this.quoteService.queryQuote();
+
+    this.logger.log('盘后行情brief数据同步完成');
+    return;
+  }
+
+  // 周一到周五下午15:15 执行查询持仓数据
+  @Cron('15 15 * * 1-5')
+  async startAfterSyncPositionTask() {
+    const task = await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后持仓数据同步',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_SYNC_POSITIONS,
+      },
+    });
+
+    const fundAccounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        XTPConfig: true,
+        ATPConfig: true,
+        broker: true,
+      },
+    });
+
+    for (const fundAccount of fundAccounts) {
+      const markets = !isEmpty(fundAccount.XTPConfig)
+        ? fundAccount.XTPConfig.map((c) => c.market)
+        : fundAccount.ATPConfig.map((c) => c.market);
+
+      for (const market of markets) {
+        try {
+          await this.fundAccountService.queryPosition(
+            fundAccount,
+            market,
+            task
+          );
+        } catch (error) {
+          this.logger.error(error);
+          await this.prismaService.opsWarning.create({
+            data: {
+              trade_day: dayjs().format('YYYY-MM-DD'),
+              opsTask: {
+                connect: { id: task.id },
+              },
+              text: ` FundAccount ${fundAccount.account} market ${market} 持仓数据同步失败 ${error.message}`,
+              fundAccount: {
+                connect: { id: fundAccount.id },
+              },
+            },
+          });
+        }
+      }
+    }
+
+    this.logger.log('盘后持仓数据同步完成');
+    return;
+  }
+
+  // 周一到周五下午15:20 执行查询订单数据
+  @Cron('20 15 * * 1-5')
+  async startAfterSyncOrderTask() {
+    const task = await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后订单数据同步',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_SYNC_ORDER,
+      },
+    });
+
+    const fundAccounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        XTPConfig: true,
+        ATPConfig: true,
+      },
+    });
+
+    for (const fundAccount of fundAccounts) {
+      const markets = !isEmpty(fundAccount.XTPConfig)
+        ? fundAccount.XTPConfig.map((c) => c.market)
+        : fundAccount.ATPConfig.map((c) => c.market);
+
+      for (const market of markets) {
+        try {
+          await this.fundAccountService.queryOrder(fundAccount, market, task);
+        } catch (error) {
+          this.logger.error(error);
+          await this.prismaService.opsWarning.create({
+            data: {
+              trade_day: dayjs().format('YYYY-MM-DD'),
+              opsTask: {
+                connect: { id: task.id },
+              },
+              fundAccount: {
+                connect: { id: fundAccount.id },
+              },
+              text: ` FundAccount ${fundAccount.account} market ${market} 订单数据同步失败 ${error.message}`,
+            },
+          });
+        }
+      }
+    }
+    this.logger.log('盘后订单数据同步完成');
+    return;
+  }
+
+  // 周一到周五下午15:25 执行查询交易数据
+  @Cron('30 15 * * 1-5')
+  async startAfterSyncTradeTask() {
+    const task = await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后交易数据同步',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_SYNC_TRADE,
+      },
+    });
+    const fundAccounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        active: true,
+      },
+      include: {
+        XTPConfig: true,
+        ATPConfig: true,
+      },
+    });
+
+    for (const fundAccount of fundAccounts) {
+      const markets = !isEmpty(fundAccount.XTPConfig)
+        ? fundAccount.XTPConfig.map((c) => c.market)
+        : fundAccount.ATPConfig.map((c) => c.market);
+
+      for (const market of markets) {
+        try {
+          await this.fundAccountService.queryTrade(fundAccount, market, task);
+        } catch (error) {
+          this.logger.error(error);
+          await this.prismaService.opsWarning.create({
+            data: {
+              trade_day: dayjs().format('YYYY-MM-DD'),
+              opsTask: {
+                connect: { id: task.id },
+              },
+              fundAccount: {
+                connect: { id: fundAccount.id },
+              },
+              text: ` FundAccount ${fundAccount.account} market ${market} 交易数据同步失败 ${error.message}`,
+            },
+          });
+        }
+      }
+    }
+
+    this.logger.log('盘后交易数据同步完成');
+    return;
+  }
+
+  // 周一到周五早上8:35 执行
+  @Cron('35 8 * * 1-5')
+  async startBeforeSyncWeightIndexTask() {
+    await this.prismaService.opsTask.create({
+      data: {
+        name: '盘前权重指数同步',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.BEFORE_SYNC_INDEX_WEIGHT,
+      },
+    });
+
+    await this.quoteService.queryIndexWeight();
+
+    this.logger.log('盘前权重指数同步完成');
+    return;
+  }
+
+  // 周一到周五晚上23:30 执行
+  @Cron('30 23 * * 1-5')
+  async startAfterClearProcessesTask() {
+    const task = await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后进程清理',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_CLEAR_PROCESSES,
+      },
+    });
+
+    const hostServers = await this.prismaService.hostServer.findMany({
+      where: {
+        active: true,
+      },
+    });
+
+    for (const hostServer of hostServers) {
+      const remoteCommand = await this.remoteCommandService.makePkillTraderTool(
+        hostServer,
+        task
+      );
+      await this.hostServerService.execRemoteCommand(remoteCommand);
+      this.logger.log(
+        `清理 ${hostServer.brokerKey} ${hostServer.ssh_port} 进程完成`
+      );
+    }
+
+    this.logger.log('盘后进程清理完成');
     return;
   }
 }

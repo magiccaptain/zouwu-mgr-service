@@ -26,7 +26,7 @@ async function main() {
 
   await nodeSSH.getDirectory(asset_path, zhisui_tools_path, { concurrency: 4 });
 
-  nodeSSH.dispose();
+  nodeSSH?.dispose();
 }
 
 main();

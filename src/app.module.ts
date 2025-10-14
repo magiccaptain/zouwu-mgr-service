@@ -13,8 +13,10 @@ import { settings } from './config';
 import { FundAccountModule } from './fund_account/fund_account.module';
 import { HelloController } from './hello.controller';
 import { HostServerModule } from './host_server/host_server.module';
+import { MarketValueModule } from './market-value/market-value.module';
 import { OpsTaskModule } from './ops-task/ops-task.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { QuoteModule } from './quote/quote.module';
 import { RemoteCommandModule } from './remote-command/remote-command.module';
 import { SessionModule } from './session/session.module';
 import { WarningModule } from './warning/warning.module';
@@ -47,6 +49,8 @@ import { WarningModule } from './warning/warning.module';
     OpsTaskModule,
     RemoteCommandModule,
     WarningModule,
+    QuoteModule,
+    MarketValueModule,
   ],
   controllers: [HelloController],
 })

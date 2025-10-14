@@ -119,6 +119,150 @@ export class RemoteCommandService {
     });
   }
 
+  async makeQueryOrder(
+    hostServer: HostServer,
+    fund_account: string,
+    opTask?: OpsTask
+  ): Promise<RemoteCommand> {
+    const { home_dir } = hostServer;
+
+    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
+      home_dir,
+      'td_config'
+    )} query_order -a ${fund_account}`;
+
+    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
+
+    const data: Prisma.RemoteCommandCreateInput = {
+      type: RemoteCommandType.QUERY_ORDER,
+      trade_day: dayjs().format('YYYY-MM-DD'),
+      cmd: cmd,
+      cwd: zhisui_tool_path,
+      hostServer: {
+        connect: { id: hostServer.id },
+      },
+      fundAccount: {
+        connect: { account: fund_account },
+      },
+    };
+
+    if (opTask) {
+      data.opsTask = {
+        connect: { id: opTask.id },
+      };
+    }
+
+    return this.prismaService.remoteCommand.create({
+      data,
+      include: { hostServer: true, opsTask: true, fundAccount: true },
+    });
+  }
+
+  async makeQueryTrade(
+    hostServer: HostServer,
+    fund_account: string,
+    opTask?: OpsTask
+  ): Promise<RemoteCommand> {
+    const { home_dir } = hostServer;
+
+    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
+      home_dir,
+      'td_config'
+    )} query_trade -a ${fund_account}`;
+
+    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
+
+    const data: Prisma.RemoteCommandCreateInput = {
+      type: RemoteCommandType.QUERY_TRADE,
+      trade_day: dayjs().format('YYYY-MM-DD'),
+      cmd: cmd,
+      cwd: zhisui_tool_path,
+      hostServer: {
+        connect: { id: hostServer.id },
+      },
+      fundAccount: {
+        connect: { account: fund_account },
+      },
+    };
+
+    if (opTask) {
+      data.opsTask = {
+        connect: { id: opTask.id },
+      };
+    }
+
+    return this.prismaService.remoteCommand.create({
+      data,
+      include: { hostServer: true, opsTask: true, fundAccount: true },
+    });
+  }
+
+  async makeQueryPosition(
+    hostServer: HostServer,
+    fund_account: string,
+    opTask?: OpsTask
+  ): Promise<RemoteCommand> {
+    const { home_dir } = hostServer;
+    const cmd = `LD_LIBRARY_PATH=. ./trader_tools --config_dir ${path.join(
+      home_dir,
+      'td_config'
+    )} query_position -a ${fund_account}`;
+
+    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
+
+    const data: Prisma.RemoteCommandCreateInput = {
+      type: RemoteCommandType.QUERY_POSITION,
+      trade_day: dayjs().format('YYYY-MM-DD'),
+      cmd: cmd,
+      cwd: zhisui_tool_path,
+      hostServer: {
+        connect: { id: hostServer.id },
+      },
+      fundAccount: {
+        connect: { account: fund_account },
+      },
+    };
+
+    if (opTask) {
+      data.opsTask = {
+        connect: { id: opTask.id },
+      };
+    }
+
+    return this.prismaService.remoteCommand.create({
+      data,
+      include: { hostServer: true, opsTask: true, fundAccount: true },
+    });
+  }
+
+  async makePkillTraderTool(hostServer: HostServer, opTask?: OpsTask) {
+    const { home_dir } = hostServer;
+    const cmd = `pkill -f trader_tools && pkill -f trade_data_pull`;
+
+    const zhisui_tool_path = path.join(home_dir, 'zhisui_tools');
+
+    const data: Prisma.RemoteCommandCreateInput = {
+      type: RemoteCommandType.PKILL_TRADER_TOOL,
+      trade_day: dayjs().format('YYYY-MM-DD'),
+      cmd: cmd,
+      cwd: zhisui_tool_path,
+      hostServer: {
+        connect: { id: hostServer.id },
+      },
+    };
+
+    if (opTask) {
+      data.opsTask = {
+        connect: { id: opTask.id },
+      };
+    }
+
+    return this.prismaService.remoteCommand.create({
+      data,
+      include: { hostServer: true, opsTask: true, fundAccount: true },
+    });
+  }
+
   parseQueryAccountCmd(remoteCommand: RemoteCommand): InnerSnapshotFromServer {
     const { stdout, hostServer } = remoteCommand;
     const { market } = hostServer;

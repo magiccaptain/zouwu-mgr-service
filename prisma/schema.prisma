@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider          = "postgresql"
   url               = env("DATABASE_URL")
-  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+  // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 model User {
@@ -133,6 +133,7 @@ model FundAccount {
   XTPConfig          XTPConfig[]
   OpsWarning         OpsWarning[]
   RemoteCommand      RemoteCommand[]
+  MarketValue        MarketValue[]
 }
 
 model XTPConfig {
@@ -266,12 +267,18 @@ enum OpsTaskType {
   AFTER_CHECK_OP_VALUE
   AFTER_ARCHIVE_TRADE_LOG
   AFTER_SYNC_FUND_ACCOUNT
+  BEFORE_SYNC_POSITIONS
   AFTER_SYNC_POSITIONS
   AFTER_SYNC_ORDER
   AFTER_SYNC_TRADE
   AFTER_SYNC_LAST_PRICE
   AFTER_PULL_OP_VALUE
   AFTER_PULL_QUOTE_SNAPSHOT
+  AFTER_CLEAR_PROCESSES
+  AFTER_CALC_MARKET_VALUE
+  BEFORE_SYNC_INDEX_WEIGHT
+  // 盘后计算盈亏
+  AFTER_CALC_PNL
 }
 
 model OpsTask {
@@ -349,6 +356,7 @@ enum RemoteCommandType {
   INNER_TRANSFER
   EXTERNAL_TRANSFER
   ARCHIVE_TRADE_LOG
+  PKILL_TRADER_TOOL
 }
 
 model RemoteCommand {
@@ -374,4 +382,160 @@ model RemoteCommand {
   OpsWarning  OpsWarning[]
 
   @@index([hostServerId, trade_day(sort: Desc)])
+}
+
+enum Side {
+  BUY
+  SELL
+}
+
+model Position {
+  id          Int      @id @default(autoincrement())
+  tradeDay    String
+  fundAccount String
+  market      Market
+  ticker      String
+  brokerKey   String
+  productKey  String
+  companyKey  String
+  totalQty    Int
+  sellableQty Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+
+  @@unique([tradeDay, fundAccount, market, ticker])
+}
+
+model Order {
+  id          Int    @id @default(autoincrement())
+  tradeDay    String
+  fundAccount String
+  market      Market
+  ticker      String
+  orderApiId  BigInt
+  orderRef    BigInt
+  price       Float
+  quantity    Int
+  priceType   Int
+  side        Side
+  qtyTraded   Int
+  qtyLeft     Int
+  insertTime  BigInt
+  updateTime  BigInt
+  cancelTime  BigInt
+  status      Int
+  brokerKey   String
+  productKey  String
+  companyKey  String
+
+  @@unique([tradeDay, fundAccount, market, ticker, orderRef])
+  @@index([tradeDay, fundAccount, orderApiId])
+  @@index([tradeDay, fundAccount, orderRef])
+}
+
+model Trade {
+  id          Int    @id @default(autoincrement())
+  tradeDay    String
+  fundAccount String
+  market      Market
+  ticker      String
+  orderApiId  BigInt
+  orderRef    BigInt
+  tradeId     String
+  price       Float
+  quantity    Int
+  tradeTime   BigInt
+  tradeAmount Float
+  side        Side
+  brokerKey   String
+  productKey  String
+  companyKey  String
+
+  @@unique([tradeDay, fundAccount, market, ticker, tradeId])
+  @@index([tradeDay, fundAccount, orderApiId])
+  @@index([tradeDay, fundAccount, orderRef])
+  @@index([tradeDay, fundAccount, tradeId])
+}
+
+// 行情简要
+model QuoteBrief {
+  id                Int      @id @default(autoincrement())
+  tradeDay          String
+  ticker            String
+  market            Market
+  // 昨收价
+  pre_close_price   Float
+  // 收盘价
+  close_price       Float
+  // 涨停价
+  upper_limit_price Float
+  // 跌停价
+  lower_limit_price Float
+  // 证券类型
+  security_type     Int
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@unique([tradeDay, ticker, market])
+}
+
+// 市值表
+model MarketValue {
+  id               Int     @id @default(autoincrement())
+  trade_day        String
+  ticker           String
+  market           Market
+  // 持仓
+  position         Int
+  // 市值
+  value            Float
+  // 结算价
+  close_price      Float?
+  // 结算价日期
+  close_price_date String?
+
+  fund_account String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  fundAccount FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@unique([trade_day, fund_account, ticker, market])
+}
+
+// 指数权重表
+model IndexWeight {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  code       String // 指数代码
+  symbol     String // 股票代码 688001.SH
+  trade_dt   String // 交易日期
+  i_weight   Float // 权重
+  updatetime DateTime
+
+  @@unique([trade_dt, code, symbol])
+}
+
+// 资金账户日统计表
+model DailyStat {
+  id                        Int      @id @default(autoincrement())
+  trade_day                 String
+  fund_account              String
+  rebalance_return          Float // 换仓回报
+  rebalance_pnl             Float // 换仓盈亏
+  rebalance_buy_commission  Float // 换仓买手续费
+  rebalance_sell_commission Float // 换仓卖手续费
+  t0_return                 Float // T0回报
+  t0_pnl                    Float // T0盈亏
+  t0_buy_commission         Float // T0买手续费
+  t0_sell_commission        Float // T0卖手续费
+  hold_return               Float // 持仓回报
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now()) @updatedAt
+
+  brokerKey  String
+  productKey String
+  companyKey String
+
+  @@unique([trade_day, fund_account])
 }

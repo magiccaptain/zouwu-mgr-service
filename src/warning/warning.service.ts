@@ -35,7 +35,7 @@ export class WarningService {
         cmd: 'rm -rf core.*',
       },
       {
-        cwd: 'common_v6/modeldir/20230621',
+        cwd: 'common_v6/modeldir/20240701',
         // 删除除本月外其余所有日志文件
         cmd: 'find -name "*.txt" ! -name "*{current_month}*.txt" -exec rm -rf {} +',
         args: {

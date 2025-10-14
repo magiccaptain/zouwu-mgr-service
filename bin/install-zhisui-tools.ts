@@ -57,7 +57,7 @@ async function main() {
     );
 
     if (remoteVersion.trim() === localVersion.trim()) {
-      ssh.dispose();
+      ssh?.dispose();
       console.log(`zhisui_tools is already up-to-date, skip...`);
       continue;
     }
@@ -85,7 +85,7 @@ async function main() {
     // chmod +x trader_tools
     await ssh.execCommand(`chmod +x ${remotePath}/trader_tools`);
 
-    ssh.dispose();
+    ssh?.dispose();
   }
 
   console.log('install done');

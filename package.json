@@ -26,7 +26,8 @@
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "deploydb": "prisma migrate deploy"
+    "deploydb": "prisma migrate deploy",
+    "reset-password": "ts-node bin/reset-password.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^8.3.1",
@@ -51,8 +52,10 @@
     "class-validator": "^0.14.0",
     "clickhouse": "^2.6.0",
     "compression": "^1.7.4",
+    "csvtojson": "^2.0.10",
     "dayjs": "^1.11.10",
     "debug": "^4.3.4",
+    "decimal.js": "^10.6.0",
     "dotenv": "^16.3.1",
     "husky": "^8.0.3",
     "jsonwebtoken": "^9.0.2",

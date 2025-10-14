@@ -1081,6 +1081,52 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     login_mode: 2,
   },
 
+  {
+    fund_account: '101800002923',
+    market: Market.SH,
+    ip: '172.18.196.50',
+    port: 32001,
+    spare_ip: '172.18.196.50',
+    spare_port: 32001,
+    branch_id: '1018',
+    cust_id: '4979000',
+    cust_password: '911074',
+    sh_account_id: 'B887522751',
+    sz_account_id: '0899490464',
+    client_name: 'ZHISUI',
+    client_version: 'V1.0.0',
+    client_feature_code:
+      'ZXATP0172_SHZSLHTRD--PC;IIP=NA;IPORT=NA;LIP=10.12.182.248;MAC=3CECEFADBB12;HD=WD-WCC4M6JDT97K@Zhisui;V0.0.1;ZHUANXIAN;ZJ-ZHISUI',
+    user: 'ZXATP0172_SHZSLHTRD',
+    password: 'ZXATP0172@',
+    order_way: '3',
+    account_mode: 2,
+    login_mode: 2,
+  },
+
+  {
+    fund_account: '101800002923',
+    market: Market.SZ,
+    ip: '172.27.12.50',
+    port: 32001,
+    spare_ip: '172.27.12.50',
+    spare_port: 32001,
+    branch_id: '1018',
+    cust_id: '4979000',
+    cust_password: '911074',
+    sh_account_id: 'B887522751',
+    sz_account_id: '0899490464',
+    client_name: 'ZHISUI',
+    client_version: 'V1.0.0',
+    client_feature_code:
+      'ZXATP0172_SHZSLHTRD--PC;IIP=NA;IPORT=NA;LIP=10.12.182.248;MAC=3CECEFADBB12;HD=WD-WCC4M6JDT97K@Zhisui;V0.0.1;ZHUANXIAN;ZJ-ZHISUI',
+    user: 'ZXATP0172_SHZSLHTRD',
+    password: 'ZXATP0172@',
+    order_way: '3',
+    account_mode: 2,
+    login_mode: 2,
+  },
+
   // 方正
   {
     fund_account: '9858016666',

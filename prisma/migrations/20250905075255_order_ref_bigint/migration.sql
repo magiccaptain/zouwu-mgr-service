@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Order" ALTER COLUMN "orderRef" SET DATA TYPE BIGINT;
+
+-- AlterTable
+ALTER TABLE "Trade" ALTER COLUMN "orderRef" SET DATA TYPE BIGINT;

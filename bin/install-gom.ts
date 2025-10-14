@@ -20,7 +20,7 @@ async function main() {
 
   await nodeSSH.getDirectory(asset_path, gom_path);
 
-  nodeSSH.dispose();
+  nodeSSH?.dispose();
 
   const client = new PrismaClient();
 
@@ -49,7 +49,7 @@ async function main() {
 
       console.log(brokerKey, ssh_port, 'gom installed');
 
-      ssh.dispose();
+      ssh?.dispose();
     })
   );
 }

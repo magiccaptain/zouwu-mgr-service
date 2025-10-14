@@ -38,7 +38,7 @@ export function SSH2Exec(
     } catch (error) {
       reject(error);
     } finally {
-      cmd_ssh.dispose();
+      cmd_ssh?.dispose();
     }
   });
 }
@@ -106,7 +106,7 @@ export function PullRemoteFile(
     } catch (error) {
       reject(error);
     } finally {
-      scp_ssh.dispose();
+      scp_ssh?.dispose();
     }
   });
 }

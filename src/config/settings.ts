@@ -36,6 +36,16 @@ export const settings = env({
     start_time: '09:18',
     end_time: '15:00',
   },
+  quote_brief_source: {
+    host_server_port: 12706,
+    remote_dir: '/home/admin/quote_data',
+    local_dir: '/data/quote_data',
+  },
+  quote_index_weight_source: {
+    host_server_port: 12722,
+    remote_dir: '/root/common_v6/run',
+    local_dir: '/data/index_weight_data',
+  },
   warning: {
     disk_usage: 0.9,
     // 托管机和本机时间相差 秒数
