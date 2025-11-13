@@ -19,6 +19,7 @@ import { MarketValueService } from 'src/market-value/market-value.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QuoteService } from 'src/quote/quote.service';
 import { RemoteCommand, RemoteCommandService } from 'src/remote-command';
+import { ValCalcService } from 'src/val-calc/val-calc.service';
 import { WarningService } from 'src/warning/warning.service';
 
 @Injectable()
@@ -32,7 +33,8 @@ export class OpsTaskService {
     private readonly fundAccountService: FundAccountService,
     private readonly warningService: WarningService,
     private readonly quoteService: QuoteService,
-    private readonly marketValueService: MarketValueService
+    private readonly marketValueService: MarketValueService,
+    private readonly valCalcService: ValCalcService
   ) {}
 
   async checkHostServerDiskTask(task: OpsTask) {
@@ -590,6 +592,36 @@ export class OpsTaskService {
     }
 
     this.logger.log('盘后交易数据同步完成');
+    return;
+  }
+
+  // 周一到周五下午16:00 执行计算盈亏
+  @Cron('0 16 * * 1-5')
+  async startAfterCalcPnlTask() {
+    await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后盈亏计算',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_CALC_PNL,
+      },
+    });
+    const fundAccounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        active: true,
+      },
+    });
+    const tradeDay = dayjs().format('YYYY-MM-DD');
+
+    // await this.valCalcService.cal(task);
+
+    for (const fundAccount of fundAccounts) {
+      await this.valCalcService.calcFundAccountPnl(
+        fundAccount.account,
+        tradeDay
+      );
+    }
+
+    this.logger.log('盘后盈亏计算完成');
     return;
   }
 

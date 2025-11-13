@@ -28,6 +28,10 @@ async function main() {
       return;
     }
 
+    // if (ssh_port !== 12744) {
+    //   continue;
+    // }
+
     const pkgPath = path.join(assetPath, brokerKey);
 
     if (!fs.existsSync(pkgPath)) {

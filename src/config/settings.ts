@@ -51,4 +51,7 @@ export const settings = env({
     // 托管机和本机时间相差 秒数
     time_diff: 3,
   },
+  val_calc: {
+    endpoint: 'http://10.242.0.16:8000/api/v1/pnl/calculate',
+  },
 });

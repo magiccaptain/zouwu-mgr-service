@@ -27,6 +27,9 @@ export class MarketValueService {
         market: market,
         tradeDay: tradeDay,
       },
+      orderBy: {
+        tradeDay: 'desc',
+      },
     });
 
     if (!quoteBrief) {
@@ -43,9 +46,15 @@ export class MarketValueService {
           tradeDay: { lt: tradeDay },
           close_price: { not: 0 },
         },
+        orderBy: {
+          tradeDay: 'desc',
+        },
       });
 
       if (preClosePrice) {
+        this.logger.debug(
+          `QuoteBrief close_price is 0, ticker: ${ticker}, market: ${market}, tradeDay: ${tradeDay}, preClosePrice: ${preClosePrice.close_price}, preClosePrice.tradeDay: ${preClosePrice.tradeDay}`
+        );
         this.quoteBriefMap.set(wind_code, preClosePrice);
         return preClosePrice;
       }

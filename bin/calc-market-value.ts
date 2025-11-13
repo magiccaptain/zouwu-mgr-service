@@ -9,6 +9,11 @@ import { MarketValueService } from '../dist/market-value/market-value.service';
 import { PrismaService } from '../dist/prisma/prisma.service';
 
 async function main() {
+  let tradeDay = process.argv[2];
+  if (!tradeDay) {
+    tradeDay = dayjs().format('YYYY-MM-DD');
+  }
+
   const app = await NestFactory.createApplicationContext(AppModule);
 
   const prismaService = app.get(PrismaService);
@@ -25,15 +30,10 @@ async function main() {
     //   continue;
     // }
 
-    await marketValueService.calcMarketValue(
-      fundAccount,
-      dayjs().format('YYYY-MM-DD')
-    );
+    await marketValueService.calcMarketValue(fundAccount, tradeDay);
 
     console.log(
-      `Calculated market value for ${fundAccount.brokerKey} ${
-        fundAccount.account
-      } on ${dayjs().format('YYYY-MM-DD')}`
+      `Calculated market value for ${fundAccount.brokerKey} ${fundAccount.account} on ${tradeDay}`
     );
   }
 

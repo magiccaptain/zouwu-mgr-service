@@ -49,8 +49,8 @@ export const users: Prisma.UserCreateManyInput[] = [
     name: '汪家伟',
     username: 'wangjiawei',
     password: bcryptjs.hashSync('wangjiawei@12345', 10),
-    permissions: ['host-server/*'],
-    homePage: '/host-server',
+    permissions: ['*/*'],
+    homePage: '/dashboard',
   },
   {
     name: '测试',

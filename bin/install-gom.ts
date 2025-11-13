@@ -24,11 +24,13 @@ async function main() {
 
   const client = new PrismaClient();
 
-  const servers = await client.hostServer.findMany({
+  let servers = await client.hostServer.findMany({
     where: {
       active: true,
     },
   });
+
+  // servers = servers.filter((s) => s.ssh_port === 12744);
 
   await Promise.all(
     servers.map(async (server) => {

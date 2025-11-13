@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider          = "postgresql"
-  url               = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
   // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
@@ -516,8 +516,8 @@ model IndexWeight {
   @@unique([trade_dt, code, symbol])
 }
 
-// 资金账户日统计表
-model DailyStat {
+// 资金账户日盈亏表
+model DailyPnl {
   id                        Int      @id @default(autoincrement())
   trade_day                 String
   fund_account              String

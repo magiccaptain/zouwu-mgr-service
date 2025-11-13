@@ -19,6 +19,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { QuoteModule } from './quote/quote.module';
 import { RemoteCommandModule } from './remote-command/remote-command.module';
 import { SessionModule } from './session/session.module';
+import { ValCalcModule } from './val-calc/val-calc.module';
 import { WarningModule } from './warning/warning.module';
 
 @Module({
@@ -51,6 +52,7 @@ import { WarningModule } from './warning/warning.module';
     WarningModule,
     QuoteModule,
     MarketValueModule,
+    ValCalcModule,
   ],
   controllers: [HelloController],
 })
