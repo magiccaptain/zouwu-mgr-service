@@ -422,8 +422,8 @@ export class OpsTaskService {
     return;
   }
 
-  // 周一到周五下午15:30 执行 同步行情数据
-  @Cron('30 15 * * 1-5')
+  // 周一到周五下午15:10 执行 同步行情数据
+  @Cron('10 15 * * 1-5')
   async startAfterSyncQuoteTask() {
     await this.prismaService.opsTask.create({
       data: {
