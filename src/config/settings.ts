@@ -54,4 +54,30 @@ export const settings = env({
   val_calc: {
     endpoint: 'http://10.242.0.16:8000/api/v1/pnl/calculate',
   },
+  cron: {
+    // 每日早8点执行盘前磁盘检查
+    before_check_host_server_disk: '0 8 * * *',
+    // 每日下午15:30执行盘后磁盘检查
+    after_check_host_server_disk: '30 15 * * *',
+    // 周一到周五下午15:40执行计算市值
+    after_calc_market_value: '40 15 * * 1-5',
+    // 周一到周五早上8:40执行盘前资金账户同步
+    before_sync_fund_account: '40 8 * * 1-5',
+    // 周一到周五下午15:5执行盘后资金账户同步
+    after_sync_fund_account: '5 15 * * 1-5',
+    // 周一到周五下午15:20执行同步行情数据
+    after_sync_last_price: '20 15 * * 1-5',
+    // 周一到周五下午15:15执行查询持仓数据
+    after_sync_positions: '15 15 * * 1-5',
+    // 周一到周五下午15:20执行查询订单数据
+    after_sync_order: '20 15 * * 1-5',
+    // 周一到周五下午15:30执行查询交易数据
+    after_sync_trade: '30 15 * * 1-5',
+    // 周一到周五下午16:00执行计算盈亏
+    after_calc_pnl: '0 16 * * 1-5',
+    // 周一到周五早上8:35执行盘前权重指数同步
+    before_sync_index_weight: '35 8 * * 1-5',
+    // 周一到周五晚上23:30执行盘后进程清理
+    after_clear_processes: '30 23 * * 1-5',
+  },
 });

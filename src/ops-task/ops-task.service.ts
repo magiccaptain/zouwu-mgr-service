@@ -75,7 +75,7 @@ export class OpsTaskService {
   }
 
   // 每日早8点执行盘前磁盘检查
-  @Cron('0 8 * * *')
+  @Cron(settings.cron.before_check_host_server_disk)
   async startBeforeCheckHostServerDiskTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -90,7 +90,7 @@ export class OpsTaskService {
   }
 
   // 每日下午 15:30 执行盘后磁盘检查
-  @Cron('30 15 * * *')
+  @Cron(settings.cron.after_check_host_server_disk)
   async startAfterCheckHostServerDiskTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -359,7 +359,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:40 执行计算市值
-  @Cron('40 15 * * 1-5')
+  @Cron(settings.cron.after_calc_market_value)
   async startAfterCalcMarketValueTask() {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
@@ -389,7 +389,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五早上8:40 执行
-  @Cron('40 8 * * 1-5')
+  @Cron(settings.cron.before_sync_fund_account)
   async startBeforeSyncFundAccountTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -406,7 +406,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:5 执行
-  @Cron('5 15 * * 1-5')
+  @Cron(settings.cron.after_sync_fund_account)
   async startAfterSyncFundAccountTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -422,8 +422,8 @@ export class OpsTaskService {
     return;
   }
 
-  // 周一到周五下午15:10 执行 同步行情数据
-  @Cron('10 15 * * 1-5')
+  // 周一到周五下午15:20 执行 同步行情数据
+  @Cron(settings.cron.after_sync_last_price)
   async startAfterSyncQuoteTask() {
     await this.prismaService.opsTask.create({
       data: {
@@ -440,7 +440,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:15 执行查询持仓数据
-  @Cron('15 15 * * 1-5')
+  @Cron(settings.cron.after_sync_positions)
   async startAfterSyncPositionTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -496,7 +496,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:20 执行查询订单数据
-  @Cron('20 15 * * 1-5')
+  @Cron(settings.cron.after_sync_order)
   async startAfterSyncOrderTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -546,7 +546,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:25 执行查询交易数据
-  @Cron('30 15 * * 1-5')
+  @Cron(settings.cron.after_sync_trade)
   async startAfterSyncTradeTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -596,7 +596,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午16:00 执行计算盈亏
-  @Cron('0 16 * * 1-5')
+  @Cron(settings.cron.after_calc_pnl)
   async startAfterCalcPnlTask() {
     await this.prismaService.opsTask.create({
       data: {
@@ -626,7 +626,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五早上8:35 执行
-  @Cron('35 8 * * 1-5')
+  @Cron(settings.cron.before_sync_index_weight)
   async startBeforeSyncWeightIndexTask() {
     await this.prismaService.opsTask.create({
       data: {
@@ -643,7 +643,7 @@ export class OpsTaskService {
   }
 
   // 周一到周五晚上23:30 执行
-  @Cron('30 23 * * 1-5')
+  @Cron(settings.cron.after_clear_processes)
   async startAfterClearProcessesTask() {
     const task = await this.prismaService.opsTask.create({
       data: {

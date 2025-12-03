@@ -81,6 +81,9 @@ export class MarketValueService {
       },
     });
 
+    // 重置缓存
+    this.quoteBriefMap.clear();
+
     for (const position of positions) {
       const quoteBrief = await this.getQuoteBrief(
         position.ticker,
