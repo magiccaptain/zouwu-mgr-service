@@ -177,6 +177,13 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     active: true,
   },
   {
+    brokerKey: 'guojun',
+    account: '0311040018678666',
+    productKey: 'jp',
+    companyKey: 'zhisui',
+    active: true,
+  },
+  {
     brokerKey: 'anxin',
     account: '10000074022',
     productKey: 'zy1',
@@ -328,6 +335,34 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     companyKey: 'zhisui',
     active: true,
   },
+  {
+    brokerKey: 'xtp',
+    account: '109004038416',
+    productKey: 'jsh1',
+    companyKey: 'zouwu',
+    active: true,
+  },
+  {
+    brokerKey: 'xtp',
+    account: '109004038415',
+    productKey: 'zw1',
+    companyKey: 'zouwu',
+    active: true,
+  },
+  {
+    brokerKey: 'zhongxin',
+    account: '101800003112',
+    productKey: 'zy11',
+    companyKey: 'zhisui',
+    active: true,
+  },
+  {
+    brokerKey: 'zhongxin',
+    account: '101800002922',
+    productKey: 'xx4',
+    companyKey: 'zhisui',
+    active: true,
+  },
 ];
 
 const product_data: Prisma.ProductCreateManyInput[] = [
@@ -416,6 +451,13 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     type: 'gz2000n',
   },
   {
+    key: 'xx9',
+    name: '致邃投资-雪香9号量化对冲私募证券投资基金',
+    short_name: '雪香9号',
+    companyKey: 'zhisui',
+    type: 'gz2000n',
+  },
+  {
     key: 'xx12',
     name: '致邃投资-雪香金懿对冲量化12号私募证券投资基金',
     short_name: '雪香12号',
@@ -470,6 +512,20 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致信1号',
     type: 'zz500e',
     companyKey: 'zhisui',
+  },
+  {
+    key: 'jp',
+    name: '致邃投资-金品',
+    short_name: '金品',
+    type: 'zz1000',
+    companyKey: 'zhisui',
+  },
+  {
+    key: 'jsh1',
+    name: '金水河一号',
+    short_name: '金水河1号',
+    type: 'gz2000',
+    companyKey: 'zouwu',
   },
 ];
 

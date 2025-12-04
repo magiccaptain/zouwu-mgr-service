@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { seedBrokers } from './seed/broker';
 import { seedFundAccounts } from './seed/fund-account';
 import { seedHostServer } from './seed/host-server';
+import { seedProcessMonitor } from './seed/process-monitor';
 import { seedATPConfigs, seedXTPConfigs } from './seed/td-config';
 import { seedUser } from './seed/users';
 
@@ -21,6 +22,8 @@ async function main() {
   await seedXTPConfigs(prisma);
 
   await seedATPConfigs(prisma);
+
+  await seedProcessMonitor(prisma);
 
   console.log('Seed success!');
 }

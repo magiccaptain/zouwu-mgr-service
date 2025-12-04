@@ -31,9 +31,9 @@ async function main() {
       ? fund_account.XTPConfig.map((c) => c.market)
       : fund_account.ATPConfig.map((c) => c.market);
 
-    // if (fund_account.brokerKey !== 'guojun') {
-    //   continue;
-    // }
+    if (fund_account.brokerKey !== 'zhongxin') {
+      continue;
+    }
 
     console.log('begin sync position ', fund_account.account);
 

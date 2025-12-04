@@ -35,16 +35,14 @@ async function main() {
     reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
   }
 
-  console.log(fundAccounts);
-
   for (const fund_account of fundAccounts) {
-    // if (fund_account.account !== '100202016316') {
+    // if (fund_account.account !== '109004038415') {
     //   continue;
     // }
 
-    // if (fund_account.brokerKey !== 'zhongxin') {
-    //   continue;
-    // }
+    if (fund_account.brokerKey !== 'zhongxin') {
+      continue;
+    }
 
     // if (fund_account.brokerKey !== 'fangzheng') {
     //   continue;

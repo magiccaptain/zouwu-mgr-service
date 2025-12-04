@@ -59,6 +59,13 @@ export const users: Prisma.UserCreateManyInput[] = [
     permissions: ['fund-account/*', 'host-server/*'],
     homePage: '/fund-account',
   },
+  {
+    name: '曹玉',
+    username: 'caoyu',
+    password: bcryptjs.hashSync('caoyu@12345', 10),
+    permissions: ['fund-account/*'],
+    homePage: '/fund-account',
+  },
 ];
 
 export async function seedUser(prisma: PrismaClient) {

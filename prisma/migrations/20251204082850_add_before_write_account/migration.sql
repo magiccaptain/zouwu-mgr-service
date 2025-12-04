@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "OpsTaskType" ADD VALUE 'BEFORE_WRITE_FUND_DATA';

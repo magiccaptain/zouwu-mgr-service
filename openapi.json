@@ -308,6 +308,265 @@
           }
         }
       }
+    },
+    "/process-monitor": {
+      "get": {
+        "operationId": "listProcessMonitors",
+        "summary": "获取进程监控配置列表",
+        "description": "获取所有进程监控配置列表，支持筛选",
+        "parameters": [
+          {
+            "name": "hostServerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "fundAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "processType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "TRADER",
+                "QUOTE",
+                "COMMUNICATION",
+                "CUSTOM"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程监控配置列表"
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      },
+      "post": {
+        "operationId": "createProcessMonitor",
+        "summary": "创建进程监控配置",
+        "description": "创建一个新的进程监控配置",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProcessMonitorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "进程监控配置创建成功"
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}": {
+      "put": {
+        "operationId": "updateProcessMonitor",
+        "summary": "更新进程监控配置",
+        "description": "更新指定的进程监控配置",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProcessMonitorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "进程监控配置更新成功"
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      },
+      "delete": {
+        "operationId": "deleteProcessMonitor",
+        "summary": "删除进程监控配置",
+        "description": "删除指定的进程监控配置",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程监控配置删除成功"
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/status/history": {
+      "get": {
+        "operationId": "getProcessStatusHistory",
+        "summary": "获取进程状态历史",
+        "description": "获取进程状态的历史记录",
+        "parameters": [
+          {
+            "name": "processMonitorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tradeDay",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程状态历史记录"
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}/status/latest": {
+      "get": {
+        "operationId": "getLatestProcessStatus",
+        "summary": "获取最新的进程状态",
+        "description": "获取指定进程监控的最新状态",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "最新的进程状态"
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}/check": {
+      "post": {
+        "operationId": "triggerCheck",
+        "summary": "手动触发进程检查",
+        "description": "立即检查指定进程监控的状态",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程检查结果"
+          },
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}/@kill": {
+      "post": {
+        "operationId": "killProcess",
+        "summary": "杀死进程",
+        "description": "根据最新的进程状态中的 pid 和 ppid 来杀死进程（包括父进程）",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程杀死结果"
+          },
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "process-monitor"
+        ]
+      }
     }
   },
   "info": {
@@ -700,6 +959,153 @@
           "data",
           "total"
         ]
+      },
+      "CreateProcessMonitorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "进程名称/标识"
+          },
+          "process_type": {
+            "type": "string",
+            "description": "进程类型",
+            "enum": [
+              "TRADER",
+              "QUOTE",
+              "COMMUNICATION",
+              "CUSTOM"
+            ]
+          },
+          "hostServerId": {
+            "type": "number",
+            "description": "关联的 HostServer ID"
+          },
+          "fundAccountId": {
+            "type": "string",
+            "description": "如果是交易程序，关联 FundAccount account"
+          },
+          "process_name": {
+            "type": "string",
+            "description": "进程名称（用于 ps 命令匹配）"
+          },
+          "command_pattern": {
+            "type": "string",
+            "description": "命令模式（用于更精确匹配）"
+          },
+          "pid_file": {
+            "type": "string",
+            "description": "PID 文件路径"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "是否启用监控",
+            "default": true
+          },
+          "check_interval": {
+            "type": "number",
+            "description": "检查间隔（秒）",
+            "default": 60
+          },
+          "monitor_start_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控开始时间"
+          },
+          "monitor_end_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控结束时间"
+          },
+          "cpu_threshold": {
+            "type": "number",
+            "description": "CPU 使用率告警阈值（0-100）"
+          },
+          "memory_threshold": {
+            "type": "number",
+            "description": "内存使用率告警阈值（0-100）"
+          },
+          "remark": {
+            "type": "string",
+            "description": "备注"
+          }
+        },
+        "required": [
+          "name",
+          "process_type",
+          "hostServerId"
+        ]
+      },
+      "UpdateProcessMonitorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "进程名称/标识"
+          },
+          "process_type": {
+            "type": "string",
+            "description": "进程类型",
+            "enum": [
+              "TRADER",
+              "QUOTE",
+              "COMMUNICATION",
+              "CUSTOM"
+            ]
+          },
+          "hostServerId": {
+            "type": "number",
+            "description": "关联的 HostServer ID"
+          },
+          "fundAccountId": {
+            "type": "string",
+            "description": "如果是交易程序，关联 FundAccount account"
+          },
+          "process_name": {
+            "type": "string",
+            "description": "进程名称（用于 ps 命令匹配）"
+          },
+          "command_pattern": {
+            "type": "string",
+            "description": "命令模式（用于更精确匹配）"
+          },
+          "pid_file": {
+            "type": "string",
+            "description": "PID 文件路径"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "是否启用监控",
+            "default": true
+          },
+          "check_interval": {
+            "type": "number",
+            "description": "检查间隔（秒）",
+            "default": 60
+          },
+          "monitor_start_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控开始时间"
+          },
+          "monitor_end_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控结束时间"
+          },
+          "cpu_threshold": {
+            "type": "number",
+            "description": "CPU 使用率告警阈值（0-100）"
+          },
+          "memory_threshold": {
+            "type": "number",
+            "description": "内存使用率告警阈值（0-100）"
+          },
+          "remark": {
+            "type": "string",
+            "description": "备注"
+          }
+        }
       }
     }
   }

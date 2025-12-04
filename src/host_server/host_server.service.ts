@@ -64,9 +64,25 @@ export class HostServerService {
     const { cmd, cwd, id } = remoteCommand;
 
     try {
-      const { code, stdout, stderr } = await node_ssh.execCommand(cmd, {
-        cwd,
+      // 创建超时 Promise
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(
+            new Error(
+              `远程命令执行超时（${settings.ssh.command_timeout}ms）: ${cmd}`
+            )
+          );
+        }, settings.ssh.command_timeout);
       });
+
+      // 使用 Promise.race 实现超时控制
+      const { code, stdout, stderr } = await Promise.race([
+        node_ssh.execCommand(cmd, {
+          cwd,
+        }),
+        timeoutPromise,
+      ]);
+
       return await this.prismaService.remoteCommand.update({
         where: { id },
         data: {

@@ -13,7 +13,7 @@ export const settings = env({
     url: 'mongodb://localhost:27017/zouwu-core-dev',
   },
   memcached: {
-    url: 'localhost:11211',
+    url: '10.242.0.18:11211',
   },
   redis: {
     host: 'localhost',
@@ -22,6 +22,7 @@ export const settings = env({
   },
   ssh: {
     local_private_key_path: '/root/.ssh/id_rsa',
+    command_timeout: 10000, // 远程命令执行超时时间（毫秒），默认 10 秒
   },
   clickhouse: {
     url: 'http://172.16.2.65',
@@ -35,6 +36,10 @@ export const settings = env({
   trader: {
     start_time: '09:18',
     end_time: '15:00',
+  },
+  process_monitor: {
+    start_time: '09:00',
+    end_time: '17:00',
   },
   quote_brief_source: {
     host_server_port: 12706,
