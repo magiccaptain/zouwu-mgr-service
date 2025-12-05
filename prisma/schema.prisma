@@ -389,6 +389,8 @@ enum RemoteCommandType {
   EXTERNAL_TRANSFER
   ARCHIVE_TRADE_LOG
   PKILL_TRADER_TOOL
+  // 未知类型
+  UNKNOWN
 }
 
 model RemoteCommand {

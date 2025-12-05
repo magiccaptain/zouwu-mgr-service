@@ -1,13 +1,18 @@
+import path from 'path';
+
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import {
   InnerFundSnapshotReason,
+  Market,
   OpsTask,
   OpsTaskType,
   OpsWarningStatus,
   OpsWarningType,
+  RemoteCommandType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
+import Decimal from 'decimal.js';
 import { flatten, isEmpty } from 'lodash';
 
 import { settings } from 'src/config';
@@ -672,5 +677,246 @@ export class OpsTaskService {
 
     this.logger.log('盘后进程清理完成');
     return;
+  }
+
+  @Cron(settings.cron.before_write_fund_data)
+  async startBeforeWriteFundDataTask() {
+    const task = await this.prismaService.opsTask.create({
+      data: {
+        name: '盘前写入资金账户数据',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.BEFORE_WRITE_FUND_DATA,
+      },
+    });
+
+    // 查询所有active 的 fundAccount
+    const fundAccounts = await this.prismaService.fundAccount.findMany({
+      where: {
+        active: true,
+      },
+    });
+
+    for (const fundAccount of fundAccounts) {
+      const accountInfo: {
+        sh_account_cash: number;
+        sz_account_cash: number;
+        totalasset: number;
+      } = {
+        sh_account_cash: 0,
+        sz_account_cash: 0,
+        totalasset: 0,
+      };
+
+      const tradeDay = dayjs().format('YYYY-MM-DD');
+      // 查询当前日期的最新资金快照
+      const snapshots = await this.prismaService.innerFundSnapshot.findMany({
+        where: {
+          fund_account: fundAccount.account,
+          trade_day: tradeDay,
+        },
+      });
+
+      const sh_snapshot = snapshots.find((s) => s.market === Market.SH);
+      const sz_snapshot = snapshots.find((s) => s.market === Market.SZ);
+
+      if (!sh_snapshot) {
+        this.logger.error(
+          `FundAccount ${fundAccount.account} 没有上海现金数据`
+        );
+      } else {
+        accountInfo.sh_account_cash = sh_snapshot.balance;
+      }
+
+      if (!sz_snapshot) {
+        this.logger.error(
+          `FundAccount ${fundAccount.account} 没有深圳现金数据`
+        );
+      } else {
+        accountInfo.sz_account_cash = sz_snapshot.balance;
+      }
+
+      // 从 MarketValue 中查询最近的日期，作为上一交易日
+      const lastMarketValue = await this.prismaService.marketValue.findFirst({
+        where: {
+          fundAccount: {
+            account: fundAccount.account,
+          },
+        },
+        orderBy: {
+          trade_day: 'desc',
+        },
+      });
+
+      if (!lastMarketValue) {
+        this.logger.error(`FundAccount ${fundAccount.account} 没有市值数据`);
+        accountInfo.totalasset =
+          accountInfo.sh_account_cash + accountInfo.sz_account_cash;
+      } else {
+        const lastTradeDay = lastMarketValue.trade_day;
+
+        //统计上一交易日市值
+        const lastMarketValues = await this.prismaService.marketValue.findMany({
+          where: {
+            fundAccount: {
+              account: fundAccount.account,
+            },
+            trade_day: lastTradeDay,
+          },
+        });
+
+        let lastTotalAsset = new Decimal(0);
+        for (const lastMarketValue of lastMarketValues) {
+          lastTotalAsset = lastTotalAsset.add(lastMarketValue.value);
+        }
+
+        accountInfo.totalasset = lastTotalAsset
+          .add(accountInfo.sh_account_cash)
+          .add(accountInfo.sz_account_cash)
+          .toNumber();
+      }
+
+      // 找到对应的hostserver
+      const hostServers = await this.prismaService.hostServer.findMany({
+        where: {
+          brokerKey: fundAccount.brokerKey,
+          companyKey: fundAccount.companyKey,
+          is_master: true,
+        },
+      });
+
+      for (const hostServer of hostServers) {
+        const { home_dir } = hostServer;
+
+        const remote_dir = path.join(home_dir, `act_v6_${fundAccount.account}`);
+        let check_remote_dir_cmd =
+          await this.prismaService.remoteCommand.create({
+            data: {
+              type: RemoteCommandType.UNKNOWN,
+              trade_day: tradeDay,
+              cmd: `test -d ${remote_dir}`,
+              cwd: home_dir,
+              hostServer: {
+                connect: { id: hostServer.id },
+              },
+              fundAccount: {
+                connect: { account: fundAccount.account },
+              },
+              opsTask: {
+                connect: { id: task.id },
+              },
+            },
+            include: {
+              hostServer: true,
+              fundAccount: true,
+              opsTask: true,
+            },
+          });
+
+        check_remote_dir_cmd = await this.hostServerService.execRemoteCommand(
+          check_remote_dir_cmd
+        );
+
+        if (check_remote_dir_cmd.code !== 0) {
+          this.logger.error(
+            `FundAccount ${fundAccount.account} ${hostServer.brokerKey} ${hostServer.ssh_port} 远程目录 ${remote_dir} 不存在`
+          );
+          continue;
+        }
+
+        const remote_trade_dir = path.join(
+          remote_dir,
+          'trade',
+          dayjs(tradeDay).format('YYYYMMDD')
+        );
+
+        let check_remote_trade_dir_cmd =
+          await this.prismaService.remoteCommand.create({
+            data: {
+              type: RemoteCommandType.UNKNOWN,
+              trade_day: tradeDay,
+              cmd: `mkdir -p ${remote_trade_dir}`,
+              cwd: home_dir,
+              hostServer: {
+                connect: { id: hostServer.id },
+              },
+              fundAccount: {
+                connect: { account: fundAccount.account },
+              },
+              opsTask: {
+                connect: { id: task.id },
+              },
+            },
+            include: {
+              hostServer: true,
+              fundAccount: true,
+              opsTask: true,
+            },
+          });
+
+        check_remote_trade_dir_cmd =
+          await this.hostServerService.execRemoteCommand(
+            check_remote_trade_dir_cmd
+          );
+
+        if (check_remote_trade_dir_cmd.code !== 0) {
+          this.logger.error(
+            `FundAccount ${fundAccount.account} 远程目录 ${remote_trade_dir} 创建失败`
+          );
+          continue;
+        }
+
+        // const write_remote_file_cmd = `echo '${JSON.stringify(
+        //   accountInfo,
+        //   null,
+        //   2
+        // )}' > ${remote_trade_dir}/account_info.json`;
+
+        let write_remote_file_cmd =
+          await this.prismaService.remoteCommand.create({
+            data: {
+              type: RemoteCommandType.UNKNOWN,
+              trade_day: tradeDay,
+              cmd: `echo '${JSON.stringify(
+                accountInfo,
+                null,
+                2
+              )}' > ${remote_trade_dir}/account_info.json`,
+              cwd: home_dir,
+              hostServer: {
+                connect: { id: hostServer.id },
+              },
+              fundAccount: {
+                connect: { account: fundAccount.account },
+              },
+              opsTask: {
+                connect: { id: task.id },
+              },
+            },
+            include: {
+              hostServer: true,
+              fundAccount: true,
+              opsTask: true,
+            },
+          });
+
+        write_remote_file_cmd = await this.hostServerService.execRemoteCommand(
+          write_remote_file_cmd
+        );
+
+        if (write_remote_file_cmd.code !== 0) {
+          this.logger.error(
+            `FundAccount ${fundAccount.account} 远程文件 ${remote_trade_dir}/account_info.json 写入失败`
+          );
+          continue;
+        }
+
+        // console.log(`${account} ${brokerKey} ${ssh_port}  ${remote_data_dir} ${JSON.stringify(data)} write success`);
+        this.logger.log(
+          `${fundAccount.account} ${hostServer.brokerKey} ${
+            hostServer.ssh_port
+          }  ${remote_trade_dir} ${JSON.stringify(accountInfo)} write success`
+        );
+      }
+    }
   }
 }
