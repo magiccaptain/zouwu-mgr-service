@@ -714,6 +714,9 @@ export class OpsTaskService {
           fund_account: fundAccount.account,
           trade_day: tradeDay,
         },
+        orderBy: {
+          trade_day: 'desc',
+        },
       });
 
       const sh_snapshot = snapshots.find((s) => s.market === Market.SH);
@@ -865,11 +868,11 @@ export class OpsTaskService {
           continue;
         }
 
-        // const write_remote_file_cmd = `echo '${JSON.stringify(
-        //   accountInfo,
-        //   null,
-        //   2
-        // )}' > ${remote_trade_dir}/account_info.json`;
+        const accountInfoJson = {
+          totalasset: accountInfo.totalasset.toString(),
+          sh_account_cash: accountInfo.sh_account_cash.toString(),
+          sz_account_cash: accountInfo.sz_account_cash.toString(),
+        };
 
         let write_remote_file_cmd =
           await this.prismaService.remoteCommand.create({
@@ -877,7 +880,7 @@ export class OpsTaskService {
               type: RemoteCommandType.UNKNOWN,
               trade_day: tradeDay,
               cmd: `echo '${JSON.stringify(
-                accountInfo,
+                accountInfoJson,
                 null,
                 2
               )}' > ${remote_trade_dir}/account_info.json`,
@@ -914,7 +917,9 @@ export class OpsTaskService {
         this.logger.log(
           `${fundAccount.account} ${hostServer.brokerKey} ${
             hostServer.ssh_port
-          }  ${remote_trade_dir} ${JSON.stringify(accountInfo)} write success`
+          }  ${remote_trade_dir} ${JSON.stringify(
+            accountInfoJson
+          )} write success`
         );
       }
     }
