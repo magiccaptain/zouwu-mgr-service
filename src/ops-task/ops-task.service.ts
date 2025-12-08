@@ -715,7 +715,7 @@ export class OpsTaskService {
           trade_day: tradeDay,
         },
         orderBy: {
-          trade_day: 'desc',
+          createdAt: 'desc',
         },
       });
 
