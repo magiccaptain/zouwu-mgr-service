@@ -84,7 +84,7 @@ export const settings = env({
     before_sync_index_weight: '35 8 * * 1-5',
     // 周一到周五晚上23:30执行盘后进程清理
     after_clear_processes: '30 23 * * 1-5',
-    // 周一到周五早上9:10执行盘前资金写入
-    before_write_fund_data: '10 9 * * 1-5',
+    // 周一到周五早上9:15执行盘前资金写入
+    before_write_fund_data: '15 9 * * 1-5',
   },
 });
