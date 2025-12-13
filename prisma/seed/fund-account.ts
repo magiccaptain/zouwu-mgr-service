@@ -1,4 +1,4 @@
-import { PrismaClient, type Prisma } from '@prisma/client';
+import { PrismaClient, StrategyLevel, type Prisma } from '@prisma/client';
 
 const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
   {
@@ -15,6 +15,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '江苏',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI1000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'xtp',
@@ -37,7 +39,7 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zw1',
     branch: '北分',
     companyKey: 'zouwu',
-    active: true,
+    active: false,
   },
   {
     brokerKey: 'xtp',
@@ -52,7 +54,7 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     account: '109180006960',
     productKey: 'zw2',
     companyKey: 'zouwu',
-    active: true,
+    active: false,
   },
   {
     brokerKey: 'xtp',
@@ -88,6 +90,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zw1',
     companyKey: 'zouwu',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'zhongxin',
@@ -96,6 +100,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '浙分',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI1000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'zhongxin',
@@ -119,6 +125,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '北分',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'guojun',
@@ -175,6 +183,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '上分江苏路',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'guojun',
@@ -182,6 +192,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'jp',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI1000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'anxin',
@@ -204,6 +216,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '杭分',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'guoxin',
@@ -212,6 +226,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '杭分',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'guoxin',
@@ -242,6 +258,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '深分',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'guoxin',
@@ -250,6 +268,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     branch: '深分',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'guoxin',
@@ -334,6 +354,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zxin1',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI1000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'xtp',
@@ -341,6 +363,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'jsh1',
     companyKey: 'zouwu',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'xtp',
@@ -348,6 +372,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zw1',
     companyKey: 'zouwu',
     active: true,
+    executionBenchmark: 'CNI2000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'zhongxin',
@@ -355,6 +381,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'zy11',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI1000',
+    executionStrategy: 'T0',
   },
   {
     brokerKey: 'zhongxin',
@@ -362,6 +390,8 @@ const fund_accounts_data: Prisma.FundAccountCreateManyInput[] = [
     productKey: 'xx4',
     companyKey: 'zhisui',
     active: true,
+    executionBenchmark: 'CSI1000',
+    executionStrategy: 'T0',
   },
 ];
 
@@ -372,6 +402,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵1号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zh2',
@@ -379,6 +411,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵2号',
     companyKey: 'zhisui',
     type: 'gz2000e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CNI2000',
   },
   {
     key: 'zh3',
@@ -386,6 +420,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵3号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zh4',
@@ -393,6 +429,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵4号',
     companyKey: 'zhisui',
     type: 'zz1000n',
+    bizLine: 'MARKET_NEUTRAL',
+    nominalBenchmarket: 'CSI1000',
   },
   {
     key: 'zh5',
@@ -400,6 +438,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵5号',
     companyKey: 'zhisui',
     type: 'zz1000n',
+    bizLine: 'MARKET_NEUTRAL',
+    nominalBenchmarket: 'CSI1000',
   },
   {
     key: 'zh7',
@@ -407,6 +447,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵7号',
     companyKey: 'zhisui',
     type: 'gz2000n',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CNI2000',
   },
   {
     key: 'zy10',
@@ -414,6 +456,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致盈10号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zy11',
@@ -421,6 +465,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致盈11号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zy3',
@@ -428,6 +474,7 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致盈3号',
     companyKey: 'zhisui',
     type: 'cta',
+    bizLine: 'CTA',
   },
   {
     key: 'zh8',
@@ -435,6 +482,7 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '智慧矩阵8号',
     companyKey: 'zhisui',
     type: 'cta',
+    bizLine: 'CTA',
   },
   {
     key: 'xx2',
@@ -442,6 +490,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '雪香二号',
     companyKey: 'zhisui',
     type: 'gz2000e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CNI2000',
   },
   {
     key: 'xx4',
@@ -449,6 +499,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '雪香4号',
     companyKey: 'zhisui',
     type: 'gz2000n',
+    bizLine: 'MARKET_NEUTRAL',
+    nominalBenchmarket: 'CNI2000',
   },
   {
     key: 'xx9',
@@ -456,6 +508,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '雪香9号',
     companyKey: 'zhisui',
     type: 'gz2000n',
+    bizLine: 'MARKET_NEUTRAL',
+    nominalBenchmarket: 'CNI2000',
   },
   {
     key: 'xx12',
@@ -463,6 +517,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '雪香12号',
     companyKey: 'zhisui',
     type: 'zz2000e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI2000',
   },
   {
     key: 'xx11',
@@ -470,6 +526,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '雪香11号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zyue3',
@@ -477,6 +535,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致悦3号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zx1',
@@ -484,6 +544,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致轩1号',
     companyKey: 'zhisui',
     type: 'zz500e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zw1',
@@ -491,6 +553,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '长留山2000指增1号',
     companyKey: 'zouwu',
     type: 'gz2000e',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CNI2000',
   },
   {
     key: 'zw2',
@@ -498,6 +562,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '长留山1000指增1号',
     type: 'zz1000e',
     companyKey: 'zouwu',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI1000',
   },
   {
     key: 'zy1',
@@ -505,6 +571,8 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致盈1号',
     type: 'zz500e',
     companyKey: 'zhisui',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'zxin1',
@@ -512,24 +580,127 @@ const product_data: Prisma.ProductCreateManyInput[] = [
     short_name: '致信1号',
     type: 'zz500e',
     companyKey: 'zhisui',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CSI500',
   },
   {
     key: 'jp',
     name: '致邃投资-金品',
     short_name: '金品',
-    type: 'zz1000',
+    type: 'zz1000n',
     companyKey: 'zhisui',
+    bizLine: 'MARKET_NEUTRAL',
+    nominalBenchmarket: 'CSI1000',
   },
   {
     key: 'jsh1',
     name: '金水河一号',
     short_name: '金水河1号',
-    type: 'gz2000',
+    type: 'gz2000e',
     companyKey: 'zouwu',
+    bizLine: 'INDEX_ENHANCE',
+    nominalBenchmarket: 'CNI2000',
+  },
+];
+
+const strategyConstantData = [
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'biz_line',
+    val: 'INDEX_ENHANCE',
+    desc: '指数增强',
+  },
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'biz_line',
+    val: 'MARKET_NEUTRAL',
+    desc: '市场中性',
+  },
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'biz_line',
+    val: 'CTA',
+    desc: '管理期货',
+  },
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'nominal_benchmarket',
+    val: 'CSI500',
+    desc: '中证500指数',
+  },
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'nominal_benchmarket',
+    val: 'CSI1000',
+    desc: '中证1000指数',
+  },
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'nominal_benchmarket',
+    val: 'CSI2000',
+    desc: '中证2000指数',
+  },
+  {
+    level: StrategyLevel.PRODUCT,
+    standardized: 'nominal_benchmarket',
+    val: 'CNI2000',
+    desc: '国证2000指数',
+  },
+  {
+    level: StrategyLevel.FUND_ACCOUNT,
+    standardized: 'execution_benchmark',
+    val: 'CSI1000',
+    desc: '中证1000指数',
+  },
+  {
+    level: StrategyLevel.FUND_ACCOUNT,
+    standardized: 'execution_benchmark',
+    val: 'CSI2000',
+    desc: '中证2000指数',
+  },
+  {
+    level: StrategyLevel.FUND_ACCOUNT,
+    standardized: 'execution_benchmark',
+    val: 'CNI2000',
+    desc: '国证2000指数',
+  },
+  {
+    level: StrategyLevel.FUND_ACCOUNT,
+    standardized: 'execution_strategy',
+    val: 'ALPHA',
+    desc: '阿尔法策略',
+  },
+  {
+    level: StrategyLevel.FUND_ACCOUNT,
+    standardized: 'execution_strategy',
+    val: 'T0',
+    desc: 'T0策略',
+  },
+  {
+    level: StrategyLevel.FUND_ACCOUNT,
+    standardized: 'execution_strategy',
+    val: 'ALPHA_T0',
+    desc: '阿尔法T0策略',
   },
 ];
 
 export async function seedFundAccounts(prisma: PrismaClient) {
+  // 创建策略常量
+  for (const strategyConstant of strategyConstantData) {
+    await prisma.strategyConstant.upsert({
+      where: {
+        level_standardized_val: {
+          level: strategyConstant.level,
+          standardized: strategyConstant.standardized,
+          val: strategyConstant.val,
+        },
+      },
+      create: strategyConstant,
+      update: strategyConstant,
+    });
+  }
+  console.log('strategy constant seed done');
+
   // 创建产品
   for (const product of product_data) {
     await prisma.product.upsert({

@@ -1,7 +1,6 @@
 import path from 'path';
 
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import {
   InnerFundSnapshotReason,
   Market,
@@ -19,6 +18,7 @@ import { settings } from 'src/config';
 import { MarketCode } from 'src/config/constants';
 import { FundAccountService, InnerSnapshotFromServer } from 'src/fund_account';
 import { HostServerService } from 'src/host_server/host_server.service';
+import { Cron } from 'src/lib/cron';
 import { tryParseJSON } from 'src/lib/lang/json';
 import { MarketValueService } from 'src/market-value/market-value.service';
 import { PrismaService } from 'src/prisma/prisma.service';

@@ -332,14 +332,6 @@
             }
           },
           {
-            "name": "active",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
             "name": "processType",
             "required": false,
             "in": "query",
@@ -351,6 +343,14 @@
                 "CUSTOM"
               ],
               "type": "string"
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -532,14 +532,7 @@
             "description": "进程检查结果"
           },
           "201": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
+            "description": ""
           }
         },
         "tags": [

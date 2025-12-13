@@ -9,18 +9,19 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  name         String
-  username     String    @unique
-  password     String
-  phone        String?   @unique
-  email        String?   @unique
-  permissions  String[]  @default([])
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @default(now()) @updatedAt
-  needResetPwd Boolean?  @default(true)
-  homePage     String?   @default("/")
-  Session      Session[]
+  id                           Int                            @id @default(autoincrement())
+  name                         String
+  username                     String                         @unique
+  password                     String
+  phone                        String?                        @unique
+  email                        String?                        @unique
+  permissions                  String[]                       @default([])
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @default(now()) @updatedAt
+  needResetPwd                 Boolean?                       @default(true)
+  homePage                     String?                        @default("/")
+  Session                      Session[]
+  SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
 }
 
 model Session {
@@ -98,6 +99,22 @@ model HostServer {
   @@unique([market, brokerKey, companyKey, ssh_host, ssh_port])
 }
 
+enum StrategyLevel {
+  PRODUCT
+  FUND_ACCOUNT
+}
+
+model StrategyConstant {
+  id           Int           @id @default(autoincrement())
+  level        StrategyLevel
+  val          String
+  standardized String
+  desc         String?
+
+  // level, standardized, val 唯一
+  @@unique([level, standardized, val])
+}
+
 model Product {
   id                     Int      @id @default(autoincrement())
   key                    String   @unique
@@ -110,6 +127,8 @@ model Product {
   updatedAt              DateTime @default(now()) @updatedAt
   isValuationEnabled     Boolean  @default(true)
   isTradeAnalysisEnabled Boolean  @default(true)
+  bizLine                String?
+  nominalBenchmarket     String?
 
   FundAccount     FundAccount[]
   company         Company           @relation(fields: [companyKey], references: [key])
@@ -119,6 +138,12 @@ model Product {
   MarginEst       MarginEst[]
   OptionCustodian OptionCustodian[]
   PositionVerify  PositionVerify[]
+}
+
+enum TradeApiType {
+  XTP
+  ATP
+  CTP
 }
 
 model FundAccount {
@@ -146,6 +171,11 @@ model FundAccount {
   RemoteCommand      RemoteCommand[]
   MarketValue        MarketValue[]
   ProcessMonitor     ProcessMonitor[]
+  tradeApiType       TradeApiType?
+
+  executionBenchmark           String?
+  executionStrategy            String?
+  SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
 }
 
 model XTPConfig {
@@ -215,6 +245,9 @@ model InnerFundSnapshot {
   fundAccount  FundAccount             @relation(fields: [fund_account], references: [account])
   record       TransferRecord?         @relation(fields: [recordId], references: [id])
 
+  // 期货专属字段
+  ctpData Json?
+
   @@index([fund_account, market, trade_day(sort: Desc)])
 }
 
@@ -245,6 +278,11 @@ model ExternalFundDatail {
 enum Market {
   SH
   SZ
+  SHFE
+  CZCE
+  DCE
+  CFFEX
+  GFEX
 }
 
 enum FundAccountType {
@@ -277,6 +315,11 @@ enum TransferDirection {
 enum TransferType {
   INNER
   EXTERNAL
+}
+
+enum SubscriptionRedemptionDirection {
+  SUBSCRIPTION // 申购
+  REDEMPTION // 赎回
 }
 
 enum OpsTaskType {
@@ -423,6 +466,18 @@ enum Side {
   SELL
 }
 
+enum PositionDirection {
+  N
+  L
+  S
+}
+
+enum HedgeFlag {
+  S
+  A
+  H
+}
+
 model Position {
   id          Int      @id @default(autoincrement())
   tradeDay    String
@@ -437,7 +492,22 @@ model Position {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @default(now()) @updatedAt
 
+  // 期货专属字段
+  // 持仓方向
+  posiDirection PositionDirection?
+  // 套保标志
+  hedgeFlag     HedgeFlag?
+  // 其他数据
+  ctpData       Json?
+
   @@unique([tradeDay, fundAccount, market, ticker])
+}
+
+enum OffsetFlag {
+  O
+  C
+  T
+  F
 }
 
 model Order {
@@ -462,6 +532,14 @@ model Order {
   productKey  String
   companyKey  String
 
+  // 期货专属字段
+  // 开平标志
+  offsetFlag OffsetFlag?
+  // 套保标志
+  hedgeFlag  HedgeFlag?
+  // 其他数据
+  ctpData    Json?
+
   @@unique([tradeDay, fundAccount, market, ticker, orderRef])
   @@index([tradeDay, fundAccount, orderApiId])
   @@index([tradeDay, fundAccount, orderRef])
@@ -484,6 +562,12 @@ model Trade {
   brokerKey   String
   productKey  String
   companyKey  String
+
+  // 期货专属字段
+  // 开平标志
+  offsetFlag OffsetFlag?
+  // 其他数据
+  ctpData    Json?
 
   @@unique([tradeDay, fundAccount, market, ticker, tradeId])
   @@index([tradeDay, fundAccount, orderApiId])
@@ -835,4 +919,21 @@ model PositionVerify {
   @@index([fund_abbr], name: "idx_position_verify_abbr")
   @@index([verify_date], name: "idx_position_verify_date")
   @@map("position_verify")
+}
+
+// 申赎记录表
+model SubscriptionRedemptionRecord {
+  id           Int                             @id @default(autoincrement())
+  fund_account String
+  direction    SubscriptionRedemptionDirection
+  amount       Float
+  operator     String? // 操作人, user.username
+  remark       String? // 备注 
+  createdAt    DateTime                        @default(now())
+  updatedAt    DateTime                        @default(now()) @updatedAt
+
+  fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
+  operatorUser User?       @relation(fields: [operator], references: [username])
+
+  @@index([fund_account, createdAt(sort: Desc)])
 }

@@ -60,6 +60,7 @@ export const settings = env({
     endpoint: 'http://10.242.0.16:8000/api/v1/pnl/calculate',
   },
   cron: {
+    task_switch: 'on',
     // 每日早8点执行盘前磁盘检查
     before_check_host_server_disk: '0 8 * * *',
     // 每日下午15:30执行盘后磁盘检查

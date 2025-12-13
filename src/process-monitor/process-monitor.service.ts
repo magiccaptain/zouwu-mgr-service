@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
 import {
   OpsWarningStatus,
   OpsWarningType,
@@ -14,6 +13,7 @@ import { NodeSSH } from 'node-ssh';
 
 import { settings } from 'src/config/settings';
 import { HostServerService } from 'src/host_server/host_server.service';
+import { Cron } from 'src/lib/cron';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 interface ProcessInfo {
