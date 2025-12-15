@@ -2,6 +2,7 @@ import path from 'path';
 
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  FundAccountType,
   InnerFundSnapshotReason,
   Market,
   OpsTask,
@@ -201,6 +202,7 @@ export class OpsTaskService {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
+        type: FundAccountType.STOCK,
       },
       include: {
         XTPConfig: true,
@@ -458,6 +460,7 @@ export class OpsTaskService {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
+        type: FundAccountType.STOCK,
       },
       include: {
         XTPConfig: true,
@@ -514,6 +517,7 @@ export class OpsTaskService {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
+        type: FundAccountType.STOCK,
       },
       include: {
         XTPConfig: true,
@@ -563,6 +567,7 @@ export class OpsTaskService {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
+        type: FundAccountType.STOCK,
       },
       include: {
         XTPConfig: true,
@@ -693,6 +698,7 @@ export class OpsTaskService {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
+        type: FundAccountType.STOCK,
       },
     });
 

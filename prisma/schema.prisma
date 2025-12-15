@@ -286,16 +286,10 @@ enum Market {
 }
 
 enum FundAccountType {
+  // 股票账户
   STOCK
-  O
-  O1
-  O2
-  // 互换户
-  W
-  // 托管户
-  T
-  // 外部户
-  E
+  // 期货账户
+  FUTURES
 }
 
 enum InnerFundSnapshotReason {
