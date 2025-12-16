@@ -925,6 +925,8 @@ model SubscriptionRedemptionRecord {
   remark       String? // 备注 
   createdAt    DateTime                        @default(now())
   updatedAt    DateTime                        @default(now()) @updatedAt
+  // 减仓日, 赎回时候使用
+  reduce_day   String?
 
   fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
   operatorUser User?       @relation(fields: [operator], references: [username])

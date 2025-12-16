@@ -10,6 +10,7 @@ import {
   OpsWarningStatus,
   OpsWarningType,
   RemoteCommandType,
+  SubscriptionRedemptionDirection,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -782,6 +783,27 @@ export class OpsTaskService {
           .add(accountInfo.sh_account_cash)
           .add(accountInfo.sz_account_cash)
           .toNumber();
+      }
+
+      // 查询当天的赎回记录，从 totalasset 中减去赎回金额
+      const redemptionRecords =
+        await this.prismaService.subscriptionRedemptionRecord.findMany({
+          where: {
+            fund_account: fundAccount.account,
+            direction: SubscriptionRedemptionDirection.REDEMPTION,
+            reduce_day: tradeDay,
+          },
+        });
+
+      if (redemptionRecords.length > 0) {
+        const totalRedemptionAmount = redemptionRecords.reduce(
+          (sum, record) => sum + record.amount,
+          0
+        );
+        accountInfo.totalasset = accountInfo.totalasset - totalRedemptionAmount;
+        this.logger.log(
+          `FundAccount ${fundAccount.account} 减仓日 ${tradeDay} 赎回金额 ${totalRedemptionAmount}，调整后 totalasset: ${accountInfo.totalasset}`
+        );
       }
 
       // 找到对应的hostserver

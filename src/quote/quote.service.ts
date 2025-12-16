@@ -101,37 +101,52 @@ export class QuoteService {
 
     // 批量处理数据
     if (allIndexWeightData.length > 0) {
-      this.logger.log(
-        `开始批量处理 ${allIndexWeightData.length} 条指数权重数据`
-      );
+      this.logger.log(`开始插入 ${allIndexWeightData.length} 条指数权重数据`);
 
-      // 使用事务进行批量操作
-      await this.prismaService.$transaction(async (prisma) => {
-        // 分批处理，每批1000条记录
-        const batchSize = 1000;
-        for (let i = 0; i < allIndexWeightData.length; i += batchSize) {
-          const batch = allIndexWeightData.slice(i, i + batchSize);
+      // 每批处理 50 条，控制并发数避免数据库连接池耗尽
+      const batchSize = 100;
+      const batches = [];
+      for (let i = 0; i < allIndexWeightData.length; i += batchSize) {
+        batches.push(allIndexWeightData.slice(i, i + batchSize));
+      }
 
-          // 先删除可能存在的记录
-          const tradeDts = [...new Set(batch.map((item) => item.trade_dt))];
-          const codes = [...new Set(batch.map((item) => item.code))];
-          const symbols = [...new Set(batch.map((item) => item.symbol))];
-
-          await prisma.indexWeight.deleteMany({
-            where: {
-              trade_dt: { in: tradeDts },
-              code: { in: codes },
-              symbol: { in: symbols },
-            },
-          });
-
-          // 批量插入新记录
-          await prisma.indexWeight.createMany({
-            data: batch,
-            skipDuplicates: true,
-          });
-        }
-      });
+      for (let i = 0; i < batches.length; i++) {
+        const batch = batches[i];
+        await Promise.all(
+          batch.map((item) =>
+            this.prismaService.indexWeight.upsert({
+              where: {
+                trade_dt_code_symbol: {
+                  trade_dt: item.trade_dt,
+                  code: item.code,
+                  symbol: item.symbol,
+                },
+              },
+              create: {
+                date: item.date,
+                code: item.code,
+                symbol: item.symbol,
+                trade_dt: item.trade_dt,
+                i_weight: item.i_weight,
+                updatetime: item.updatetime,
+              },
+              update: {
+                date: item.date,
+                code: item.code,
+                symbol: item.symbol,
+                trade_dt: item.trade_dt,
+                i_weight: item.i_weight,
+                updatetime: item.updatetime,
+              },
+            })
+          )
+        );
+        this.logger.debug(
+          `已处理 ${Math.min((i + 1) * batchSize, allIndexWeightData.length)}/${
+            allIndexWeightData.length
+          } 条记录`
+        );
+      }
 
       this.logger.log(
         `批量处理完成，共处理 ${allIndexWeightData.length} 条记录`
