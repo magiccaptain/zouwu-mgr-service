@@ -87,7 +87,7 @@ export class QuoteService {
           line.split(',');
 
         allIndexWeightData.push({
-          date: dayjs(trade_dt, 'YYYYMMDD').toDate(),
+          date: dayjs().toDate(),
           code: code,
           symbol: symbol,
           trade_dt: dayjs(trade_dt, 'YYYYMMDD HH:mm:ss.SSS').format(

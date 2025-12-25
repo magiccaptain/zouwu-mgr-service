@@ -176,6 +176,7 @@ model FundAccount {
   executionBenchmark           String?
   executionStrategy            String?
   SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
+  futuresAccountInfos          FuturesAccountInfo[]
 }
 
 model XTPConfig {
@@ -273,6 +274,18 @@ model ExternalFundDatail {
   fund_account String      @unique
   balance      Float
   fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
+}
+
+model AlphaIndexWeight {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  code       String // 指数代码
+  symbol     String // 股票代码 688001.SH
+  trade_dt   String // 交易日期
+  i_weight   Float // 权重
+  updatetime DateTime
+
+  @@unique([trade_dt, code, symbol])
 }
 
 enum Market {
@@ -932,4 +945,34 @@ model SubscriptionRedemptionRecord {
   operatorUser User?       @relation(fields: [operator], references: [username])
 
   @@index([fund_account, createdAt(sort: Desc)])
+}
+
+// 期货账户信息表
+model FuturesAccountInfo {
+  id             Int         @id @default(autoincrement())
+  fund_account   String
+  userID         String
+  investorID     String
+  preMortgage    Decimal     @db.Decimal(18, 2)
+  preCredit      Decimal     @db.Decimal(18, 2)
+  preBalance     Decimal     @db.Decimal(18, 2)
+  deposit        Decimal     @db.Decimal(18, 2)
+  withdraw       Decimal     @db.Decimal(18, 2)
+  frozenMargin   Decimal     @db.Decimal(18, 2)
+  frozenFee      Decimal     @db.Decimal(18, 2)
+  currMargin     Decimal     @db.Decimal(18, 2)
+  fee            Decimal     @db.Decimal(18, 2)
+  closeProfit    Decimal     @db.Decimal(18, 2)
+  positionProfit Decimal     @db.Decimal(18, 2)
+  balance        Decimal     @db.Decimal(18, 2)
+  available      Decimal     @db.Decimal(18, 2)
+  tradingDay     String
+  updateTime     String
+  currencyID     String
+  createdAt      DateTime    @default(now())
+  FundAccount    FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@unique([fund_account, tradingDay])
+  @@index([fund_account], map: "idx_futures_account_info_fund")
+  @@index([tradingDay], map: "idx_futures_account_info_day")
 }

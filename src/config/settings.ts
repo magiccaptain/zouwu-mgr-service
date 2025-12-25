@@ -59,6 +59,10 @@ export const settings = env({
   val_calc: {
     endpoint: 'http://10.242.0.16:8000/api/v1/pnl/calculate',
   },
+  feishu: {
+    maintenance_webhook:
+      'https://open.feishu.cn/open-apis/bot/v2/hook/53315122-106b-4b2a-b8fb-38c7c8c4ca08',
+  },
   cron: {
     task_switch: 'on',
     // 每日早8点执行盘前磁盘检查

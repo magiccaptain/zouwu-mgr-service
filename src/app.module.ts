@@ -8,6 +8,7 @@ import MemCache from 'memcache-pp';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
+import { FeishuModule } from './feishu/feishu.module';
 import { FundAccountModule } from './fund_account/fund_account.module';
 import { HelloController } from './hello.controller';
 import { HostServerModule } from './host_server/host_server.module';
@@ -45,6 +46,7 @@ import { WarningModule } from './warning/warning.module';
     QuoteModule,
     MarketValueModule,
     ValCalcModule,
+    FeishuModule,
   ],
   controllers: [HelloController],
 })

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { FeishuModule } from 'src/feishu/feishu.module';
 import { FundAccountModule } from 'src/fund_account';
 import { HostServerModule } from 'src/host_server/host_server.module';
 import { MarketValueModule } from 'src/market-value/market-value.module';
@@ -21,6 +22,7 @@ import { OpsTaskService } from './ops-task.service';
     QuoteModule,
     MarketValueModule,
     ValCalcModule,
+    FeishuModule,
   ],
   providers: [OpsTaskService],
 })

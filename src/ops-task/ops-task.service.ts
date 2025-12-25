@@ -18,6 +18,7 @@ import { flatten, isEmpty } from 'lodash';
 
 import { settings } from 'src/config';
 import { MarketCode } from 'src/config/constants';
+import { FeishuService } from 'src/feishu/feishu.service';
 import { FundAccountService, InnerSnapshotFromServer } from 'src/fund_account';
 import { HostServerService } from 'src/host_server/host_server.service';
 import { Cron } from 'src/lib/cron';
@@ -41,7 +42,8 @@ export class OpsTaskService {
     private readonly warningService: WarningService,
     private readonly quoteService: QuoteService,
     private readonly marketValueService: MarketValueService,
-    private readonly valCalcService: ValCalcService
+    private readonly valCalcService: ValCalcService,
+    private readonly feishuService: FeishuService
   ) {}
 
   async checkHostServerDiskTask(task: OpsTask) {
@@ -77,7 +79,19 @@ export class OpsTaskService {
 
     // 自动处理
     for (const warning of warnings) {
-      await this.warningService.handleDiskFullWarning(warning);
+      const updatedWarning = await this.warningService.handleDiskFullWarning(
+        warning
+      );
+
+      if (updatedWarning.status === OpsWarningStatus.AUTO_DONE) {
+        await this.feishuService.notifyMaintenance(
+          `${updatedWarning.hostServer.ssh_port} 磁盘空间不足 已自动处理`
+        );
+      } else {
+        await this.feishuService.notifyMaintenance(
+          `${updatedWarning.hostServer.ssh_port} 磁盘空间不足 自动处理失败`
+        );
+      }
     }
   }
 
@@ -273,6 +287,10 @@ export class OpsTaskService {
             stderr
           );
 
+          await this.feishuService.notifyMaintenance(
+            `${hostServer.ssh_port} 资金账户同步失败 ${brokerKey} ${fund_account} ${market}`
+          );
+
           return await this.prismaService.opsWarning.create({
             data: {
               trade_day,
@@ -317,6 +335,11 @@ export class OpsTaskService {
             stdout,
             stderr
           );
+
+          await this.feishuService.notifyMaintenance(
+            `${hostServer.ssh_port} 资金账户同步失败 未找到数据 ${brokerKey} ${fund_account} ${market}`
+          );
+
           return await this.prismaService.opsWarning.create({
             data: {
               trade_day,
@@ -409,6 +432,10 @@ export class OpsTaskService {
 
     await this.startSyncFundAccountTask(task);
 
+    await this.feishuService.notifyMaintenance(
+      `盘前资金账户同步完成 ${task.trade_day}`
+    );
+
     this.logger.log('盘前资金账户同步完成');
     return;
   }
@@ -425,6 +452,10 @@ export class OpsTaskService {
     });
 
     await this.startSyncFundAccountTask(task);
+
+    await this.feishuService.notifyMaintenance(
+      `盘后资金账户同步完成 ${task.trade_day}`
+    );
 
     this.logger.log('盘后资金账户同步完成');
     return;
@@ -444,6 +475,8 @@ export class OpsTaskService {
     await this.quoteService.queryQuote();
 
     this.logger.log('盘后行情brief数据同步完成');
+
+    await this.feishuService.notifyMaintenance(`盘后行情brief数据同步完成`);
     return;
   }
 
@@ -484,6 +517,7 @@ export class OpsTaskService {
           );
         } catch (error) {
           this.logger.error(error);
+
           await this.prismaService.opsWarning.create({
             data: {
               trade_day: dayjs().format('YYYY-MM-DD'),
@@ -496,11 +530,18 @@ export class OpsTaskService {
               },
             },
           });
+
+          await this.feishuService.notifyMaintenance(
+            `FundAccount ${fundAccount.account} ${market} 持仓数据同步失败`
+          );
         }
       }
     }
 
     this.logger.log('盘后持仓数据同步完成');
+
+    await this.feishuService.notifyMaintenance(`盘后持仓数据同步完成`);
+
     return;
   }
 
@@ -536,6 +577,7 @@ export class OpsTaskService {
           await this.fundAccountService.queryOrder(fundAccount, market, task);
         } catch (error) {
           this.logger.error(error);
+
           await this.prismaService.opsWarning.create({
             data: {
               trade_day: dayjs().format('YYYY-MM-DD'),
@@ -548,10 +590,15 @@ export class OpsTaskService {
               text: ` FundAccount ${fundAccount.account} market ${market} 订单数据同步失败 ${error.message}`,
             },
           });
+
+          await this.feishuService.notifyMaintenance(
+            `FundAccount ${fundAccount.account} ${market} 订单数据同步失败`
+          );
         }
       }
     }
     this.logger.log('盘后订单数据同步完成');
+    await this.feishuService.notifyMaintenance(`盘后订单数据同步完成`);
     return;
   }
 
@@ -598,11 +645,18 @@ export class OpsTaskService {
               text: ` FundAccount ${fundAccount.account} market ${market} 交易数据同步失败 ${error.message}`,
             },
           });
+
+          await this.feishuService.notifyMaintenance(
+            `FundAccount ${fundAccount.account} ${market} 交易数据同步失败`
+          );
         }
       }
     }
 
     this.logger.log('盘后交易数据同步完成');
+
+    await this.feishuService.notifyMaintenance(`盘后交易数据同步完成`);
+
     return;
   }
 
@@ -733,6 +787,9 @@ export class OpsTaskService {
         this.logger.error(
           `FundAccount ${fundAccount.account} 没有上海现金数据`
         );
+        await this.feishuService.notifyMaintenance(
+          `托管机写入资金账户数据 ${fundAccount.account} 没有上海现金数据`
+        );
       } else {
         accountInfo.sh_account_cash = sh_snapshot.balance;
       }
@@ -740,6 +797,9 @@ export class OpsTaskService {
       if (!sz_snapshot) {
         this.logger.error(
           `FundAccount ${fundAccount.account} 没有深圳现金数据`
+        );
+        await this.feishuService.notifyMaintenance(
+          `托管机写入资金账户数据 ${fundAccount.account} 没有深圳现金数据`
         );
       } else {
         accountInfo.sz_account_cash = sz_snapshot.balance;
@@ -759,6 +819,9 @@ export class OpsTaskService {
 
       if (!lastMarketValue) {
         this.logger.error(`FundAccount ${fundAccount.account} 没有市值数据`);
+        await this.feishuService.notifyMaintenance(
+          `托管机写入资金账户数据 ${fundAccount.account} 没有市值数据`
+        );
         accountInfo.totalasset =
           accountInfo.sh_account_cash + accountInfo.sz_account_cash;
       } else {
@@ -803,6 +866,9 @@ export class OpsTaskService {
         accountInfo.totalasset = accountInfo.totalasset - totalRedemptionAmount;
         this.logger.log(
           `FundAccount ${fundAccount.account} 减仓日 ${tradeDay} 赎回金额 ${totalRedemptionAmount}，调整后 totalasset: ${accountInfo.totalasset}`
+        );
+        await this.feishuService.notifyMaintenance(
+          `托管机写入资金账户数据 ${fundAccount.account} 减仓日 ${tradeDay} 赎回金额 ${totalRedemptionAmount}，调整后 totalasset: ${accountInfo.totalasset}`
         );
       }
 
@@ -893,6 +959,7 @@ export class OpsTaskService {
           this.logger.error(
             `FundAccount ${fundAccount.account} 远程目录 ${remote_trade_dir} 创建失败`
           );
+
           continue;
         }
 
@@ -938,6 +1005,9 @@ export class OpsTaskService {
           this.logger.error(
             `FundAccount ${fundAccount.account} 远程文件 ${remote_trade_dir}/account_info.json 写入失败`
           );
+          await this.feishuService.notifyMaintenance(
+            `托管机写入资金账户数据 ${fundAccount.account} ${hostServer.brokerKey} ${hostServer.ssh_port} 失败`
+          );
           continue;
         }
 
@@ -951,5 +1021,7 @@ export class OpsTaskService {
         );
       }
     }
+
+    await this.feishuService.notifyMaintenance(`托管机写入资金账户数据完成`);
   }
 }

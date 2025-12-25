@@ -105,7 +105,7 @@ export class WarningService {
     return await this.hostServerService.checkDisk(hostServer);
   }
 
-  async handleDiskFullWarning(warning: OpsWarning): Promise<void> {
+  async handleDiskFullWarning(warning: OpsWarning): Promise<OpsWarning> {
     const { hostServer } = warning;
 
     let status: OpsWarningStatus = OpsWarningStatus.AUTO_DONE;
@@ -116,7 +116,7 @@ export class WarningService {
       status = OpsWarningStatus.AUTO_ERROR;
     }
 
-    await this.prismaService.opsWarning.update({
+    return await this.prismaService.opsWarning.update({
       where: { id: warning.id },
       data: {
         status,
