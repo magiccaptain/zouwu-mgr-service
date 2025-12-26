@@ -31,7 +31,11 @@ async function main() {
       ? fund_account.XTPConfig.map((c) => c.market)
       : fund_account.ATPConfig.map((c) => c.market);
 
-    if (fund_account.brokerKey !== 'zhongxin') {
+    // if (fund_account.brokerKey !== 'zhongxin') {
+    //   continue;
+    // }
+
+    if (fund_account.account !== '109277002626') {
       continue;
     }
 
@@ -39,6 +43,10 @@ async function main() {
 
     for (const market of markets) {
       console.log(market);
+
+      // if (market === 'SH') {
+      //   continue;
+      // }
 
       try {
         await fundAccountService.queryPosition(fund_account, market);

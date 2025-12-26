@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import fetch from 'node-fetch';
 
 import { settings } from 'src/config';
 
@@ -22,10 +23,11 @@ export class FeishuService {
       }),
     });
 
-    if (ret.status !== 204) {
+    if (ret.status !== 200) {
       this.logger.error('NotifyMaintenance error', ret);
     } else {
       this.logger.log(`NotifyMaintenance success: ${msg}`);
     }
+    return ret;
   }
 }

@@ -26,9 +26,9 @@ async function main() {
   });
 
   for (const fundAccount of fundAccounts) {
-    // if (fundAccount.account !== '109277002626') {
-    //   continue;
-    // }
+    if (fundAccount.account !== '109277002626') {
+      continue;
+    }
 
     await marketValueService.calcMarketValue(fundAccount, tradeDay);
 
