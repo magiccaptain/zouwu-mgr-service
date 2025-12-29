@@ -20,6 +20,7 @@ import {
 import { ProcessType } from '@prisma/client';
 
 import { CreateProcessMonitorDto } from './dto/create-process-monitor.dto';
+import { SyncConfigFileDto } from './dto/sync-config-file.dto';
 import { UpdateProcessMonitorDto } from './dto/update-process-monitor.dto';
 import { ProcessMonitorService } from './process-monitor.service';
 
@@ -228,5 +229,24 @@ export class ProcessMonitorController {
   @Post('/:id/@kill')
   async killProcess(@Param('id', ParseIntPipe) id: number) {
     return await this.processMonitorService.killProcess(id);
+  }
+
+  /**
+   * 同步配置文件到 HostServer
+   */
+  @ApiOperation({
+    operationId: 'syncConfigFile',
+    summary: '同步配置文件到 HostServer',
+    description:
+      '将配置文件内容通过 SSH 同步到对应的 HostServer 上，并更新 ProcessMonitor 的 configs 字段',
+  })
+  @ApiOkResponse({ description: '配置文件同步成功' })
+  @Post('/sync-config-file')
+  async syncConfigFile(@Body() dto: SyncConfigFileDto) {
+    return await this.processMonitorService.syncConfigFile(
+      dto.processMonitorId,
+      dto.config_file,
+      dto.cfg
+    );
   }
 }

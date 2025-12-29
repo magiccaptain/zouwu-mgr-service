@@ -683,22 +683,25 @@ enum ProcessStatusType {
 
 // 进程监控配置表
 model ProcessMonitor {
-  id                 Int         @id @default(autoincrement())
-  name               String // 进程名称/标识
-  start_command      String? // 启动命令
-  process_type       ProcessType // 进程类型
-  hostServerId       Int // 关联的 HostServer
-  fund_account       String? // 如果是交易程序，关联 FundAccount
+  id              Int         @id @default(autoincrement())
+  name            String // 进程名称/标识
+  start_command   String? // 启动命令
+  process_type    ProcessType // 进程类型
+  hostServerId    Int // 关联的 HostServer
+  fund_account    String? // 如果是交易程序，关联 FundAccount
   // 进程识别方式（支持多种方式）
-  process_name       String? // 进程名称（用于 ps 命令匹配）
-  command_pattern    String? // 命令模式（用于更精确匹配）
+  process_name    String? // 进程名称（用于 ps 命令匹配）
+  command_pattern String? // 命令模式（用于更精确匹配）
   // 配置文件, 可能有多个
-  config_files       String[]    @default([]) // 配置文件路径
-  log_files          String[]    @default([]) // 日志文件路径
-  pid_file           String? // PID 文件路径
+  config_files    String[]    @default([]) // 配置文件路径
+  log_files       String[]    @default([]) // 日志文件路径
+  pid_file        String? // PID 文件路径
+
+  configs Json[] // 配置
+
   // 监控配置
-  active             Boolean     @default(true) // 是否启用监控
-  check_interval     Int         @default(60) // 检查间隔（秒）
+  active             Boolean   @default(true) // 是否启用监控
+  check_interval     Int       @default(60) // 检查间隔（秒）
   monitor_start_time DateTime? // 监控开始时间（可选，用于限制监控时间范围）
   monitor_end_time   DateTime? // 监控结束时间（可选，用于限制监控时间范围）
   // 告警阈值（可选）
@@ -706,8 +709,8 @@ model ProcessMonitor {
   memory_threshold   Float? // 内存使用率告警阈值（0-100）
   // 元数据
   remark             String? // 备注
-  createdAt          DateTime    @default(now())
-  updatedAt          DateTime    @default(now()) @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @default(now()) @updatedAt
 
   hostServer    HostServer      @relation(fields: [hostServerId], references: [id], onDelete: Cascade)
   fundAccount   FundAccount?    @relation(fields: [fund_account], references: [account], onDelete: SetNull)

@@ -1,3 +1,7 @@
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+
 import { Injectable, Logger } from '@nestjs/common';
 import {
   OpsWarningStatus,
@@ -952,6 +956,110 @@ export class ProcessMonitorService {
       );
       throw error;
     } finally {
+      ssh?.dispose();
+    }
+  }
+
+  /**
+   * 同步配置文件到 HostServer
+   */
+  async syncConfigFile(
+    processMonitorId: number,
+    configFile: string,
+    content: string
+  ): Promise<{ success: boolean; message: string }> {
+    // 查询 ProcessMonitor 及其关联的 HostServer
+    const processMonitor = await this.prismaService.processMonitor.findUnique({
+      where: { id: processMonitorId },
+      include: {
+        hostServer: true,
+      },
+    });
+
+    if (!processMonitor) {
+      throw new Error(`ProcessMonitor ${processMonitorId} not found`);
+    }
+
+    const hostServer = processMonitor.hostServer;
+
+    if (!hostServer.ssh_host || !hostServer.ssh_port || !hostServer.ssh_user) {
+      throw new Error(
+        `HostServer ${hostServer.id} SSH configuration is incomplete`
+      );
+    }
+
+    const ssh = await this.hostServerService.connect(hostServer);
+
+    // 创建临时文件
+    const tempFilePath = path.join(
+      os.tmpdir(),
+      `config_${processMonitorId}_${Date.now()}_${path.basename(configFile)}`
+    );
+
+    try {
+      // 确保目录存在
+      const lastSlashIndex = configFile.lastIndexOf('/');
+      if (lastSlashIndex > 0) {
+        const dirPath = configFile.substring(0, lastSlashIndex);
+        await ssh.execCommand(`mkdir -p "${dirPath}"`);
+      }
+
+      // 写入内容到临时文件
+      fs.writeFileSync(tempFilePath, content, 'utf-8');
+
+      // 上传文件到远程服务器
+      await ssh.putFile(tempFilePath, configFile);
+
+      // 更新 ProcessMonitor 的 configs 字段
+      const existingConfigs = (processMonitor.configs || []) as Array<{
+        config_file: string;
+        cfg: string;
+      }>;
+
+      // 查找是否已存在该配置文件
+      const configIndex = existingConfigs.findIndex(
+        (c) => c.config_file === configFile
+      );
+
+      const updatedConfig = {
+        config_file: configFile,
+        cfg: content,
+      };
+
+      if (configIndex >= 0) {
+        // 更新现有配置
+        existingConfigs[configIndex] = updatedConfig;
+      } else {
+        // 添加新配置
+        existingConfigs.push(updatedConfig);
+      }
+
+      await this.prismaService.processMonitor.update({
+        where: { id: processMonitorId },
+        data: {
+          configs: existingConfigs as any,
+        },
+      });
+
+      this.logger.log(
+        `Successfully synced config file ${configFile} for ProcessMonitor ${processMonitorId}`
+      );
+
+      return {
+        success: true,
+        message: `Successfully synced config file ${configFile}`,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to sync config file for ProcessMonitor ${processMonitorId}: ${error.message}`,
+        error.stack
+      );
+      throw error;
+    } finally {
+      // 删除临时文件
+      if (fs.existsSync(tempFilePath)) {
+        fs.unlinkSync(tempFilePath);
+      }
       ssh?.dispose();
     }
   }

@@ -228,10 +228,21 @@ export async function seedProcessMonitor(prisma: PrismaClient) {
   await init_quote_server(12706, prisma);
   await init_quote_server(12752, prisma);
 
+  // zhisui
   await init_trade_server(12730, ['109277002626'], prisma);
-  await init_trade_server(13702, ['109180010410'], prisma);
-  await init_trade_server(12714, ['109180010410'], prisma);
   await init_trade_server(12760, ['109277002626'], prisma);
+
+  // zouwu
+  await init_trade_server(
+    13702,
+    ['109180010410', '109004038415', '109004038416'],
+    prisma
+  );
+  await init_trade_server(
+    12714,
+    ['109180010410', '109004038415', '109004038416'],
+    prisma
+  );
 
   // 国君
   await init_quote_server(12724, prisma);
@@ -271,8 +282,16 @@ export async function seedProcessMonitor(prisma: PrismaClient) {
   // 中信
   await init_quote_server(12856, prisma);
 
-  await init_trade_server(12852, ['101800002107', '101800002923'], prisma);
-  await init_trade_server(12854, ['101800002107', '101800002923'], prisma);
+  await init_trade_server(
+    12852,
+    ['101800002107', '101800002923', '101800002922', '101800003112'],
+    prisma
+  );
+  await init_trade_server(
+    12854,
+    ['101800002107', '101800002923', '101800002922', '101800003112'],
+    prisma
+  );
 
   // 中金
   await init_quote_server(12774, prisma);
