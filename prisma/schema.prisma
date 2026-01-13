@@ -1,10 +1,12 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["public", "operational"]
   // shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
@@ -22,6 +24,8 @@ model User {
   homePage                     String?                        @default("/")
   Session                      Session[]
   SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
+
+  @@schema("public")
 }
 
 model Session {
@@ -32,6 +36,8 @@ model Session {
   updatedAt DateTime @default(now()) @updatedAt
   expireAt  DateTime
   user      User     @relation(fields: [userId], references: [id])
+
+  @@schema("public")
 }
 
 model Broker {
@@ -42,6 +48,8 @@ model Broker {
   updatedAt   DateTime      @default(now()) @updatedAt
   FundAccount FundAccount[]
   HostServer  HostServer[]
+
+  @@schema("public")
 }
 
 model Company {
@@ -53,6 +61,20 @@ model Company {
   FundAccount FundAccount[]
   HostServer  HostServer[]
   Product     Product[]
+
+  @@schema("public")
+}
+
+// 托管方
+model Custodian {
+  id        Int       @id @default(autoincrement())
+  name      String
+  key       String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  product   Product[]
+
+  @@schema("public")
 }
 
 model HostServer {
@@ -97,11 +119,14 @@ model HostServer {
   ProcessMonitor ProcessMonitor[]
 
   @@unique([market, brokerKey, companyKey, ssh_host, ssh_port])
+  @@schema("public")
 }
 
 enum StrategyLevel {
   PRODUCT
   FUND_ACCOUNT
+
+  @@schema("public")
 }
 
 model StrategyConstant {
@@ -113,6 +138,7 @@ model StrategyConstant {
 
   // level, standardized, val 唯一
   @@unique([level, standardized, val])
+  @@schema("public")
 }
 
 model Product {
@@ -129,54 +155,63 @@ model Product {
   isTradeAnalysisEnabled Boolean  @default(true)
   bizLine                String?
   nominalBenchmarket     String?
+  custodianKey           String?
 
   FundAccount     FundAccount[]
   company         Company           @relation(fields: [companyKey], references: [key])
+  custodian       Custodian?        @relation(fields: [custodianKey], references: [key])
   NavCustodian    NavCustodian[]
   NavEst          NavEst[]
   MarginCustodian MarginCustodian[]
   MarginEst       MarginEst[]
   OptionCustodian OptionCustodian[]
   PositionVerify  PositionVerify[]
+
+  @@schema("public")
 }
 
 enum TradeApiType {
   XTP
   ATP
   CTP
+
+  @@schema("public")
 }
 
 model FundAccount {
-  id                 Int                 @id @default(autoincrement())
-  account            String              @unique
-  brokerKey          String
-  productKey         String
-  companyKey         String
-  type               FundAccountType     @default(STOCK)
-  active             Boolean             @default(true)
-  remark             String?
-  branch             String?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @default(now()) @updatedAt
-  isTransferEnabled  Boolean             @default(true)
-  ATPConfig          ATPConfig[]
-  ExternalFundDatail ExternalFundDatail?
-  broker             Broker              @relation(fields: [brokerKey], references: [key])
-  company            Company             @relation(fields: [companyKey], references: [key])
-  product            Product             @relation(fields: [productKey], references: [key])
-  InnerFundSnapshot  InnerFundSnapshot[]
-  TransferRecord     TransferRecord[]
-  XTPConfig          XTPConfig[]
-  OpsWarning         OpsWarning[]
-  RemoteCommand      RemoteCommand[]
-  MarketValue        MarketValue[]
-  ProcessMonitor     ProcessMonitor[]
-  tradeApiType       TradeApiType?
+  id                     Int                 @id @default(autoincrement())
+  account                String              @unique
+  brokerKey              String
+  productKey             String
+  companyKey             String
+  type                   FundAccountType     @default(STOCK)
+  active                 Boolean             @default(true)
+  remark                 String?
+  branch                 String?
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @default(now()) @updatedAt
+  isTransferEnabled      Boolean             @default(true)
+  isTradeAnalysisEnabled Boolean             @default(true)
+  ATPConfig              ATPConfig[]
+  ExternalFundDatail     ExternalFundDatail?
+  broker                 Broker              @relation(fields: [brokerKey], references: [key])
+  company                Company             @relation(fields: [companyKey], references: [key])
+  product                Product             @relation(fields: [productKey], references: [key])
+  InnerFundSnapshot      InnerFundSnapshot[]
+  TransferRecord         TransferRecord[]
+  XTPConfig              XTPConfig[]
+  OpsWarning             OpsWarning[]
+  RemoteCommand          RemoteCommand[]
+  MarketValue            MarketValue[]
+  ProcessMonitor         ProcessMonitor[]
+  tradeApiType           TradeApiType?
 
   executionBenchmark           String?
   executionStrategy            String?
   SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
   futuresAccountInfos          FuturesAccountInfo[]
+
+  @@schema("public")
 }
 
 model XTPConfig {
@@ -196,6 +231,7 @@ model XTPConfig {
   fundAccount        FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([fund_account, market])
+  @@schema("public")
 }
 
 model ATPConfig {
@@ -227,6 +263,7 @@ model ATPConfig {
   fundAccount               FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([fund_account, market])
+  @@schema("public")
 }
 
 model InnerFundSnapshot {
@@ -250,6 +287,7 @@ model InnerFundSnapshot {
   ctpData Json?
 
   @@index([fund_account, market, trade_day(sort: Desc)])
+  @@schema("public")
 }
 
 model TransferRecord {
@@ -267,6 +305,7 @@ model TransferRecord {
   fundAccount  FundAccount         @relation(fields: [fund_account], references: [account])
 
   @@index([fund_account, market, trade_day(sort: Desc)])
+  @@schema("public")
 }
 
 model ExternalFundDatail {
@@ -274,6 +313,8 @@ model ExternalFundDatail {
   fund_account String      @unique
   balance      Float
   fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@schema("public")
 }
 
 model AlphaIndexWeight {
@@ -286,16 +327,20 @@ model AlphaIndexWeight {
   updatetime DateTime
 
   @@unique([trade_dt, code, symbol])
+  @@schema("public")
 }
 
 enum Market {
   SH
   SZ
+  STOCK_ALL
   SHFE
   CZCE
   DCE
   CFFEX
   GFEX
+
+  @@schema("public")
 }
 
 enum FundAccountType {
@@ -303,6 +348,8 @@ enum FundAccountType {
   STOCK
   // 期货账户
   FUTURES
+
+  @@schema("public")
 }
 
 enum InnerFundSnapshotReason {
@@ -312,21 +359,29 @@ enum InnerFundSnapshotReason {
   SYNC
   BEFORE_TRANSFER
   AFTER_TRANSFER
+
+  @@schema("public")
 }
 
 enum TransferDirection {
   IN
   OUT
+
+  @@schema("public")
 }
 
 enum TransferType {
   INNER
   EXTERNAL
+
+  @@schema("public")
 }
 
 enum SubscriptionRedemptionDirection {
   SUBSCRIPTION // 申购
   REDEMPTION // 赎回
+
+  @@schema("public")
 }
 
 enum OpsTaskType {
@@ -351,6 +406,8 @@ enum OpsTaskType {
   AFTER_CALC_PNL
   // 盘前写入资金数据
   BEFORE_WRITE_FUND_DATA
+
+  @@schema("public")
 }
 
 model OpsTask {
@@ -365,6 +422,7 @@ model OpsTask {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index([trade_day(sort: Desc)])
+  @@schema("public")
 }
 
 enum OpsWarningStatus {
@@ -372,6 +430,8 @@ enum OpsWarningStatus {
   MANUAL_DONE
   AUTO_DONE
   AUTO_ERROR
+
+  @@schema("public")
 }
 
 enum OpsWarningType {
@@ -394,6 +454,8 @@ enum OpsWarningType {
   PROCESS_HIGH_MEMORY
   // 进程检查失败
   PROCESS_CHECK_FAILED
+
+  @@schema("public")
 }
 
 model OpsWarning {
@@ -416,12 +478,15 @@ model OpsWarning {
   remoteCommand RemoteCommand? @relation(fields: [remoteCommandId], references: [id])
 
   @@index([trade_day(sort: Desc)])
+  @@schema("public")
 }
 
 enum RemoteCommandStatus {
   PENDING
   DONE
   ERROR
+
+  @@schema("public")
 }
 
 enum RemoteCommandType {
@@ -441,6 +506,8 @@ enum RemoteCommandType {
   PKILL_TRADER_TOOL
   // 未知类型
   UNKNOWN
+
+  @@schema("public")
 }
 
 model RemoteCommand {
@@ -466,23 +533,30 @@ model RemoteCommand {
   OpsWarning  OpsWarning[]
 
   @@index([hostServerId, trade_day(sort: Desc)])
+  @@schema("public")
 }
 
 enum Side {
   BUY
   SELL
+
+  @@schema("public")
 }
 
 enum PositionDirection {
   N
   L
   S
+
+  @@schema("public")
 }
 
 enum HedgeFlag {
   S
   A
   H
+
+  @@schema("public")
 }
 
 model Position {
@@ -508,6 +582,7 @@ model Position {
   ctpData       Json?
 
   @@unique([tradeDay, fundAccount, market, ticker])
+  @@schema("public")
 }
 
 enum OffsetFlag {
@@ -515,6 +590,8 @@ enum OffsetFlag {
   C
   T
   F
+
+  @@schema("public")
 }
 
 model Order {
@@ -550,6 +627,7 @@ model Order {
   @@unique([tradeDay, fundAccount, market, ticker, orderRef])
   @@index([tradeDay, fundAccount, orderApiId])
   @@index([tradeDay, fundAccount, orderRef])
+  @@schema("public")
 }
 
 model Trade {
@@ -580,6 +658,7 @@ model Trade {
   @@index([tradeDay, fundAccount, orderApiId])
   @@index([tradeDay, fundAccount, orderRef])
   @@index([tradeDay, fundAccount, tradeId])
+  @@schema("public")
 }
 
 // 行情简要
@@ -602,6 +681,7 @@ model QuoteBrief {
   updatedAt         DateTime @default(now()) @updatedAt
 
   @@unique([tradeDay, ticker, market])
+  @@schema("public")
 }
 
 // 市值表
@@ -620,12 +700,17 @@ model MarketValue {
   close_price_date String?
 
   fund_account String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now()) @updatedAt
+
+  // 市值占比
+  market_value_ratio Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   fundAccount FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([trade_day, fund_account, ticker, market])
+  @@schema("public")
 }
 
 // 指数权重表
@@ -639,6 +724,7 @@ model IndexWeight {
   updatetime DateTime
 
   @@unique([trade_dt, code, symbol])
+  @@schema("public")
 }
 
 // 资金账户日盈亏表
@@ -663,6 +749,7 @@ model DailyPnl {
   companyKey String
 
   @@unique([trade_day, fund_account])
+  @@schema("public")
 }
 
 // 进程类型枚举
@@ -671,6 +758,8 @@ enum ProcessType {
   QUOTE // 行情程序
   COMMUNICATION // 通信程序
   CUSTOM // 自定义进程
+
+  @@schema("public")
 }
 
 // 进程状态类型枚举
@@ -679,6 +768,8 @@ enum ProcessStatusType {
   STOPPED // 已停止
   ERROR // 检查错误
   NOT_FOUND // 未找到进程
+
+  @@schema("public")
 }
 
 // 进程监控配置表
@@ -718,6 +809,7 @@ model ProcessMonitor {
 
   @@unique([hostServerId, name])
   @@index([hostServerId, active])
+  @@schema("public")
 }
 
 // 进程状态表
@@ -747,6 +839,7 @@ model ProcessStatus {
   @@index([processMonitorId, checked_at(sort: Desc)])
   @@index([checked_at(sort: Desc)])
   @@index([trade_day, checked_at(sort: Desc)])
+  @@schema("public")
 }
 
 // =============================================================================
@@ -797,6 +890,7 @@ model NavCustodian {
   @@index([fund_abbr], name: "idx_nav_custodian_abbr")
   @@index([nav_date], name: "idx_nav_custodian_date")
   @@map("nav_custodian")
+  @@schema("public")
 }
 
 // 预估净值表
@@ -843,6 +937,7 @@ model NavEst {
   @@index([fund_abbr], name: "idx_nav_est_abbr")
   @@index([estimate_date], name: "idx_nav_est_date")
   @@map("nav_est")
+  @@schema("public")
 }
 
 // 托管保证金表（真实值，从 swap 文件解析）
@@ -864,6 +959,7 @@ model MarginCustodian {
   @@index([fund_abbr], name: "idx_margin_custodian_abbr")
   @@index([margin_date], name: "idx_margin_custodian_date")
   @@map("margin_custodian")
+  @@schema("public")
 }
 
 // 预估保证金表
@@ -886,6 +982,7 @@ model MarginEst {
   @@index([fund_abbr], name: "idx_margin_est_abbr")
   @@index([estimate_date], name: "idx_margin_est_date")
   @@map("margin_est")
+  @@schema("public")
 }
 
 // 期货账户结算表（真实值，从结算单解析）
@@ -908,6 +1005,7 @@ model OptionCustodian {
   @@index([fund_abbr], name: "idx_option_custodian_abbr")
   @@index([settle_date], name: "idx_option_custodian_date")
   @@map("option_custodian")
+  @@schema("public")
 }
 
 // 多空市值验证表
@@ -929,6 +1027,7 @@ model PositionVerify {
   @@index([fund_abbr], name: "idx_position_verify_abbr")
   @@index([verify_date], name: "idx_position_verify_date")
   @@map("position_verify")
+  @@schema("public")
 }
 
 // 申赎记录表
@@ -948,6 +1047,7 @@ model SubscriptionRedemptionRecord {
   operatorUser User?       @relation(fields: [operator], references: [username])
 
   @@index([fund_account, createdAt(sort: Desc)])
+  @@schema("public")
 }
 
 // 期货账户信息表
@@ -978,4 +1078,62 @@ model FuturesAccountInfo {
   @@unique([fund_account, tradingDay])
   @@index([fund_account], map: "idx_futures_account_info_fund")
   @@index([tradingDay], map: "idx_futures_account_info_day")
+  @@schema("public")
+}
+
+// 期货持仓表
+model FuturesPosition {
+  id            Int                @id @default(autoincrement())
+  tradeDay      String
+  fundAccount   String
+  market        Market
+  brokerKey     String
+  totalQty      Int
+  sellableQty   Int
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @default(now())
+  companyKey    String
+  productKey    String
+  ticker        String
+  ctpData       Json?
+  hedgeFlag     HedgeFlag?
+  posiDirection PositionDirection?
+  // 结算价
+  closePrice    Float?
+  // 市值
+  notionalValue Float?
+
+  @@unique([tradeDay, fundAccount, market, ticker, posiDirection])
+  @@schema("public")
+}
+
+// 账户每日交易统计
+model AccountDailyStats {
+  id          Int    @id @default(autoincrement())
+  tradeDay    String // 交易日
+  fundAccount String // 账户
+
+  market Market // 市场
+
+  // 资产数据
+  netAsset Float // 净资产(万)
+
+  // 交易指标
+  turnoverRate Float // 换手率
+
+  // 涨跌数据
+  dailyReturn  Float // 日涨跌
+  weeklyReturn Float // 周涨跌
+  weeklyExcess Float // 周超额
+
+  // 持仓分布
+  shRatio Float // 沪市比例
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@unique([tradeDay, fundAccount])
+  @@index([tradeDay])
+  @@index([fundAccount])
+  @@schema("operational")
 }

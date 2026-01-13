@@ -21,7 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "NODE_ENV=test jest --detectOpenHandles --config ./test/jest-e2e.json",
     "prepare": "husky install",
-    "syncdb": "prisma db push --force-reset && prisma db seed",
+    "syncdb": "prisma db push --force-reset",
     "pulldb": "prisma db pull",
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",

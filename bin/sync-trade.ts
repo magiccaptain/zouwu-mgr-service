@@ -35,10 +35,16 @@ async function main() {
     //   continue;
     // }
 
+    // if(fund_account.account !== '0311040018566660'){
+    //   continue;
+    // }
+
     console.log('begin sync trade ', fund_account.account);
 
     for (const market of markets) {
-      console.log(market);
+      // if(market !== 'SZ'){
+      //   continue;
+      // }
 
       try {
         await fundAccountService.queryTrade(fund_account, market);

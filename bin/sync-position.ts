@@ -44,9 +44,9 @@ async function main() {
     for (const market of markets) {
       console.log(market);
 
-      // if (market === 'SH') {
-      //   continue;
-      // }
+      if (market === 'SH') {
+        continue;
+      }
 
       try {
         await fundAccountService.queryPosition(fund_account, market);

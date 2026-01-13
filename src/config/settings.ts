@@ -42,9 +42,9 @@ export const settings = env({
     end_time: '17:00',
   },
   quote_brief_source: {
-    host_server_port: 12706,
-    remote_dir: '/home/admin/quote_data',
-    local_dir: '/data/quote_data',
+    host_server_port: 12736,
+    remote_dir: '/root/quote_data',
+    local_dir: '/home/shaochen/data/quote_data',
   },
   quote_index_weight_source: {
     host_server_port: 12722,
@@ -69,6 +69,8 @@ export const settings = env({
     before_check_host_server_disk: '0 8 * * *',
     // 每日下午15:30执行盘后磁盘检查
     after_check_host_server_disk: '30 15 * * *',
+    // 每日晚上21:00执行盘后磁盘检查
+    night_check_host_server_disk: '30 15 * * *',
     // 周一到周五下午15:40执行计算市值
     after_calc_market_value: '40 15 * * 1-5',
     // 周一到周五早上8:40执行盘前资金账户同步

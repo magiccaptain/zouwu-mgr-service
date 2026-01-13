@@ -125,6 +125,21 @@ export class OpsTaskService {
     this.logger.log('盘后磁盘检查完成');
   }
 
+  // 每日晚上21:00执行盘后磁盘检查
+  @Cron(settings.cron.night_check_host_server_disk)
+  async startNightCheckHostServerDiskTask() {
+    const task = await this.prismaService.opsTask.create({
+      data: {
+        name: '盘后磁盘检查',
+        trade_day: dayjs().format('YYYY-MM-DD'),
+        type: OpsTaskType.AFTER_CHECK_HOST_SERVER_DISK,
+      },
+    });
+
+    await this.checkHostServerDiskTask(task);
+    this.logger.log('盘后磁盘检查完成');
+  }
+
   async startBeforeCheckTimeTask() {
     const task = await this.prismaService.opsTask.create({
       data: {
@@ -415,6 +430,10 @@ export class OpsTaskService {
         type: OpsTaskType.AFTER_CALC_MARKET_VALUE,
       },
     });
+
+    await this.feishuService.notifyMaintenance(
+      `盘后市值计算完成 ${dayjs().format('YYYY-MM-DD')}`
+    );
 
     this.logger.log('盘后市值计算完成');
   }

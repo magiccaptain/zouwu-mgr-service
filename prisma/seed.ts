@@ -11,19 +11,19 @@ import { seedUser } from './seed/users';
 const prisma = new PrismaClient();
 
 async function main() {
-  await seedUser(prisma);
+  // await seedUser(prisma);
 
-  await seedBrokers(prisma);
+  // await seedBrokers(prisma);
 
-  await seedHostServer(prisma);
+  // await seedHostServer(prisma);
 
-  await seedFundAccounts(prisma);
+  // await seedFundAccounts(prisma);
 
-  await seedXTPConfigs(prisma);
+  // await seedXTPConfigs(prisma);
 
-  await seedATPConfigs(prisma);
+  // await seedATPConfigs(prisma);
 
-  await seedProcessMonitor(prisma);
+  // await seedProcessMonitor(prisma);
 
   console.log('Seed success!');
 }

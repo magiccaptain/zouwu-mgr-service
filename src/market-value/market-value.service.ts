@@ -133,5 +133,63 @@ export class MarketValueService {
         );
       }
     }
+
+    // 计算市值占比
+    // 使用数据库聚合函数计算总市值
+    const aggregateResult = await this.prismaService.marketValue.aggregate({
+      where: {
+        fund_account: fundAccount.account,
+        trade_day: tradeDay,
+      },
+      _sum: {
+        value: true,
+      },
+    });
+
+    const totalValue = aggregateResult._sum.value || 0;
+
+    if (totalValue === 0) {
+      this.logger.warn(
+        `Total market value is 0 for fund account ${fundAccount.account} on trade day ${tradeDay}`
+      );
+      return;
+    }
+
+    // 查询该账户当日所有市值记录用于更新占比
+    const marketValues = await this.prismaService.marketValue.findMany({
+      where: {
+        fund_account: fundAccount.account,
+        trade_day: tradeDay,
+      },
+    });
+
+    if (marketValues.length === 0) {
+      this.logger.warn(
+        `No market values found for fund account ${fundAccount.account} on trade day ${tradeDay}`
+      );
+      return;
+    }
+
+    // 计算每条记录的市值占比并批量更新
+    const updateOperations = marketValues.map((mv) => {
+      const marketValueRatio =
+        mv.value && mv.value > 0 ? mv.value / totalValue : null;
+
+      return this.prismaService.marketValue.update({
+        where: {
+          id: mv.id,
+        },
+        data: {
+          market_value_ratio: marketValueRatio,
+        },
+      });
+    });
+
+    // 使用事务批量更新，确保原子性
+    await this.prismaService.$transaction(updateOperations);
+
+    this.logger.debug(
+      `Updated market_value_ratio for ${marketValues.length} records, total value: ${totalValue}, fund account: ${fundAccount.account}, trade day: ${tradeDay}`
+    );
   }
 }
