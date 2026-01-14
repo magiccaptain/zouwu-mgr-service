@@ -42,9 +42,9 @@ export const settings = env({
     end_time: '17:00',
   },
   quote_brief_source: {
-    host_server_port: 12736,
-    remote_dir: '/root/quote_data',
-    local_dir: '/home/shaochen/data/quote_data',
+    host_server_port: 12706,
+    remote_dir: '/home/admin/quote_data',
+    local_dir: '/data/quote_data',
   },
   quote_index_weight_source: {
     host_server_port: 12722,

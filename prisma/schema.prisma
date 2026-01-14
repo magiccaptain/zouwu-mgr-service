@@ -339,6 +339,7 @@ enum Market {
   DCE
   CFFEX
   GFEX
+  INE
 
   @@schema("public")
 }
@@ -1136,4 +1137,39 @@ model AccountDailyStats {
   @@index([tradeDay])
   @@index([fundAccount])
   @@schema("operational")
+}
+
+// 期货合约参数表
+model FuturesContractParameter {
+  id                       Int       @id @default(autoincrement())
+  order_book_id            String    @unique // 合约代码，如 Y1001, P1001
+  underlying_symbol        String // 标的符号，如 Y, P
+  market_tplus             String? // 市场T+
+  symbol                   String // 合约名称，如 豆油1001, 棕榈油100
+  margin_rate              Float // 保证金率，如 0.05, 0.06
+  maturity_date            DateTime? @db.Date // 到期日
+  type                     String // 类型，如 Future
+  trading_code             String // 交易代码，如 y1001, p1001
+  exchange                 Market // 交易所，如 DCE, CZCE, SHFE
+  product                  String // 产品类型，如 Commodity
+  contract_mult            Int // 合约乘数
+  round_lot                Int // 交易单位
+  trading_hours            String? // 交易时间
+  listed_date              DateTime? @db.Date // 上市日期
+  industry_name            String? // 行业名称，如 油脂, 化工
+  de_listed_date           DateTime? @db.Date // 退市日期
+  underlying_order_book_id String? // 标的合约代码
+  start_delivery_date      DateTime? @db.Date // 开始交割日期
+  end_delivery_date        DateTime? @db.Date // 结束交割日期
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([order_book_id])
+  @@index([underlying_symbol])
+  @@index([exchange])
+  @@index([maturity_date])
+  @@index([listed_date])
+  @@index([de_listed_date])
+  @@schema("public")
 }
