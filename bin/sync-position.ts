@@ -35,18 +35,16 @@ async function main() {
     //   continue;
     // }
 
-    if (fund_account.account !== '109277002626') {
-      continue;
-    }
-
-    console.log('begin sync position ', fund_account.account);
+    // if (fund_account.account !== '109277002626') {
+    //   continue;
+    // }
 
     for (const market of markets) {
-      console.log(market);
+      console.log('begin sync position ', fund_account.account, market);
 
-      if (market === 'SH') {
-        continue;
-      }
+      // if (market === 'SH') {
+      //   continue;
+      // }
 
       try {
         await fundAccountService.queryPosition(fund_account, market);

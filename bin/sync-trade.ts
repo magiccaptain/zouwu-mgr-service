@@ -39,12 +39,11 @@ async function main() {
     //   continue;
     // }
 
-    console.log('begin sync trade ', fund_account.account);
-
     for (const market of markets) {
       // if(market !== 'SZ'){
       //   continue;
       // }
+      console.log('begin sync trade ', fund_account.account, market);
 
       try {
         await fundAccountService.queryTrade(fund_account, market);

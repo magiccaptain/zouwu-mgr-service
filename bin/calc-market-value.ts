@@ -26,7 +26,7 @@ async function main() {
   });
 
   for (const fundAccount of fundAccounts) {
-    // if (fundAccount.account !== '109277002626') {
+    // if (fundAccount.account !== '003030060982') {
     //   continue;
     // }
 

@@ -31,18 +31,16 @@ async function main() {
       ? fund_account.XTPConfig.map((c) => c.market)
       : fund_account.ATPConfig.map((c) => c.market);
 
-    if (fund_account.account !== '109277002626') {
-      continue;
-    }
-
-    console.log('begin sync order ', fund_account.account);
+    // if (fund_account.account !== '109277002626') {
+    //   continue;
+    // }
 
     for (const market of markets) {
-      console.log(market);
+      console.log('begin sync order ', fund_account.account, market);
 
-      if (market === 'SH') {
-        continue;
-      }
+      // if (market === 'SH') {
+      //   continue;
+      // }
 
       try {
         await fundAccountService.queryOrder(fund_account, market);

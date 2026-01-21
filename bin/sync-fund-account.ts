@@ -40,9 +40,9 @@ async function main() {
     //   continue;
     // }
 
-    if (fund_account.brokerKey !== 'zhongxin') {
-      continue;
-    }
+    // if (fund_account.brokerKey !== 'zhongxin') {
+    //   continue;
+    // }
 
     // if (fund_account.brokerKey !== 'fangzheng') {
     //   continue;
