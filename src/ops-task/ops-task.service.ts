@@ -410,18 +410,15 @@ export class OpsTaskService {
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
+        type: FundAccountType.STOCK,
       },
     });
 
-    for (const fundAccount of fundAccounts) {
-      await this.marketValueService.calcMarketValue(
-        fundAccount,
-        dayjs().format('YYYY-MM-DD')
-      );
-      this.logger.log(
-        `盘后市值计算完成 ${fundAccount.brokerKey} ${fundAccount.account}`
-      );
-    }
+    await this.marketValueService.batchCalcActualClosePrice(
+      fundAccounts,
+      dayjs().format('YYYY-MM-DD'),
+      10
+    );
 
     await this.prismaService.opsTask.create({
       data: {
@@ -492,6 +489,7 @@ export class OpsTaskService {
     });
 
     await this.quoteService.queryQuote();
+    await this.quoteService.calcActualClosePrice();
 
     this.logger.log('盘后行情brief数据同步完成');
 

@@ -682,6 +682,11 @@ model QuoteBrief {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @default(now()) @updatedAt
 
+  // 当日实际收盘价（如果当日收盘价为0，则使用历史最新的收盘价）
+  actual_close_price      Float?
+  // 当日实际收盘价日期
+  actual_close_price_date String?
+
   @@unique([tradeDay, ticker, market])
   @@schema("public")
 }

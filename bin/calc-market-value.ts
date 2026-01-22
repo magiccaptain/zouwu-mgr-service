@@ -1,5 +1,6 @@
 // 计算账户市值
 import { NestFactory } from '@nestjs/core';
+import { FundAccountType } from '@prisma/client';
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash';
 
@@ -19,23 +20,16 @@ async function main() {
   const prismaService = app.get(PrismaService);
   const marketValueService = app.get(MarketValueService);
 
-  const fundAccounts = await prismaService.fundAccount.findMany({
+  let fundAccounts = await prismaService.fundAccount.findMany({
     where: {
       active: true,
+      type: FundAccountType.STOCK,
     },
   });
 
-  for (const fundAccount of fundAccounts) {
-    // if (fundAccount.account !== '003030060982') {
-    //   continue;
-    // }
+  fundAccounts = fundAccounts.filter(Boolean);
 
-    await marketValueService.calcMarketValue(fundAccount, tradeDay);
-
-    console.log(
-      `Calculated market value for ${fundAccount.brokerKey} ${fundAccount.account} on ${tradeDay}`
-    );
-  }
+  await marketValueService.batchCalcActualClosePrice(fundAccounts, tradeDay);
 
   app.close();
 }

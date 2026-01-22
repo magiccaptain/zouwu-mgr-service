@@ -13,6 +13,20 @@ export class MarketValueService {
 
   constructor(private readonly prismaService: PrismaService) {}
 
+  async buildQuoteBriefMap(tradeDay: string) {
+    const quoteBriefs = await this.prismaService.quoteBrief.findMany({
+      where: {
+        tradeDay: tradeDay,
+      },
+    });
+    for (const quoteBrief of quoteBriefs) {
+      const market = quoteBrief.market;
+      const marketStr = market === Market.SH ? 'SH' : 'SZ';
+      const wind_code = `${quoteBrief.ticker}.${marketStr}`;
+      this.quoteBriefMap.set(wind_code, quoteBrief);
+    }
+  }
+
   async getQuoteBrief(ticker: string, market: Market, tradeDay: string) {
     const marketStr = market === Market.SH ? 'SH' : 'SZ';
     const wind_code = `${ticker}.${marketStr}`;
@@ -21,50 +35,24 @@ export class MarketValueService {
       return this.quoteBriefMap.get(wind_code);
     }
 
+    // 查询数据库，找到最近的actual_close_price不为0的quoteBrief
     const quoteBrief = await this.prismaService.quoteBrief.findFirst({
       where: {
         ticker: ticker,
         market: market,
-        tradeDay: tradeDay,
+        actual_close_price: { not: 0 },
+        tradeDay: {
+          lt: tradeDay,
+        },
       },
       orderBy: {
         tradeDay: 'desc',
       },
     });
 
-    if (!quoteBrief) {
-      return null;
-    }
-
-    // 今日结算价为0
-    if (quoteBrief.close_price === 0) {
-      // 从trade_day开始往前查找，直到找到 pre_close_price 不为0的
-      const preClosePrice = await this.prismaService.quoteBrief.findFirst({
-        where: {
-          ticker: ticker,
-          market: market,
-          tradeDay: { lt: tradeDay },
-          close_price: { not: 0 },
-        },
-        orderBy: {
-          tradeDay: 'desc',
-        },
-      });
-
-      if (preClosePrice) {
-        this.logger.debug(
-          `QuoteBrief close_price is 0, ticker: ${ticker}, market: ${market}, tradeDay: ${tradeDay}, preClosePrice: ${preClosePrice.close_price}, preClosePrice.tradeDay: ${preClosePrice.tradeDay}`
-        );
-        this.quoteBriefMap.set(wind_code, preClosePrice);
-        return preClosePrice;
-      }
-
-      this.quoteBriefMap.set(wind_code, quoteBrief);
-      return quoteBrief;
-    } else {
-      this.quoteBriefMap.set(wind_code, quoteBrief);
-      return quoteBrief;
-    }
+    // 存入缓存
+    this.quoteBriefMap.set(wind_code, quoteBrief);
+    return quoteBrief;
   }
 
   /**
@@ -81,9 +69,6 @@ export class MarketValueService {
       },
     });
 
-    // 重置缓存
-    this.quoteBriefMap.clear();
-
     for (const position of positions) {
       const quoteBrief = await this.getQuoteBrief(
         position.ticker,
@@ -93,11 +78,8 @@ export class MarketValueService {
 
       if (quoteBrief) {
         let marketValue = 0;
-        let close_price = quoteBrief.close_price || 0;
-        // 如果收盘价为0，则使用昨收价
-        if (close_price == 0) {
-          close_price = quoteBrief.pre_close_price || 0;
-        }
+        const close_price = quoteBrief.actual_close_price || 0;
+
         marketValue = new Decimal(close_price)
           .mul(position.totalQty)
           .toNumber();
@@ -109,7 +91,7 @@ export class MarketValueService {
           position: position.totalQty,
           value: marketValue,
           close_price: close_price,
-          close_price_date: quoteBrief?.tradeDay || '',
+          close_price_date: quoteBrief?.actual_close_price_date || '',
           fundAccount: {
             connect: { account: fundAccount.account },
           },
@@ -191,5 +173,31 @@ export class MarketValueService {
     this.logger.debug(
       `Updated market_value_ratio for ${marketValues.length} records, total value: ${totalValue}, fund account: ${fundAccount.account}, trade day: ${tradeDay}`
     );
+  }
+
+  async batchCalcActualClosePrice(
+    fundAccounts: FundAccount[],
+    tradeDay: string,
+    batchSize = 20
+  ) {
+    await this.buildQuoteBriefMap(tradeDay);
+
+    // 分批并行处理
+    for (let i = 0; i < fundAccounts.length; i += batchSize) {
+      const batch = fundAccounts.slice(i, i + batchSize);
+      await Promise.all(
+        batch.map((fundAccount) =>
+          this.calcMarketValue(fundAccount, tradeDay).catch((error) => {
+            this.logger.error(
+              `Failed to calc market value for fund account ${fundAccount.account}: ${error.message}`,
+              error.stack
+            );
+            throw error;
+          })
+        )
+      );
+    }
+
+    this.quoteBriefMap.clear();
   }
 }

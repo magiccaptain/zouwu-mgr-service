@@ -295,4 +295,75 @@ export class QuoteService {
 
     this.logger.log(`QuoteBrief upserted, count: ${base_info.length}`);
   }
+
+  async calcActualClosePrice(tradeDay: string = dayjs().format('YYYYMMDD')) {
+    // 将 tradeDay 转换为 YYYY-MM-DD 格式
+    const formattedTradeDay = dayjs(tradeDay, 'YYYYMMDD').format('YYYY-MM-DD');
+
+    // 查询指定交易日的所有 QuoteBrief 记录
+    const quoteBriefs = await this.prismaService.quoteBrief.findMany({
+      where: {
+        tradeDay: formattedTradeDay,
+      },
+    });
+
+    this.logger.log(
+      `开始计算实际结算价，交易日: ${formattedTradeDay}，记录数: ${quoteBriefs.length}`
+    );
+
+    let updatedCount = 0;
+
+    for (const quoteBrief of quoteBriefs) {
+      let actualClosePrice: number | null = null;
+      let actualClosePriceDate: string | null = null;
+
+      // 如果当日收盘价为0，则往前查找，直到找到 close_price 不为0的
+      if (quoteBrief.close_price === 0) {
+        const preClosePrice = await this.prismaService.quoteBrief.findFirst({
+          where: {
+            ticker: quoteBrief.ticker,
+            market: quoteBrief.market,
+            tradeDay: { lt: formattedTradeDay },
+            close_price: { not: 0 },
+          },
+          orderBy: {
+            tradeDay: 'desc',
+          },
+        });
+
+        if (preClosePrice) {
+          actualClosePrice = preClosePrice.close_price;
+          actualClosePriceDate = preClosePrice.tradeDay;
+          this.logger.debug(
+            `QuoteBrief close_price is 0, ticker: ${quoteBrief.ticker}, market: ${quoteBrief.market}, tradeDay: ${formattedTradeDay}, actualClosePrice: ${actualClosePrice}, actualClosePriceDate: ${actualClosePriceDate}`
+          );
+        } else {
+          // 如果往前查找也没找到，保持为 null
+          actualClosePrice = null;
+          actualClosePriceDate = null;
+        }
+      } else {
+        // 如果当日收盘价不为0，直接使用
+        actualClosePrice = quoteBrief.close_price;
+        actualClosePriceDate = formattedTradeDay;
+      }
+
+      // 更新 actual_close_price 和 actual_close_price_date 字段
+      await this.prismaService.quoteBrief.update({
+        where: {
+          id: quoteBrief.id,
+        },
+        data: {
+          actual_close_price: actualClosePrice,
+          actual_close_price_date: actualClosePriceDate,
+        },
+      });
+
+      updatedCount++;
+    }
+
+    this.logger.log(
+      `实际结算价计算完成，交易日: ${formattedTradeDay}，更新记录数: ${updatedCount}`
+    );
+  }
 }
