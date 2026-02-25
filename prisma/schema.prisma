@@ -386,6 +386,15 @@ enum SubscriptionRedemptionDirection {
   @@schema("public")
 }
 
+// 赎回分类，包括 申请赎回，减仓，三费
+enum RedemptionType {
+  APPLY // 申请赎回
+  REDUCE // 减仓
+  FEE // 三费
+
+  @@schema("public")
+}
+
 enum OpsTaskType {
   BEFORE_CHECK_HOST_SERVER_DISK
   BEFORE_CHECK_HOST_SERVER_TIME

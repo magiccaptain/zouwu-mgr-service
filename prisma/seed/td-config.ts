@@ -119,15 +119,6 @@ const xtpConfigs: Prisma.XTPConfigCreateManyInput[] = [
     account_key: '9491cb1f5bae809dd2eaf5a353a3cda0',
   },
   {
-    fund_account: '109180006960',
-    market: Market.SZ,
-    ip: '10.99.0.122',
-    port: 6102,
-    user: '109180006960',
-    password: '102106',
-    account_key: '9491cb1f5bae809dd2eaf5a353a3cda0',
-  },
-  {
     fund_account: '109180010410',
     market: Market.SH,
     ip: '10.101.7.11',
@@ -199,6 +190,24 @@ const xtpConfigs: Prisma.XTPConfigCreateManyInput[] = [
     password: '102106',
     account_key: '9491cb1f5bae809dd2eaf5a353a3cda0',
   },
+  {
+    fund_account: '109180006960',
+    market: Market.SH,
+    ip: '10.101.6.85',
+    user: '109180006960',
+    port: 6102,
+    password: '102106',
+    account_key: '9491cb1f5bae809dd2eaf5a353a3cda0',
+  },
+  {
+    fund_account: '109180006960',
+    market: Market.SZ,
+    ip: '10.99.0.122',
+    user: '109180006960',
+    port: 6102,
+    password: '102106',
+    account_key: '9491cb1f5bae809dd2eaf5a353a3cda0',
+  },
 ];
 
 const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
@@ -219,7 +228,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.113.254;IPORT=NA;LIP=192.168.113.254;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.113.155.72;IPORT=NA;LIP=10.113.155.72;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs01',
     password: 'cjs@zssys',
     order_way: 'N',
@@ -242,7 +251,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.123.104;IPORT=NA;LIP=192.168.123.104;MAC=000F53A9C731;HD=8D93BCFC-49A7-4A8D-A06F-354E5A1D;PCN=SDC-ZSSYSTEM-4;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.197.91.58;IPORT=NA;LIP=10.197.91.58;MAC=000F53A9C731;HD=8D93BCFC-49A7-4A8D-A06F-354E5A1D;PCN=SDC-ZSSYSTEM-4;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs01',
     password: 'cjs@zssys',
     order_way: 'N',
@@ -265,7 +274,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.113.254;IPORT=NA;LIP=192.168.113.254;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.113.155.72;IPORT=NA;LIP=10.113.155.72;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs01',
     password: 'cjs@zssys',
     order_way: 'N',
@@ -311,7 +320,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.113.254;IPORT=NA;LIP=192.168.113.254;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.113.155.72;IPORT=NA;LIP=10.113.155.72;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs01',
     password: 'cjs@zssys',
     order_way: 'N',
@@ -357,7 +366,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.113.254;IPORT=NA;LIP=192.168.113.254;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.113.155.72;IPORT=NA;LIP=10.113.155.72;MAC=000F53AA1371;HD=5A1739AC-3C2C-4CDB-A707-22710703;PCN=JQ-ZSSYSTEM-2;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs04',
     password: 'cjs@zssys',
     order_way: 'N',
@@ -380,7 +389,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.123.104;IPORT=NA;LIP=192.168.123.104;MAC=000F53A9C731;HD=8D93BCFC-49A7-4A8D-A06F-354E5A1D;PCN=SDC-ZSSYSTEM-4;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.197.91.58;IPORT=NA;LIP=10.197.91.58;MAC=000F53A9C731;HD=8D93BCFC-49A7-4A8D-A06F-354E5A1D;PCN=SDC-ZSSYSTEM-4;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs04',
     password: 'cjs@zssys',
     order_way: 'N',
@@ -428,7 +437,7 @@ const atpConfigs: Prisma.ATPConfigCreateManyInput[] = [
     client_name: 'ZHISUI',
     client_version: 'V1.0.0',
     client_feature_code:
-      'PC;IIP=192.168.123.104;IPORT=NA;LIP=192.168.123.104;MAC=000F53A9C731;HD=8D93BCFC-49A7-4A8D-A06F-354E5A1D;PCN=SDC-ZSSYSTEM-4;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
+      'PC;IIP=10.197.91.58;IPORT=NA;LIP=10.197.91.58;MAC=000F53A9C731;HD=8D93BCFC-49A7-4A8D-A06F-354E5A1D;PCN=SDC-ZSSYSTEM-4;CPU=BFEBFBFF000606A6@ZHISUI;V1.0.0',
     user: 'zs01',
     password: 'cjs@zssys',
     order_way: 'N',

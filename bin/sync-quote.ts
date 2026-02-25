@@ -15,9 +15,8 @@ async function main() {
 
   const quoteService = app.get(QuoteService);
 
+  await quoteService.queryQuote();
   await quoteService.calcActualClosePrice(tradeDay);
-
-  // await quoteService.queryQuote();
 
   app.close();
 }

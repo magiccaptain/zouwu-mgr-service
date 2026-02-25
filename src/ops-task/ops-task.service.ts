@@ -720,6 +720,8 @@ export class OpsTaskService {
 
     await this.quoteService.queryIndexWeight();
 
+    await this.feishuService.notifyMaintenance(`盘前权重指数同步完成`);
+
     this.logger.log('盘前权重指数同步完成');
     return;
   }

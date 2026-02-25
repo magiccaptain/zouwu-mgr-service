@@ -24,9 +24,13 @@ async function main() {
   // console.log(fundAccounts);
 
   for (const fund_account of fundAccounts) {
-    if (fund_account.brokerKey !== 'zhongxin') {
+    if (fund_account.brokerKey !== 'guojun') {
       continue;
     }
+
+    // if (fund_account.account !== '109180006960') {
+    //   continue;
+    // }
 
     if (
       fund_account.XTPConfig.length === 0 &&
