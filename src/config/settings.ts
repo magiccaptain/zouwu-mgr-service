@@ -47,8 +47,8 @@ export const settings = env({
     local_dir: '/data/quote_data',
   },
   quote_index_weight_source: {
-    host_server_port: 12722,
-    remote_dir: '/root/common_v6/run',
+    host_server_port: 12730,
+    remote_dir: '/home/admin/common_v6/run',
     local_dir: '/data/index_weight_data',
   },
   warning: {
