@@ -89,6 +89,7 @@ export const settings = env({
       force_path_style: true,
     },
   },
+  mock_fund_operations: false,
   cron: {
     task_switch: 'on',
     // 每日早8点执行盘前磁盘检查

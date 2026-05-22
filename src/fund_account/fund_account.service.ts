@@ -16,11 +16,13 @@ import {
   OpsTask,
   RemoteCommandStatus,
   Side,
+  TransferDirection,
   TransferType,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 
 import { settings } from 'src/config';
+import { MarketCode } from 'src/config/constants';
 import { HostServerService } from 'src/host_server/host_server.service';
 import { tryParseJSON } from 'src/lib/lang/json';
 import { GetMarketByTicker } from 'src/lib/stock';
@@ -185,10 +187,190 @@ export class FundAccountService {
     return hostServer;
   }
 
+  private async getLatestSnapshot(
+    fund_account: string,
+    market: Market
+  ): Promise<InnerSnapshotFromServer> {
+    const snapshot = await this.prismaService.innerFundSnapshot.findFirst({
+      where: { fund_account, market },
+      orderBy: { id: 'desc' },
+    });
+
+    if (snapshot) {
+      return {
+        balance: snapshot.balance,
+        buying_power: snapshot.buying_power,
+        frozen: snapshot.frozen,
+        market: MarketCode[market],
+        xtp_account: (snapshot.xtp_account as object) ?? {},
+        atp_account: (snapshot.atp_account as object) ?? {},
+      };
+    }
+
+    return {
+      balance: 0,
+      buying_power: 0,
+      frozen: 0,
+      market: MarketCode[market],
+      xtp_account: {},
+      atp_account: {},
+    };
+  }
+
+  private async mockInnerTransfer(
+    fund_account: string,
+    market: Market,
+    other_market: Market,
+    direction: TransferDirection,
+    amount: number
+  ) {
+    const sign = direction === TransferDirection.IN ? 1 : -1;
+
+    const beforeSnapshot = await this.getLatestSnapshot(fund_account, market);
+    const otherBeforeSnapshot = await this.getLatestSnapshot(
+      fund_account,
+      other_market
+    );
+
+    const afterBalance = beforeSnapshot.balance + sign * amount;
+    const otherAfterBalance = otherBeforeSnapshot.balance - sign * amount;
+
+    if (afterBalance < 0 || otherAfterBalance < 0) {
+      throw new BadRequestException('余额不足');
+    }
+
+    const today = dayjs().format('YYYY-MM-DD');
+
+    return this.prismaService.transferRecord.create({
+      data: {
+        market,
+        fund_account,
+        trade_day: today,
+        direction,
+        amount,
+        type: TransferType.INNER,
+        snapshots: {
+          createMany: {
+            data: [
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: beforeSnapshot.balance,
+                buying_power: beforeSnapshot.buying_power,
+                frozen: beforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: beforeSnapshot.xtp_account,
+                atp_account: beforeSnapshot.atp_account,
+              },
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: afterBalance,
+                buying_power: beforeSnapshot.buying_power,
+                frozen: beforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: beforeSnapshot.xtp_account,
+                atp_account: beforeSnapshot.atp_account,
+              },
+              {
+                market: other_market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: otherBeforeSnapshot.balance,
+                buying_power: otherBeforeSnapshot.buying_power,
+                frozen: otherBeforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: otherBeforeSnapshot.xtp_account,
+                atp_account: otherBeforeSnapshot.atp_account,
+              },
+              {
+                market: other_market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: otherAfterBalance,
+                buying_power: otherBeforeSnapshot.buying_power,
+                frozen: otherBeforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: otherBeforeSnapshot.xtp_account,
+                atp_account: otherBeforeSnapshot.atp_account,
+              },
+            ],
+          },
+        },
+      },
+      include: { snapshots: true },
+    });
+  }
+
+  private async mockExternalTransfer(
+    fund_account: string,
+    market: Market,
+    direction: TransferDirection,
+    amount: number
+  ) {
+    const sign = direction === TransferDirection.IN ? 1 : -1;
+
+    const beforeSnapshot = await this.getLatestSnapshot(fund_account, market);
+
+    const afterBalance = beforeSnapshot.balance + sign * amount;
+
+    if (afterBalance < 0) {
+      throw new BadRequestException('余额不足');
+    }
+
+    const today = dayjs().format('YYYY-MM-DD');
+
+    return this.prismaService.transferRecord.create({
+      data: {
+        market,
+        fund_account,
+        trade_day: today,
+        direction,
+        amount,
+        type: TransferType.EXTERNAL,
+        snapshots: {
+          createMany: {
+            data: [
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.BEFORE_TRANSFER,
+                balance: beforeSnapshot.balance,
+                buying_power: beforeSnapshot.buying_power,
+                frozen: beforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: beforeSnapshot.xtp_account,
+                atp_account: beforeSnapshot.atp_account,
+              },
+              {
+                market,
+                fund_account,
+                reason: InnerFundSnapshotReason.AFTER_TRANSFER,
+                balance: afterBalance,
+                buying_power: beforeSnapshot.buying_power,
+                frozen: beforeSnapshot.frozen,
+                trade_day: today,
+                xtp_account: beforeSnapshot.xtp_account,
+                atp_account: beforeSnapshot.atp_account,
+              },
+            ],
+          },
+        },
+      },
+      include: { snapshots: true },
+    });
+  }
+
   async queryFundAccount(
     account: string,
     market: Market
   ): Promise<InnerSnapshotFromServer> {
+    if (settings.mock_fund_operations) {
+      return this.getLatestSnapshot(account, market);
+    }
+
     const hostServer = await this.findMasterServer(account, market);
 
     let remoteCommand = await this.remoteCommandService.makeQueryAccount(
@@ -693,6 +875,16 @@ export class FundAccountService {
     const market = marketStr as Market;
     const other_market: Market = market === Market.SH ? Market.SZ : Market.SH;
 
+    if (settings.mock_fund_operations) {
+      return this.mockInnerTransfer(
+        fund_account,
+        market,
+        other_market,
+        direction,
+        amount
+      );
+    }
+
     const hostServer = await this.findMasterServer(fund_account, market);
     const otherHostServer = await this.findMasterServer(
       fund_account,
@@ -830,6 +1022,10 @@ export class FundAccountService {
   async externalTransfer(fund_account: string, transferDto: TransferDto) {
     const { market: marketStr, amount, direction } = transferDto;
     const market = marketStr as Market;
+
+    if (settings.mock_fund_operations) {
+      return this.mockExternalTransfer(fund_account, market, direction, amount);
+    }
 
     const hostServer = await this.findMasterServer(fund_account, market);
 
