@@ -1,0 +1,1045 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["operational", "public"]
+}
+
+model User {
+  id                           Int                            @id @default(autoincrement())
+  name                         String
+  username                     String                         @unique
+  password                     String
+  phone                        String?                        @unique
+  email                        String?                        @unique
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @default(now()) @updatedAt
+  needResetPwd                 Boolean?                       @default(true)
+  permissions                  String[]                       @default([])
+  homePage                     String?                        @default("/")
+  Session                      Session[]
+  SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
+
+  @@schema("public")
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  expireAt  DateTime
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@schema("public")
+}
+
+model Broker {
+  id          Int           @id @default(autoincrement())
+  name        String
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+  FundAccount FundAccount[]
+  HostServer  HostServer[]
+
+  @@schema("public")
+}
+
+model Company {
+  id          Int           @id @default(autoincrement())
+  name        String
+  key         String        @unique
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @default(now()) @updatedAt
+  FundAccount FundAccount[]
+  HostServer  HostServer[]
+  Product     Product[]
+
+  @@schema("public")
+}
+
+model Custodian {
+  id        Int       @id @default(autoincrement())
+  name      String
+  key       String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  product   Product[]
+
+  @@schema("public")
+}
+
+model HostServer {
+  id             Int              @id @default(autoincrement())
+  name           String
+  desc           String?
+  market         Market
+  host_ip        String?
+  ssh_host       String?
+  ssh_user       String?
+  ssh_port       Int?
+  home_dir       String?
+  active         Boolean          @default(true)
+  is_master      Boolean          @default(false)
+  last_check_at  DateTime?
+  brokerKey      String?
+  companyKey     String?
+  remark         String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now()) @updatedAt
+  disk_total     Int?
+  disk_used      Int?
+  cpu_cores      Int?
+  cpu_model      String?
+  hostname       String?
+  memory_size    Int?
+  os             String?
+  os_version     String?
+  broker         Broker?          @relation(fields: [brokerKey], references: [key])
+  company        Company?         @relation(fields: [companyKey], references: [key])
+  OpsWarning     OpsWarning[]
+  ProcessMonitor ProcessMonitor[]
+  RemoteCommand  RemoteCommand[]
+
+  @@unique([market, brokerKey, companyKey, ssh_host, ssh_port])
+  @@schema("public")
+}
+
+model StrategyConstant {
+  id           Int           @id @default(autoincrement())
+  level        StrategyLevel
+  val          String
+  standardized String
+  desc         String?
+
+  @@unique([level, standardized, val])
+  @@schema("public")
+}
+
+model Product {
+  id                     Int               @id @default(autoincrement())
+  key                    String            @unique
+  name                   String
+  short_name             String?
+  type                   String
+  companyKey             String
+  active                 Boolean           @default(true)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @default(now()) @updatedAt
+  isTradeAnalysisEnabled Boolean           @default(true)
+  isValuationEnabled     Boolean           @default(true)
+  bizLine                String?
+  nominalBenchmarket     String?
+  custodianKey           String?
+  FundAccount            FundAccount[]
+  company                Company           @relation(fields: [companyKey], references: [key])
+  custodian              Custodian?        @relation(fields: [custodianKey], references: [key])
+  MarginCustodian        MarginCustodian[]
+  MarginEst              MarginEst[]
+  NavCustodian           NavCustodian[]
+  NavEst                 NavEst[]
+  OptionCustodian        OptionCustodian[]
+  PositionVerify         PositionVerify[]
+
+  @@schema("public")
+}
+
+model FundAccount {
+  id                           Int                            @id @default(autoincrement())
+  account                      String                         @unique
+  brokerKey                    String
+  productKey                   String
+  companyKey                   String
+  type                         FundAccountType                @default(STOCK)
+  active                       Boolean                        @default(true)
+  remark                       String?
+  branch                       String?
+  createdAt                    DateTime                       @default(now())
+  updatedAt                    DateTime                       @default(now()) @updatedAt
+  isTransferEnabled            Boolean                        @default(true)
+  executionBenchmark           String?
+  executionStrategy            String?
+  tradeApiType                 TradeApiType?
+  isTradeAnalysisEnabled       Boolean                        @default(true)
+  ATPConfig                    ATPConfig[]
+  ExternalFundDatail           ExternalFundDatail?
+  broker                       Broker                         @relation(fields: [brokerKey], references: [key])
+  company                      Company                        @relation(fields: [companyKey], references: [key])
+  product                      Product                        @relation(fields: [productKey], references: [key])
+  futuresAccountInfos          FuturesAccountInfo[]
+  InnerFundSnapshot            InnerFundSnapshot[]
+  MarketValue                  MarketValue[]
+  OpsWarning                   OpsWarning[]
+  ProcessMonitor               ProcessMonitor[]
+  RemoteCommand                RemoteCommand[]
+  SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
+  TransferRecord               TransferRecord[]
+  XTPConfig                    XTPConfig[]
+
+  @@schema("public")
+}
+
+model XTPConfig {
+  id                 Int         @id @default(autoincrement())
+  fund_account       String
+  market             Market
+  ip                 String
+  port               Int
+  user               String
+  password           String
+  local_ip           String?     @default("")
+  log_level          Int?        @default(4)
+  account_key        String
+  save_file_path     String?     @default(".")
+  software_version   String?     @default("0.0.1")
+  heat_beat_interval Int?        @default(3)
+  fundAccount        FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@unique([fund_account, market])
+  @@schema("public")
+}
+
+model ATPConfig {
+  id                        Int         @id @default(autoincrement())
+  fund_account              String
+  market                    Market
+  ip                        String
+  port                      Int
+  spare_ip                  String?
+  spare_port                Int?
+  user                      String
+  password                  String
+  branch_id                 String
+  cust_id                   String
+  cust_password             String
+  sh_account_id             String
+  sz_account_id             String
+  client_name               String
+  client_version            String
+  client_feature_code       String
+  account_mode              Int
+  login_mode                Int
+  order_way                 String
+  reconnect_time            Int?        @default(10)
+  heartbeat_interval_milli  Int?        @default(5000)
+  connect_timeout_milli     Int?        @default(5000)
+  encrypt_password_lib_path String?
+  rsa_public_key_path       String?
+  fundAccount               FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@unique([fund_account, market])
+  @@schema("public")
+}
+
+model InnerFundSnapshot {
+  id           Int                     @id @default(autoincrement())
+  market       Market
+  fund_account String
+  trade_day    String
+  reason       InnerFundSnapshotReason
+  balance      Float
+  buying_power Float
+  frozen       Float
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @default(now()) @updatedAt
+  xtp_account  Json?
+  atp_account  Json?
+  recordId     Int?
+  ctpData      Json?
+  fundAccount  FundAccount             @relation(fields: [fund_account], references: [account])
+  record       TransferRecord?         @relation(fields: [recordId], references: [id])
+
+  @@index([fund_account, market, trade_day(sort: Desc)])
+  @@schema("public")
+}
+
+model TransferRecord {
+  id           Int                 @id @default(autoincrement())
+  fund_account String
+  trade_day    String
+  market       Market
+  direction    TransferDirection
+  amount       Float
+  type         TransferType
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @default(now()) @updatedAt
+  createdBy    String?
+  snapshots    InnerFundSnapshot[]
+  fundAccount  FundAccount         @relation(fields: [fund_account], references: [account])
+
+  @@index([fund_account, market, trade_day(sort: Desc)])
+  @@schema("public")
+}
+
+model ExternalFundDatail {
+  id           Int         @id @default(autoincrement())
+  fund_account String      @unique
+  balance      Float
+  fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@schema("public")
+}
+
+model AlphaIndexWeight {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  code       String
+  symbol     String
+  trade_dt   String
+  i_weight   Float
+  updatetime DateTime
+
+  @@unique([trade_dt, code, symbol])
+  @@schema("public")
+}
+
+model OpsTask {
+  id             Int             @id @default(autoincrement())
+  type           OpsTaskType
+  name           String
+  trade_day      String
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  opsWarnings    OpsWarning[]
+  remoteCommands RemoteCommand[]
+
+  @@index([trade_day(sort: Desc)])
+  @@schema("public")
+}
+
+model OpsWarning {
+  id              Int              @id @default(autoincrement())
+  trade_day       String
+  status          OpsWarningStatus @default(PENDING)
+  opsTaskId       Int?
+  hostServerId    Int?
+  fund_account    String?
+  text            String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @default(now()) @updatedAt
+  remoteCommandId Int?
+  type            OpsWarningType?
+  fundAccount     FundAccount?     @relation(fields: [fund_account], references: [account])
+  hostServer      HostServer?      @relation(fields: [hostServerId], references: [id])
+  opsTask         OpsTask?         @relation(fields: [opsTaskId], references: [id])
+  remoteCommand   RemoteCommand?   @relation(fields: [remoteCommandId], references: [id])
+
+  @@index([trade_day(sort: Desc)])
+  @@schema("public")
+}
+
+model RemoteCommand {
+  id           Int                 @id @default(autoincrement())
+  trade_day    String
+  cmd          String
+  cwd          String?
+  code         Int?                @default(-999)
+  stdout       String?
+  stderr       String?
+  hostServerId Int
+  opsTaskId    Int?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @default(now()) @updatedAt
+  status       RemoteCommandStatus @default(PENDING)
+  type         RemoteCommandType?
+  fund_account String?
+  OpsWarning   OpsWarning[]
+  fundAccount  FundAccount?        @relation(fields: [fund_account], references: [account])
+  hostServer   HostServer          @relation(fields: [hostServerId], references: [id])
+  opsTask      OpsTask?            @relation(fields: [opsTaskId], references: [id])
+
+  @@index([hostServerId, trade_day(sort: Desc)])
+  @@schema("public")
+}
+
+model Position {
+  id            Int                @id @default(autoincrement())
+  tradeDay      String
+  fundAccount   String
+  market        Market
+  brokerKey     String
+  totalQty      Int
+  sellableQty   Int
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @default(now()) @updatedAt
+  companyKey    String
+  productKey    String
+  ticker        String
+  ctpData       Json?
+  hedgeFlag     HedgeFlag?
+  posiDirection PositionDirection?
+
+  @@unique([tradeDay, fundAccount, market, ticker])
+  @@schema("public")
+}
+
+model Order {
+  id          Int         @id @default(autoincrement())
+  tradeDay    String
+  fundAccount String
+  market      Market
+  ticker      String
+  orderApiId  BigInt
+  orderRef    BigInt
+  price       Float
+  quantity    Int
+  priceType   Int
+  side        Side
+  qtyTraded   Int
+  qtyLeft     Int
+  insertTime  BigInt
+  updateTime  BigInt
+  cancelTime  BigInt
+  status      Int
+  brokerKey   String
+  productKey  String
+  companyKey  String
+  ctpData     Json?
+  hedgeFlag   HedgeFlag?
+  offsetFlag  OffsetFlag?
+
+  @@unique([tradeDay, fundAccount, market, ticker, orderRef])
+  @@index([tradeDay, fundAccount, orderApiId])
+  @@index([tradeDay, fundAccount, orderRef])
+  @@schema("public")
+}
+
+model Trade {
+  id          Int         @id @default(autoincrement())
+  tradeDay    String
+  fundAccount String
+  market      Market
+  ticker      String
+  orderApiId  BigInt
+  orderRef    BigInt
+  price       Float
+  quantity    Int
+  tradeTime   BigInt
+  tradeAmount Float
+  side        Side
+  brokerKey   String
+  companyKey  String
+  productKey  String
+  tradeId     String
+  ctpData     Json?
+  offsetFlag  OffsetFlag?
+
+  @@unique([tradeDay, fundAccount, market, ticker, tradeId])
+  @@index([tradeDay, fundAccount, orderApiId])
+  @@index([tradeDay, fundAccount, orderRef])
+  @@index([tradeDay, fundAccount, tradeId])
+  @@schema("public")
+}
+
+model QuoteBrief {
+  id                      Int      @id @default(autoincrement())
+  tradeDay                String
+  ticker                  String
+  market                  Market
+  pre_close_price         Float
+  close_price             Float
+  upper_limit_price       Float
+  lower_limit_price       Float
+  security_type           Int
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @default(now()) @updatedAt
+  actual_close_price      Float?
+  actual_close_price_date String?
+
+  @@unique([tradeDay, ticker, market])
+  @@schema("public")
+}
+
+model IndexBrief {
+  id              Int      @id @default(autoincrement())
+  tradeDay        String
+  ticker          String
+  market          Market
+  pre_close_price Float
+  close_price     Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  @@unique([tradeDay, ticker, market])
+  @@index([tradeDay])
+  @@index([ticker, market])
+  @@schema("public")
+}
+
+model MarketValue {
+  id                 Int         @id @default(autoincrement())
+  trade_day          String
+  ticker             String
+  market             Market
+  position           Int
+  value              Float
+  close_price        Float?
+  close_price_date   String?
+  fund_account       String
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @default(now()) @updatedAt
+  market_value_ratio Float?
+  fundAccount        FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@unique([trade_day, fund_account, ticker, market])
+  @@schema("public")
+}
+
+model IndexWeight {
+  id         Int      @id @default(autoincrement())
+  date       DateTime
+  code       String
+  symbol     String
+  trade_dt   String
+  i_weight   Float
+  updatetime DateTime
+
+  @@unique([trade_dt, code, symbol])
+  @@schema("public")
+}
+
+model DailyPnl {
+  id                        Int      @id @default(autoincrement())
+  trade_day                 String
+  fund_account              String
+  rebalance_return          Float
+  rebalance_pnl             Float
+  rebalance_buy_commission  Float
+  rebalance_sell_commission Float
+  t0_return                 Float
+  t0_pnl                    Float
+  t0_buy_commission         Float
+  t0_sell_commission        Float
+  hold_return               Float
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @default(now()) @updatedAt
+  brokerKey                 String
+  productKey                String
+  companyKey                String
+
+  @@unique([trade_day, fund_account])
+  @@schema("public")
+}
+
+model ProcessMonitor {
+  id                 Int             @id @default(autoincrement())
+  name               String
+  process_type       ProcessType
+  hostServerId       Int
+  process_name       String?
+  command_pattern    String?
+  pid_file           String?
+  active             Boolean         @default(true)
+  check_interval     Int             @default(60)
+  monitor_start_time DateTime?
+  monitor_end_time   DateTime?
+  cpu_threshold      Float?
+  memory_threshold   Float?
+  remark             String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @default(now()) @updatedAt
+  start_command      String?
+  config_files       String[]        @default([])
+  log_files          String[]        @default([])
+  fund_account       String?
+  configs            Json[]
+  fundAccount        FundAccount?    @relation(fields: [fund_account], references: [account])
+  hostServer         HostServer      @relation(fields: [hostServerId], references: [id], onDelete: Cascade)
+  ProcessStatus      ProcessStatus[]
+
+  @@unique([hostServerId, name])
+  @@index([hostServerId, active])
+  @@schema("public")
+}
+
+model ProcessStatus {
+  id                Int               @id @default(autoincrement())
+  processMonitorId  Int
+  status            ProcessStatusType
+  pid               Int?
+  cpu_percent       Float?
+  memory_percent    Float?
+  memory_used_mb    Float?
+  uptime_seconds    Int?
+  start_time        DateTime?
+  trade_day         String
+  checked_at        DateTime          @default(now())
+  check_duration_ms Int?
+  error_message     String?
+  createdAt         DateTime          @default(now())
+  cmd               String?
+  ppid              Int?
+  processMonitor    ProcessMonitor    @relation(fields: [processMonitorId], references: [id], onDelete: Cascade)
+
+  @@index([processMonitorId, checked_at(sort: Desc)])
+  @@index([checked_at(sort: Desc)])
+  @@index([trade_day, checked_at(sort: Desc)])
+  @@schema("public")
+}
+
+model NavCustodian {
+  id                    Int      @id @default(autoincrement())
+  fund_abbr             String   @db.VarChar(8)
+  nav_date              DateTime @db.Date
+  nav                   Decimal  @db.Decimal(10, 4)
+  cum_nav               Decimal  @db.Decimal(10, 4)
+  con_capital           Decimal? @db.Decimal(18, 2)
+  net_capital           Decimal? @db.Decimal(18, 2)
+  cash                  Decimal? @db.Decimal(18, 2)
+  cash_interest         Decimal? @db.Decimal(18, 2)
+  future_margin         Decimal? @db.Decimal(18, 2)
+  future_usable         Decimal? @db.Decimal(18, 2)
+  stock_usable          Decimal? @db.Decimal(18, 2)
+  stock_usable_interest Decimal? @db.Decimal(18, 2)
+  stock_mv              Decimal? @db.Decimal(18, 2)
+  stock_mv_delisted     Decimal? @db.Decimal(18, 2)
+  swap_net_asset        Decimal? @db.Decimal(18, 2)
+  other_fund            Decimal? @db.Decimal(18, 2)
+  redeem                Decimal? @db.Decimal(18, 2)
+  expense               Decimal? @db.Decimal(18, 2)
+  tax                   Decimal? @db.Decimal(18, 2)
+  tax_base              Decimal? @db.Decimal(18, 2)
+  created_at            DateTime @default(now()) @db.Timestamp(0)
+  product               Product  @relation(fields: [fund_abbr], references: [key])
+
+  @@unique([fund_abbr, nav_date], name: "uk_nav_custodian")
+  @@index([fund_abbr], map: "idx_nav_custodian_abbr")
+  @@index([nav_date], map: "idx_nav_custodian_date")
+  @@map("nav_custodian")
+  @@schema("public")
+}
+
+model NavEst {
+  id                    Int      @id @default(autoincrement())
+  fund_abbr             String   @db.VarChar(8)
+  estimate_date         DateTime @db.Date
+  nav                   Decimal  @db.Decimal(10, 4)
+  cum_nav               Decimal  @db.Decimal(10, 4)
+  con_capital           Decimal? @db.Decimal(18, 2)
+  net_capital           Decimal? @db.Decimal(18, 2)
+  cash                  Decimal? @db.Decimal(18, 2)
+  cash_interest         Decimal? @db.Decimal(18, 2)
+  future_margin         Decimal? @db.Decimal(18, 2)
+  future_usable         Decimal? @db.Decimal(18, 2)
+  stock_usable          Decimal? @db.Decimal(18, 2)
+  stock_usable_interest Decimal? @db.Decimal(18, 2)
+  stock_mv              Decimal? @db.Decimal(18, 2)
+  stock_mv_delisted     Decimal? @db.Decimal(18, 2)
+  swap_net_asset        Decimal? @db.Decimal(18, 2)
+  other_fund            Decimal? @db.Decimal(18, 2)
+  redeem                Decimal? @db.Decimal(18, 2)
+  expense               Decimal? @db.Decimal(18, 2)
+  tax                   Decimal? @db.Decimal(18, 2)
+  tax_base              Decimal? @db.Decimal(18, 2)
+  created_at            DateTime @default(now()) @db.Timestamp(0)
+  product               Product  @relation(fields: [fund_abbr], references: [key])
+
+  @@unique([fund_abbr, estimate_date], name: "uk_nav_est")
+  @@index([fund_abbr], map: "idx_nav_est_abbr")
+  @@index([estimate_date], map: "idx_nav_est_date")
+  @@map("nav_est")
+  @@schema("public")
+}
+
+model MarginCustodian {
+  id             Int      @id @default(autoincrement())
+  fund_abbr      String   @db.VarChar(8)
+  margin_date    DateTime @db.Date
+  margin         Decimal  @db.Decimal(18, 2)
+  net_asset      Decimal  @db.Decimal(18, 2)
+  margin_change  Decimal? @db.Decimal(18, 2)
+  nextday_margin Decimal? @db.Decimal(18, 2)
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  product        Product  @relation(fields: [fund_abbr], references: [key])
+
+  @@unique([fund_abbr, margin_date], name: "uk_margin_custodian")
+  @@index([fund_abbr], map: "idx_margin_custodian_abbr")
+  @@index([margin_date], map: "idx_margin_custodian_date")
+  @@map("margin_custodian")
+  @@schema("public")
+}
+
+model MarginEst {
+  id            Int      @id @default(autoincrement())
+  fund_abbr     String   @db.VarChar(8)
+  estimate_date DateTime @db.Date
+  margin        Decimal  @db.Decimal(18, 2)
+  net_asset     Decimal  @db.Decimal(18, 2)
+  short_mv      Decimal? @db.Decimal(18, 2)
+  usable        Decimal? @db.Decimal(18, 2)
+  add_margin    Decimal? @db.Decimal(18, 2)
+  created_at    DateTime @default(now()) @db.Timestamp(0)
+  product       Product  @relation(fields: [fund_abbr], references: [key])
+
+  @@unique([fund_abbr, estimate_date], name: "uk_margin_est")
+  @@index([fund_abbr], map: "idx_margin_est_abbr")
+  @@index([estimate_date], map: "idx_margin_est_date")
+  @@map("margin_est")
+  @@schema("public")
+}
+
+model OptionCustodian {
+  id          Int      @id @default(autoincrement())
+  fund_abbr   String   @db.VarChar(8)
+  settle_date DateTime @db.Date
+  account_id  String   @db.VarChar(32)
+  balance     Decimal? @db.Decimal(18, 2)
+  usable      Decimal? @db.Decimal(18, 2)
+  deposit     Decimal? @db.Decimal(18, 2)
+  withdraw    Decimal? @db.Decimal(18, 2)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  product     Product  @relation(fields: [fund_abbr], references: [key])
+
+  @@unique([fund_abbr, settle_date, account_id], name: "uk_option_custodian")
+  @@index([fund_abbr], map: "idx_option_custodian_abbr")
+  @@index([settle_date], map: "idx_option_custodian_date")
+  @@map("option_custodian")
+  @@schema("public")
+}
+
+model PositionVerify {
+  id          Int      @id @default(autoincrement())
+  fund_abbr   String   @db.VarChar(8)
+  verify_date DateTime @db.Date
+  call_mv     Decimal? @db.Decimal(18, 2)
+  put_mv      Decimal? @db.Decimal(18, 2)
+  ptc_pct     Decimal? @db.Decimal(10, 6)
+  call_adjust Decimal? @db.Decimal(18, 2)
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  product     Product  @relation(fields: [fund_abbr], references: [key])
+
+  @@unique([fund_abbr, verify_date], name: "uk_position_verify")
+  @@index([fund_abbr], map: "idx_position_verify_abbr")
+  @@index([verify_date], map: "idx_position_verify_date")
+  @@map("position_verify")
+  @@schema("public")
+}
+
+model SubscriptionRedemptionRecord {
+  id           Int                             @id @default(autoincrement())
+  fund_account String
+  direction    SubscriptionRedemptionDirection
+  amount       Float
+  operator     String?
+  createdAt    DateTime                        @default(now())
+  updatedAt    DateTime                        @default(now()) @updatedAt
+  remark       String?
+  reduce_day   String?
+  position_change_day String?
+  cash_flow_date String?
+  fundAccount  FundAccount                     @relation(fields: [fund_account], references: [account])
+  operatorUser User?                           @relation(fields: [operator], references: [username])
+
+  @@index([fund_account, createdAt(sort: Desc)])
+  @@schema("public")
+}
+
+model FuturesAccountInfo {
+  id             Int         @id @default(autoincrement())
+  fund_account   String
+  userID         String
+  investorID     String
+  preMortgage    Decimal     @db.Decimal(18, 2)
+  preCredit      Decimal     @db.Decimal(18, 2)
+  preBalance     Decimal     @db.Decimal(18, 2)
+  deposit        Decimal     @db.Decimal(18, 2)
+  withdraw       Decimal     @db.Decimal(18, 2)
+  frozenMargin   Decimal     @db.Decimal(18, 2)
+  frozenFee      Decimal     @db.Decimal(18, 2)
+  currMargin     Decimal     @db.Decimal(18, 2)
+  fee            Decimal     @db.Decimal(18, 2)
+  closeProfit    Decimal     @db.Decimal(18, 2)
+  positionProfit Decimal     @db.Decimal(18, 2)
+  balance        Decimal     @db.Decimal(18, 2)
+  available      Decimal     @db.Decimal(18, 2)
+  tradingDay     String
+  updateTime     String
+  currencyID     String
+  createdAt      DateTime    @default(now())
+  FundAccount    FundAccount @relation(fields: [fund_account], references: [account])
+
+  @@unique([fund_account, tradingDay])
+  @@index([fund_account], map: "idx_futures_account_info_fund")
+  @@index([tradingDay], map: "idx_futures_account_info_day")
+  @@schema("public")
+}
+
+model FuturesPosition {
+  id            Int                @id @default(autoincrement())
+  tradeDay      String
+  fundAccount   String
+  market        Market
+  brokerKey     String
+  totalQty      Int
+  sellableQty   Int
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @default(now())
+  companyKey    String
+  productKey    String
+  ticker        String
+  ctpData       Json?
+  hedgeFlag     HedgeFlag?
+  posiDirection PositionDirection?
+  closePrice    Float?
+  notionalValue Float?
+
+  @@unique([tradeDay, fundAccount, market, ticker, posiDirection])
+  @@schema("public")
+}
+
+model AccountDailyStats {
+  id           Int      @id @default(autoincrement())
+  tradeDay     String
+  fundAccount  String
+  market       Market
+  netAsset     Float
+  turnoverRate Float
+  dailyReturn  Float
+  weeklyReturn Float
+  weeklyExcess Float
+  shRatio      Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
+
+  @@unique([tradeDay, fundAccount])
+  @@index([tradeDay])
+  @@index([fundAccount])
+  @@schema("operational")
+}
+
+model FuturesContractParameter {
+  id                       Int       @id @default(autoincrement())
+  order_book_id            String    @unique
+  underlying_symbol        String
+  market_tplus             String?
+  symbol                   String
+  margin_rate              Float
+  maturity_date            DateTime? @db.Date
+  type                     String
+  trading_code             String
+  exchange                 Market
+  product                  String
+  contract_mult            Int
+  round_lot                Int
+  trading_hours            String?
+  listed_date              DateTime? @db.Date
+  industry_name            String?
+  de_listed_date           DateTime? @db.Date
+  underlying_order_book_id String?
+  start_delivery_date      DateTime? @db.Date
+  end_delivery_date        DateTime? @db.Date
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @default(now()) @updatedAt
+
+  @@index([order_book_id])
+  @@index([underlying_symbol])
+  @@index([exchange])
+  @@index([maturity_date])
+  @@index([listed_date])
+  @@index([de_listed_date])
+  @@schema("public")
+}
+
+enum StrategyLevel {
+  PRODUCT
+  FUND_ACCOUNT
+
+  @@schema("public")
+}
+
+enum TradeApiType {
+  XTP
+  ATP
+  CTP
+  KFClient
+
+  @@schema("public")
+}
+
+enum Market {
+  SH
+  SZ
+  SHFE
+  CZCE
+  DCE
+  CFFEX
+  GFEX
+  STOCK_ALL
+  INE
+  CSI
+  CNI
+  BJ
+
+  @@schema("public")
+}
+
+enum FundAccountType {
+  STOCK
+  FUTURES
+
+  @@schema("public")
+}
+
+enum InnerFundSnapshotReason {
+  BEFORE_TRADING_DAY
+  AFTER_TRADING_DAY
+  MIDDLE_TRADING_DAY
+  SYNC
+  BEFORE_TRANSFER
+  AFTER_TRANSFER
+
+  @@schema("public")
+}
+
+enum TransferDirection {
+  IN
+  OUT
+
+  @@schema("public")
+}
+
+enum TransferType {
+  INNER
+  EXTERNAL
+
+  @@schema("public")
+}
+
+enum SubscriptionRedemptionDirection {
+  SUBSCRIPTION
+  REDEMPTION
+
+  @@schema("public")
+}
+
+enum OpsTaskType {
+  BEFORE_CHECK_HOST_SERVER_DISK
+  BEFORE_CHECK_HOST_SERVER_TIME
+  BEFORE_SYNC_FUND_ACCOUNT
+  AFTER_ARCHIVE_TRADE_LOG
+  AFTER_SYNC_FUND_ACCOUNT
+  AFTER_SYNC_POSITIONS
+  AFTER_SYNC_ORDER
+  AFTER_SYNC_TRADE
+  AFTER_SYNC_LAST_PRICE
+  AFTER_PULL_OP_VALUE
+  AFTER_PULL_QUOTE_SNAPSHOT
+  AFTER_CHECK_HOST_SERVER_DISK
+  AFTER_CHECK_OP_VALUE
+  BEFORE_SYNC_POSITIONS
+  AFTER_CLEAR_PROCESSES
+  AFTER_CALC_MARKET_VALUE
+  BEFORE_SYNC_INDEX_WEIGHT
+  AFTER_CALC_PNL
+  BEFORE_WRITE_FUND_DATA
+  AFTER_WRITE_SUBSCRIPTION_REDEMPTION_RECORD
+
+  @@schema("public")
+}
+
+enum OpsWarningStatus {
+  PENDING
+  MANUAL_DONE
+  AUTO_DONE
+  AUTO_ERROR
+
+  @@schema("public")
+}
+
+enum OpsWarningType {
+  DISK_CHECK_FAILED
+  DISK_FULL
+  TIME_CHECK_FAILED
+  TIME_ERROR
+  OP_VALUE_ERROR
+  PROCESS_NOT_RUNNING
+  PROCESS_CRASHED
+  PROCESS_HIGH_CPU
+  PROCESS_HIGH_MEMORY
+  PROCESS_CHECK_FAILED
+
+  @@schema("public")
+}
+
+enum RemoteCommandStatus {
+  PENDING
+  DONE
+  ERROR
+
+  @@schema("public")
+}
+
+enum RemoteCommandType {
+  DISK_CHECK
+  TIME_CHECK
+  FREE_DISK
+  QUERY_ACCOUNT
+  QUERY_POSITION
+  QUERY_ORDER
+  QUERY_TRADE
+  QUERY_LAST_PRICE
+  PULL_OP_VALUE
+  PULL_QUOTE_SNAPSHOT
+  INNER_TRANSFER
+  EXTERNAL_TRANSFER
+  ARCHIVE_TRADE_LOG
+  PKILL_TRADER_TOOL
+  UNKNOWN
+
+  @@schema("public")
+}
+
+enum Side {
+  BUY
+  SELL
+
+  @@schema("public")
+}
+
+enum PositionDirection {
+  N
+  L
+  S
+
+  @@schema("public")
+}
+
+enum HedgeFlag {
+  S
+  A
+  H
+
+  @@schema("public")
+}
+
+enum OffsetFlag {
+  O
+  C
+  T
+  F
+
+  @@schema("public")
+}
+
+enum ProcessType {
+  TRADER
+  QUOTE
+  COMMUNICATION
+  CUSTOM
+
+  @@schema("public")
+}
+
+enum ProcessStatusType {
+  RUNNING
+  STOPPED
+  ERROR
+  NOT_FOUND
+
+  @@schema("public")
+}

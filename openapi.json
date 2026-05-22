@@ -1,0 +1,1148 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/hello": {
+      "get": {
+        "operationId": "hello",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "A paged array of vehicles.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthCheckResult"
+                }
+              }
+            }
+          }
+        },
+        "summary": "health check",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/fund-account/{fund_account}/@inner-transfer": {
+      "post": {
+        "operationId": "innerTransfer",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "inner transfer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferRecordEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "FundAccount"
+        ]
+      }
+    },
+    "/fund-account/{fund_account}/@external-transfer": {
+      "post": {
+        "operationId": "externalTransfer",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "external transfer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferRecordEntity"
+                }
+              }
+            }
+          }
+        },
+        "summary": "",
+        "tags": [
+          "FundAccount"
+        ]
+      }
+    },
+    "/fund-account/{fund_account}/@query": {
+      "get": {
+        "operationId": "queryStockAccount",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "market",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "query fund account from host server",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InnerSnapshotFromServer"
+                }
+              }
+            }
+          }
+        },
+        "summary": "query fund account from host server",
+        "tags": [
+          "FundAccount"
+        ]
+      }
+    },
+    "/fund-account": {
+      "get": {
+        "operationId": "listFundAccounts",
+        "parameters": [
+          {
+            "name": "brokerKey",
+            "required": false,
+            "in": "query",
+            "description": "券商key, eg: xtp, guojun",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "companyKey",
+            "required": false,
+            "in": "query",
+            "description": "公司key, eg: zouwu, zhisui",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "productKey",
+            "required": false,
+            "in": "query",
+            "description": "产品key, eg: zy1",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "description": "是否启用, 默认为 true",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list fund accounts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FundAccountEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "list fund accounts",
+        "tags": [
+          "FundAccount"
+        ]
+      }
+    },
+    "/fund-account/{fund_account}/snapshots": {
+      "get": {
+        "operationId": "listFundSnapshots",
+        "parameters": [
+          {
+            "name": "fund_account",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "trade_day",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "market",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "list fund snapshots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FundSnapshotEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "list fund snapshots",
+        "tags": [
+          "FundAccount"
+        ]
+      }
+    },
+    "/host-server": {
+      "get": {
+        "description": "获取所有主机服务器列表",
+        "operationId": "listHostServers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "主机服务器列表",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListHostServersResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "获取主机服务器列表",
+        "tags": [
+          "host-server"
+        ]
+      }
+    },
+    "/session/{token}": {
+      "get": {
+        "operationId": "getSession",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Get session by token"
+          }
+        },
+        "summary": "Get session by token",
+        "tags": [
+          "Session"
+        ]
+      }
+    },
+    "/process-monitor": {
+      "get": {
+        "description": "获取所有进程监控配置列表，支持筛选",
+        "operationId": "listProcessMonitors",
+        "parameters": [
+          {
+            "name": "hostServerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "fundAccountId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "processType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "TRADER",
+                "QUOTE",
+                "COMMUNICATION",
+                "CUSTOM"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "active",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程监控配置列表"
+          }
+        },
+        "summary": "获取进程监控配置列表",
+        "tags": [
+          "process-monitor"
+        ]
+      },
+      "post": {
+        "description": "创建一个新的进程监控配置",
+        "operationId": "createProcessMonitor",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProcessMonitorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "进程监控配置创建成功"
+          }
+        },
+        "summary": "创建进程监控配置",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}": {
+      "put": {
+        "description": "更新指定的进程监控配置",
+        "operationId": "updateProcessMonitor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProcessMonitorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "进程监控配置更新成功"
+          }
+        },
+        "summary": "更新进程监控配置",
+        "tags": [
+          "process-monitor"
+        ]
+      },
+      "delete": {
+        "description": "删除指定的进程监控配置",
+        "operationId": "deleteProcessMonitor",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程监控配置删除成功"
+          }
+        },
+        "summary": "删除进程监控配置",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/status/history": {
+      "get": {
+        "description": "获取进程状态的历史记录",
+        "operationId": "getProcessStatusHistory",
+        "parameters": [
+          {
+            "name": "processMonitorId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "tradeDay",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程状态历史记录"
+          }
+        },
+        "summary": "获取进程状态历史",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}/status/latest": {
+      "get": {
+        "description": "获取指定进程监控的最新状态",
+        "operationId": "getLatestProcessStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "最新的进程状态"
+          }
+        },
+        "summary": "获取最新的进程状态",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}/check": {
+      "post": {
+        "description": "立即检查指定进程监控的状态",
+        "operationId": "triggerCheck",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程检查结果"
+          }
+        },
+        "summary": "手动触发进程检查",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/{id}/@kill": {
+      "post": {
+        "description": "根据最新的进程状态中的 pid 和 ppid 来杀死进程（包括父进程）",
+        "operationId": "killProcess",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "进程杀死结果"
+          }
+        },
+        "summary": "杀死进程",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    },
+    "/process-monitor/sync-config-file": {
+      "post": {
+        "description": "将配置文件内容通过 SSH 同步到对应的 HostServer 上，并更新 ProcessMonitor 的 configs 字段",
+        "operationId": "syncConfigFile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SyncConfigFileDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "配置文件同步成功"
+          }
+        },
+        "summary": "同步配置文件到 HostServer",
+        "tags": [
+          "process-monitor"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "ZouWu API Server",
+    "description": "ZouWu API for swap-charge services",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": ""
+    },
+    {
+      "name": "auth",
+      "description": ""
+    },
+    {
+      "name": "pal",
+      "description": ""
+    }
+  ],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "HealthCheckResult": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "TransferDto": {
+        "type": "object",
+        "properties": {
+          "market": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "IN",
+              "OUT"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "market",
+          "direction",
+          "amount"
+        ]
+      },
+      "FundSnapshotEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "market": {
+            "type": "string"
+          },
+          "fund_account": {
+            "type": "string"
+          },
+          "trade_day": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "balance": {
+            "type": "number"
+          },
+          "buying_power": {
+            "type": "number"
+          },
+          "frozen": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "xtp_account": {
+            "type": "object",
+            "nullable": true
+          },
+          "atp_account": {
+            "type": "object",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "market",
+          "fund_account",
+          "trade_day",
+          "reason",
+          "balance",
+          "buying_power",
+          "frozen",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "TransferRecordEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "fund_account": {
+            "type": "string"
+          },
+          "trade_day": {
+            "type": "string"
+          },
+          "market": {
+            "type": "string"
+          },
+          "direction": {
+            "enum": [
+              "IN",
+              "OUT"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "type": "number"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FundSnapshotEntity"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "fund_account",
+          "trade_day",
+          "market",
+          "direction",
+          "amount",
+          "createdAt",
+          "updatedAt",
+          "snapshots"
+        ]
+      },
+      "InnerSnapshotFromServer": {
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "number"
+          },
+          "buying_power": {
+            "type": "number"
+          },
+          "frozen": {
+            "type": "number"
+          },
+          "market": {
+            "type": "number",
+            "description": "1: 深圳 2: 上海"
+          },
+          "xtp_account": {
+            "type": "object"
+          },
+          "atp_account": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "balance",
+          "buying_power",
+          "frozen",
+          "market"
+        ]
+      },
+      "FundAccountEntity": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "account": {
+            "type": "string"
+          },
+          "brokerKey": {
+            "type": "string"
+          },
+          "productKey": {
+            "type": "string"
+          },
+          "companyKey": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "remark": {
+            "type": "string"
+          },
+          "branch": {
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "account",
+          "brokerKey",
+          "productKey",
+          "companyKey",
+          "type",
+          "active",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "HostServerDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number",
+            "description": "主机服务器ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "主机服务器名称"
+          },
+          "desc": {
+            "type": "string",
+            "description": "描述"
+          },
+          "market": {
+            "type": "string",
+            "description": "市场"
+          },
+          "host_ip": {
+            "type": "string",
+            "description": "主机IP"
+          },
+          "ssh_host": {
+            "type": "string",
+            "description": "SSH主机"
+          },
+          "ssh_user": {
+            "type": "string",
+            "description": "SSH用户"
+          },
+          "ssh_port": {
+            "type": "number",
+            "description": "SSH端口"
+          },
+          "home_dir": {
+            "type": "string",
+            "description": "主目录"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "是否激活"
+          },
+          "is_master": {
+            "type": "boolean",
+            "description": "是否为主服务器"
+          },
+          "last_check_at": {
+            "format": "date-time",
+            "type": "string",
+            "description": "最后检查时间"
+          },
+          "brokerKey": {
+            "type": "string",
+            "description": "券商密钥"
+          },
+          "companyKey": {
+            "type": "string",
+            "description": "公司密钥"
+          },
+          "remark": {
+            "type": "string",
+            "description": "备注"
+          },
+          "disk_total": {
+            "type": "number",
+            "description": "磁盘总数(GB)"
+          },
+          "disk_used": {
+            "type": "number",
+            "description": "磁盘使用量(GB)"
+          },
+          "hostname": {
+            "type": "string",
+            "description": "主机名"
+          },
+          "os": {
+            "type": "string",
+            "description": "操作系统"
+          },
+          "os_version": {
+            "type": "string",
+            "description": "操作系统版本"
+          },
+          "cpu_model": {
+            "type": "string",
+            "description": "CPU型号"
+          },
+          "cpu_cores": {
+            "type": "number",
+            "description": "CPU核数"
+          },
+          "memory_size": {
+            "type": "number",
+            "description": "内存大小(MB)"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "创建时间"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "更新时间"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "market",
+          "active",
+          "is_master",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "ListHostServersResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "description": "主机服务器列表",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HostServerDto"
+            }
+          },
+          "total": {
+            "type": "number",
+            "description": "总数"
+          }
+        },
+        "required": [
+          "data",
+          "total"
+        ]
+      },
+      "CreateProcessMonitorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "进程名称/标识"
+          },
+          "process_type": {
+            "type": "string",
+            "description": "进程类型",
+            "enum": [
+              "TRADER",
+              "QUOTE",
+              "COMMUNICATION",
+              "CUSTOM"
+            ]
+          },
+          "hostServerId": {
+            "type": "number",
+            "description": "关联的 HostServer ID"
+          },
+          "fundAccountId": {
+            "type": "string",
+            "description": "如果是交易程序，关联 FundAccount account"
+          },
+          "process_name": {
+            "type": "string",
+            "description": "进程名称（用于 ps 命令匹配）"
+          },
+          "command_pattern": {
+            "type": "string",
+            "description": "命令模式（用于更精确匹配）"
+          },
+          "pid_file": {
+            "type": "string",
+            "description": "PID 文件路径"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "是否启用监控",
+            "default": true
+          },
+          "check_interval": {
+            "type": "number",
+            "description": "检查间隔（秒）",
+            "default": 60
+          },
+          "monitor_start_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控开始时间"
+          },
+          "monitor_end_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控结束时间"
+          },
+          "cpu_threshold": {
+            "type": "number",
+            "description": "CPU 使用率告警阈值（0-100）"
+          },
+          "memory_threshold": {
+            "type": "number",
+            "description": "内存使用率告警阈值（0-100）"
+          },
+          "remark": {
+            "type": "string",
+            "description": "备注"
+          }
+        },
+        "required": [
+          "name",
+          "process_type",
+          "hostServerId"
+        ]
+      },
+      "UpdateProcessMonitorDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "进程名称/标识"
+          },
+          "process_type": {
+            "type": "string",
+            "description": "进程类型",
+            "enum": [
+              "TRADER",
+              "QUOTE",
+              "COMMUNICATION",
+              "CUSTOM"
+            ]
+          },
+          "hostServerId": {
+            "type": "number",
+            "description": "关联的 HostServer ID"
+          },
+          "fundAccountId": {
+            "type": "string",
+            "description": "如果是交易程序，关联 FundAccount account"
+          },
+          "process_name": {
+            "type": "string",
+            "description": "进程名称（用于 ps 命令匹配）"
+          },
+          "command_pattern": {
+            "type": "string",
+            "description": "命令模式（用于更精确匹配）"
+          },
+          "pid_file": {
+            "type": "string",
+            "description": "PID 文件路径"
+          },
+          "active": {
+            "type": "boolean",
+            "description": "是否启用监控",
+            "default": true
+          },
+          "check_interval": {
+            "type": "number",
+            "description": "检查间隔（秒）",
+            "default": 60
+          },
+          "monitor_start_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控开始时间"
+          },
+          "monitor_end_time": {
+            "format": "date-time",
+            "type": "string",
+            "description": "监控结束时间"
+          },
+          "cpu_threshold": {
+            "type": "number",
+            "description": "CPU 使用率告警阈值（0-100）"
+          },
+          "memory_threshold": {
+            "type": "number",
+            "description": "内存使用率告警阈值（0-100）"
+          },
+          "remark": {
+            "type": "string",
+            "description": "备注"
+          }
+        }
+      },
+      "SyncConfigFileDto": {
+        "type": "object",
+        "properties": {
+          "processMonitorId": {
+            "type": "number",
+            "description": "ProcessMonitor ID"
+          },
+          "config_file": {
+            "type": "string",
+            "description": "配置文件路径"
+          },
+          "cfg": {
+            "type": "string",
+            "description": "配置文件内容"
+          }
+        },
+        "required": [
+          "processMonitorId",
+          "config_file",
+          "cfg"
+        ]
+      }
+    }
+  }
+}
