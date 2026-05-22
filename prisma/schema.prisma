@@ -266,11 +266,13 @@ model TransferRecord {
   direction    TransferDirection
   amount       Float
   type         TransferType
+  subscription_redemption_id Int?  @unique
   createdAt    DateTime            @default(now())
   updatedAt    DateTime            @default(now()) @updatedAt
   createdBy    String?
   snapshots    InnerFundSnapshot[]
   fundAccount  FundAccount         @relation(fields: [fund_account], references: [account])
+  subscriptionRedemption SubscriptionRedemptionRecord? @relation(fields: [subscription_redemption_id], references: [id])
 
   @@index([fund_account, market, trade_day(sort: Desc)])
   @@schema("public")
@@ -721,19 +723,20 @@ model PositionVerify {
 }
 
 model SubscriptionRedemptionRecord {
-  id           Int                             @id @default(autoincrement())
-  fund_account String
-  direction    SubscriptionRedemptionDirection
-  amount       Float
-  operator     String?
-  createdAt    DateTime                        @default(now())
-  updatedAt    DateTime                        @default(now()) @updatedAt
-  remark       String?
-  reduce_day   String?
+  id                  Int                             @id @default(autoincrement())
+  fund_account        String
+  direction           SubscriptionRedemptionDirection
+  amount              Float
+  operator            String?
+  createdAt           DateTime                        @default(now())
+  updatedAt           DateTime                        @default(now()) @updatedAt
+  remark              String?
+  reduce_day          String?
   position_change_day String?
-  cash_flow_date String?
-  fundAccount  FundAccount                     @relation(fields: [fund_account], references: [account])
-  operatorUser User?                           @relation(fields: [operator], references: [username])
+  cash_flow_date      String?
+  fundAccount         FundAccount                     @relation(fields: [fund_account], references: [account])
+  operatorUser        User?                           @relation(fields: [operator], references: [username])
+  transferRecord      TransferRecord?
 
   @@index([fund_account, createdAt(sort: Desc)])
   @@schema("public")

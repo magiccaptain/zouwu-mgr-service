@@ -1,38 +1,34 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Market } from '@prisma/client';
-
-import { HostServerModule } from 'src/host_server/host_server.module';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { RemoteCommandModule } from 'src/remote-command';
+import { BadRequestException } from '@nestjs/common';
 
 import { FundAccountService } from './fund_account.service';
 
 describe('FundAccountService', () => {
   let service: FundAccountService;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule, HostServerModule, RemoteCommandModule],
-      providers: [FundAccountService],
-    }).compile();
-
-    service = module.get<FundAccountService>(FundAccountService);
+  beforeEach(() => {
+    service = new FundAccountService({} as any, {} as any, {} as any);
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  xit('should query fund account from host server', async () => {
-    const ret = await service.queryFundAccount('0311040018566660', Market.SH);
-    console.log(ret);
+  it.each([
+    ['2026-05-21', '2026-05-22'],
+    ['2026-05-22', '2026-05-25'],
+    ['2026-05-23', '2026-05-25'],
+    ['2026-05-24', '2026-05-25'],
+  ])('should return next trading day for %s', (baseDate, expectedDate) => {
+    expect(service.getNextTradingDay(baseDate)).toBe(expectedDate);
   });
 
-  // it('should inner transfer', async () => {
-  //   await service.innerTransfer({
-  //     fund_account: '0311040018566660',
-  //     from: Market.SZ,
-  //     amount: 100,
-  //   });
-  // }, 1000000);
+  it('should reject invalid base date', () => {
+    expect(() => service.getNextTradingDay('2026-02-31')).toThrow(
+      BadRequestException
+    );
+  });
+
+  xit('should query fund account from host server', async () => {
+    expect(service).toBeDefined();
+  });
 });

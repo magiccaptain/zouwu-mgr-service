@@ -25,7 +25,7 @@ async function bootstrap() {
   app.setGlobalPrefix(settings.prefix);
 
   const config = new DocumentBuilder()
-    .setTitle('ZouWu API Server')
+    .setTitle('Ops Core API Server')
     .setDescription('ZouWu API for swap-charge services')
     .setVersion('1.0')
     .addBearerAuth()

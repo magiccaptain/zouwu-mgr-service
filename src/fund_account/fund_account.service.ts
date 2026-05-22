@@ -2,7 +2,12 @@ import fs from 'fs';
 import { mkdir } from 'fs/promises';
 import path from 'path';
 
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   FundAccount,
   FundAccountType,
@@ -40,6 +45,41 @@ export class FundAccountService {
     private readonly hostServerService: HostServerService,
     private readonly remoteCommandService: RemoteCommandService
   ) {}
+
+  private parseBaseDate(base_date: string): Date {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(base_date);
+
+    if (!match) {
+      throw new BadRequestException('base_date 格式错误，应为 YYYY-MM-DD');
+    }
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const parsedDate = new Date(year, month - 1, day);
+
+    if (
+      parsedDate.getFullYear() !== year ||
+      parsedDate.getMonth() !== month - 1 ||
+      parsedDate.getDate() !== day
+    ) {
+      throw new BadRequestException('base_date 格式错误，应为 YYYY-MM-DD');
+    }
+
+    parsedDate.setHours(0, 0, 0, 0);
+
+    return parsedDate;
+  }
+
+  getNextTradingDay(base_date: string): string {
+    let nextTradingDay = dayjs(this.parseBaseDate(base_date)).add(1, 'day');
+
+    while (nextTradingDay.day() === 0 || nextTradingDay.day() === 6) {
+      nextTradingDay = nextTradingDay.add(1, 'day');
+    }
+
+    return nextTradingDay.format('YYYY-MM-DD');
+  }
 
   async listFundSnapshot(
     fund_account: string,

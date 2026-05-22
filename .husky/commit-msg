@@ -1,4 +1,14 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npx --no -- commitlint --edit "$1"
+repo_root="$(git rev-parse --show-toplevel)"
+commit_msg_path="$1"
+
+case "$commit_msg_path" in
+	/*) ;;
+	*) commit_msg_path="$repo_root/$commit_msg_path" ;;
+esac
+
+cd "$repo_root/ops-core"
+
+npx --no -- commitlint --edit "$commit_msg_path"

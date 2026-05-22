@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root/ops-core"
+
 npm run lint

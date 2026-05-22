@@ -12,6 +12,18 @@ import {
   Min,
 } from 'class-validator';
 
+export class QueryNextTradingDayDto {
+  @IsNotEmpty()
+  @IsString()
+  base_date: string;
+}
+
+export class NextTradingDayEntity {
+  @IsNotEmpty()
+  @IsString()
+  next_trading_day: string;
+}
+
 export class QueryStockAccountDto {
   @IsNotEmpty()
   @IsString()

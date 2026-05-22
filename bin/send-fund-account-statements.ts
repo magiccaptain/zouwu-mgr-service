@@ -30,11 +30,12 @@ const SEND_OPTIONS: SendFundAccountStatementsOptions = {
     'duanyabab@163.com',
     'magiccaptain510@gmail.com',
     'shujujieshou@tfxcapital.cn', 
-    'shujujieshou2@bpryinvest.com'
+    'shujujieshou2@bpryinvest.com',
+    'iwnlgre@outlook.com'
   ],
 
   // recipients: [
-  //   'magiccaptain510@gmail.com',
+  //   'iwnlgre@outlook.com',
   // ],
 };
 

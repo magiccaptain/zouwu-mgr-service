@@ -19,6 +19,8 @@ import {
   InnerSnapshotFromServer,
   ListFundAccountQueryDto,
   ListFundSnapshotQueryDto,
+  NextTradingDayEntity,
+  QueryNextTradingDayDto,
   QueryStockAccountDto,
   TransferDto,
   TransferRecordEntity,
@@ -28,6 +30,22 @@ import { FundAccountService } from './fund_account.service';
 @Controller('fund-account')
 export class FundAccountController {
   constructor(private readonly fundAccountService: FundAccountService) {}
+
+  @ApiOperation({ operationId: 'queryNextTradingDay' })
+  @ApiOkResponse({
+    description: 'query next trading day',
+    type: NextTradingDayEntity,
+  })
+  @Get('@next-trading-day')
+  queryNextTradingDay(
+    @Query() query: QueryNextTradingDayDto
+  ): NextTradingDayEntity {
+    return {
+      next_trading_day: this.fundAccountService.getNextTradingDay(
+        query.base_date
+      ),
+    };
+  }
 
   cannotDoInTradeTime() {
     const now = dayjs();
