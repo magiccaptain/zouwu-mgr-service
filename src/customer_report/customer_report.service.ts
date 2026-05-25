@@ -16,6 +16,8 @@ export interface CustomerReportStatementPerformanceRecord {
   daily_excess_ret: number | string | null;
   weekly_ret: number | string | null;
   weekly_excess_ret: number | string | null;
+  annualized_excess_ret: number | string | null;
+  annualized_excess_sharpe_ratio: number | string | null;
   [key: string]: unknown;
 }
 

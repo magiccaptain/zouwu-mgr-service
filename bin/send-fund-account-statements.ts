@@ -16,6 +16,7 @@ interface SendFundAccountStatementsOptions {
   date: string;
   directoryPath: string;
   recipients: string[];
+  sendFeishuNotification: boolean;
 }
 
 const SEND_OPTIONS: SendFundAccountStatementsOptions = {
@@ -31,12 +32,18 @@ const SEND_OPTIONS: SendFundAccountStatementsOptions = {
     'magiccaptain510@gmail.com',
     'shujujieshou@tfxcapital.cn', 
     'shujujieshou2@bpryinvest.com',
-    'iwnlgre@outlook.com'
+    'iwnlgre@outlook.com',
+    "903088646@qq.com",
+    "yixuan.qin@accelecom.com",
+    "thomasdu@aliyun.com",
+    "chanpindata@126.com",
+    "chenwh@xmpfl.com",
   ],
 
   // recipients: [
-  //   'iwnlgre@outlook.com',
+  //   'magiccaptain510@gmail.com',
   // ],
+  sendFeishuNotification: true,
 };
 
 const SPECIAL_MESSAGE = '';
@@ -63,6 +70,8 @@ const COLUMN_CONFIG = [
   { key: 'daily_excess_ret', label: '日超额', type: 'signedPercent' },
   { key: 'weekly_ret', label: '周涨跌', type: 'signedPercent' },
   { key: 'weekly_excess_ret', label: '周超额', type: 'signedPercent' },
+  { key: 'annualized_excess_ret', label: '年化超额', type: 'signedPercent' },
+  { key: 'annualized_excess_sharpe_ratio', label: '年化超额夏普', type: 'decimal' },
 ] as const;
 
 type ColumnKey = (typeof COLUMN_CONFIG)[number]['key'];
@@ -73,9 +82,16 @@ async function main() {
   // 解析参数
   const argv = process.argv.slice(2);
   let dateArg = '';
+  let sendFeishuNotificationArg: boolean | undefined;
   for (const arg of argv) {
     if (arg.startsWith('--date=')) {
       dateArg = arg.replace('--date=', '');
+    } else if (arg.startsWith('--feishu-notify=')) {
+      sendFeishuNotificationArg = parseBooleanArg(
+        arg.replace('--feishu-notify=', '')
+      );
+    } else if (arg === '--no-feishu-notify') {
+      sendFeishuNotificationArg = false;
     }
   }
   let today = dayjs();
@@ -89,6 +105,9 @@ async function main() {
     }
   }
   SEND_OPTIONS.date = dateStr;
+  if (typeof sendFeishuNotificationArg === 'boolean') {
+    SEND_OPTIONS.sendFeishuNotification = sendFeishuNotificationArg;
+  }
 
   const minioService = new MinioService();
   const emailService = new EmailService(minioService);
@@ -151,15 +170,16 @@ async function main() {
     );
   } catch (error) {
     feishuSuccess = false;
-    feishuMsg = `对账单发送失败\n日期: ${SEND_OPTIONS.date}\n错误: ${error?.message || error}`;
+    feishuMsg = `对账单发送失败\n日期: ${SEND_OPTIONS.date}\n错误: ${error instanceof Error ? error.message : String(error)}`;
     console.error('发送对账单附件失败:', error);
     process.exitCode = 1;
   } finally {
-    // 飞书通知
-    try {
-      await feishuService.notifyMaintenance(feishuMsg, '【对账单】');
-    } catch (e) {
-      console.error('飞书通知失败', e);
+    if (SEND_OPTIONS.sendFeishuNotification) {
+      try {
+        await feishuService.notifyMaintenance(feishuMsg, '【对账单】');
+      } catch (e) {
+        console.error('飞书通知失败', e);
+      }
     }
     await customerReportService.onModuleDestroy();
     await prismaService.$disconnect();
@@ -441,6 +461,8 @@ function formatDisplayValue(type: ColumnType, value: unknown): string {
   switch (type) {
     case 'integer':
       return formatInteger(value);
+    case 'decimal':
+      return formatDecimal(value);
     case 'percent':
     case 'signedPercent':
       return formatPercent(value);
@@ -492,6 +514,18 @@ function formatPercent(value: unknown): string {
   return `${(numericValue * 100).toFixed(2)}%`;
 }
 
+function formatDecimal(value: unknown): string {
+  const numericValue = toNumber(value);
+
+  if (numericValue === null) {
+    return '-';
+  }
+
+  return new Intl.NumberFormat('zh-CN', {
+    maximumFractionDigits: 4,
+  }).format(numericValue);
+}
+
 function toNumber(value: unknown): number | null {
   if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
@@ -513,6 +547,20 @@ function buildDirectoryPath(directoryPath: string, date: string): string {
   const normalizedDate = date.replace(/^\/+|\/+$/g, '');
 
   return posix.join(normalizedDirectoryPath, normalizedDate);
+}
+
+function parseBooleanArg(value: string): boolean {
+  const normalizedValue = value.trim().toLowerCase();
+
+  if (['1', 'true', 'yes', 'y', 'on'].includes(normalizedValue)) {
+    return true;
+  }
+
+  if (['0', 'false', 'no', 'n', 'off'].includes(normalizedValue)) {
+    return false;
+  }
+
+  throw new Error(`Invalid boolean value: ${value}`);
 }
 
 function escapeHtml(value: string): string {
