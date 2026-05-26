@@ -259,20 +259,20 @@ model InnerFundSnapshot {
 }
 
 model TransferRecord {
-  id           Int                 @id @default(autoincrement())
-  fund_account String
-  trade_day    String
-  market       Market
-  direction    TransferDirection
-  amount       Float
-  type         TransferType
-  subscription_redemption_id Int?  @unique
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @default(now()) @updatedAt
-  createdBy    String?
-  snapshots    InnerFundSnapshot[]
-  fundAccount  FundAccount         @relation(fields: [fund_account], references: [account])
-  subscriptionRedemption SubscriptionRedemptionRecord? @relation(fields: [subscription_redemption_id], references: [id])
+  id                         Int                           @id @default(autoincrement())
+  fund_account               String
+  trade_day                  String
+  market                     Market
+  direction                  TransferDirection
+  amount                     Float
+  type                       TransferType
+  createdAt                  DateTime                      @default(now())
+  updatedAt                  DateTime                      @default(now()) @updatedAt
+  createdBy                  String?
+  subscription_redemption_id Int?                          @unique
+  snapshots                  InnerFundSnapshot[]
+  fundAccount                FundAccount                   @relation(fields: [fund_account], references: [account])
+  subscriptionRedemption     SubscriptionRedemptionRecord? @relation(fields: [subscription_redemption_id], references: [id])
 
   @@index([fund_account, market, trade_day(sort: Desc)])
   @@schema("public")
@@ -468,6 +468,7 @@ model IndexBrief {
   updatedAt       DateTime @default(now()) @updatedAt
 
   @@unique([tradeDay, ticker, market])
+  @@unique([tradeDay, ticker, market], map: "idx_indexbrief_trade_ticker_market")
   @@index([tradeDay])
   @@index([ticker, market])
   @@schema("public")
