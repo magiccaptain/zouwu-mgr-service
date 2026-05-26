@@ -38,6 +38,10 @@ const SEND_OPTIONS: SendFundAccountStatementsOptions = {
     "thomasdu@aliyun.com",
     "chanpindata@126.com",
     "chenwh@xmpfl.com",
+    "weiganzhi@htsc.com",
+    "zhangminghua@gtht.com",
+    "baijinyu@guosen.com.cn",
+    "yinyun@hicend.com.cn"
   ],
 
   // recipients: [
