@@ -1,3 +1,4 @@
+import { SubscriptionRedemptionDirection } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -214,6 +215,28 @@ export class FundAccountEntity {
   updatedAt: Date;
 }
 
+export class RefreshFundsEntity {
+  @IsNotEmpty()
+  @IsNumber()
+  current_balance: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  previous_balance: number;
+
+  @IsNotEmpty()
+  @IsNumber()
+  delta: number;
+
+  @IsOptional()
+  @IsString()
+  current_updated_at?: string | null;
+
+  @IsOptional()
+  @IsString()
+  previous_updated_at?: string | null;
+}
+
 export class TransferRecordEntity {
   @IsNotEmpty()
   @IsNumber()
@@ -249,4 +272,47 @@ export class TransferRecordEntity {
 
   @IsArray()
   snapshots: FundSnapshotEntity[];
+}
+
+export class CreateSubscriptionRedemptionDto {
+  @IsNotEmpty()
+  @IsString()
+  fund_account: string;
+
+  @IsNotEmpty()
+  @IsEnum(SubscriptionRedemptionDirection)
+  direction: SubscriptionRedemptionDirection;
+
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(1)
+  amount: number;
+
+  @IsOptional()
+  @IsString()
+  reduce_day?: string;
+
+  @IsOptional()
+  @IsString()
+  remark?: string;
+
+  @IsOptional()
+  @IsString()
+  operator?: string;
+}
+
+export class ConfirmCompletionDto {
+  @IsNotEmpty()
+  @IsNumber()
+  subscription_redemption_id: number;
+
+  @IsNotEmpty()
+  @IsString()
+  transfer_date: string;
+}
+
+export class UpdateSubscriptionRedemptionDto {
+  @IsOptional()
+  @IsString()
+  remark?: string;
 }

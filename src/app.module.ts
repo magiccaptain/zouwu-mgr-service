@@ -8,6 +8,7 @@ import MemCache from 'memcache-pp';
 // eslint-disable-next-line import/order
 import { RouteLoggerMiddleware } from './common/route-logger.middleware';
 import { settings } from './config';
+import { CustodianTransferModule } from './custodian_transfer/custodian_transfer.module';
 import { CustomerReportModule } from './customer_report/customer_report.module';
 import { EmailModule } from './email/email.module';
 import { FeishuModule } from './feishu/feishu.module';
@@ -39,6 +40,7 @@ import { WarningModule } from './warning/warning.module';
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot(),
     FundAccountModule,
+    CustodianTransferModule,
     PrismaModule,
     CustomerReportModule,
     HostServerModule,

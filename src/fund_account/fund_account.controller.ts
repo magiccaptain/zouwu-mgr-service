@@ -4,6 +4,8 @@ import {
   ForbiddenException,
   Get,
   Param,
+  ParseIntPipe,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -14,6 +16,8 @@ import dayjs from 'dayjs';
 import { settings } from 'src/config';
 
 import {
+  ConfirmCompletionDto,
+  CreateSubscriptionRedemptionDto,
   FundAccountEntity,
   FundSnapshotEntity,
   InnerSnapshotFromServer,
@@ -22,8 +26,10 @@ import {
   NextTradingDayEntity,
   QueryNextTradingDayDto,
   QueryStockAccountDto,
+  RefreshFundsEntity,
   TransferDto,
   TransferRecordEntity,
+  UpdateSubscriptionRedemptionDto,
 } from './fund_account.dto';
 import { FundAccountService } from './fund_account.service';
 
@@ -117,6 +123,41 @@ export class FundAccountController {
     const market = marketStr as Market;
 
     return this.fundAccountService.queryFundAccount(fund_account, market);
+  }
+
+  @ApiOperation({ operationId: 'refreshFunds' })
+  @ApiOkResponse({
+    description: 'refresh funds and return balance comparison',
+    type: RefreshFundsEntity,
+  })
+  @Post(':fund_account/@refresh-funds')
+  refreshFunds(
+    @Param('fund_account') fund_account: string
+  ): Promise<RefreshFundsEntity> {
+    return this.fundAccountService.refreshFunds(fund_account);
+  }
+
+  @ApiOperation({ operationId: 'createSubscriptionRedemption' })
+  @Post('subscription-redemption')
+  createSubscriptionRedemption(
+    @Body() dto: CreateSubscriptionRedemptionDto
+  ): any {
+    return this.fundAccountService.createSubscriptionRedemption(dto);
+  }
+
+  @ApiOperation({ operationId: 'confirmSubscriptionRedemption' })
+  @Post('subscription-redemption/@confirm')
+  confirmSubscriptionRedemption(@Body() dto: ConfirmCompletionDto): any {
+    return this.fundAccountService.confirmSubscriptionRedemption(dto);
+  }
+
+  @ApiOperation({ operationId: 'updateSubscriptionRedemption' })
+  @Patch('subscription-redemption/:id')
+  updateSubscriptionRedemption(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateSubscriptionRedemptionDto
+  ): any {
+    return this.fundAccountService.updateSubscriptionRedemption(id, dto);
   }
 
   /**

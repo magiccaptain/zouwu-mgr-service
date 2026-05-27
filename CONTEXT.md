@@ -19,7 +19,8 @@
 - ProcessMonitor：进程监控配置与状态采集能力
 - OpsTask：后台任务、批处理、执行编排的任务实体
 - Prisma schema 源头：数据库模型设计首先发生在 `ops-core/prisma/schema.prisma`
-- 申赎记录：资金账户的一次申购或赎回业务事实。记录创建后，其业务字段应视为既成事实，不再修改；备注属于附加说明，不改变该事实。
+- 申赎记录：资金账户的一次申购或赎回业务事实。记录创建时状态为 OPEN；用户确认出入金完成后手动将状态置为 CLOSE，流程彻底结束。无中间状态。一笔申赎可关联多笔 CustodianTransfer。申购的 `position_change_day` 在用户确认完成时，以该笔 CustodianTransfer 的 transfer_date + 1 交易日计算并回填。赎回的 `position_change_day` 在创建申赎记录时即以 reduce_day + 1 交易日自动计算并填好。
+- CustodianTransfer：托管出入金记录。由托管平台执行出入金操作后，运维人员在运维平台手动登记的人工确认记录。与 `TransferRecord`（系统自动执行的转账记录）是不同实体。
 
 ## 关键能力边界
 

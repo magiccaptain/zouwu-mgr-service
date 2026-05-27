@@ -179,6 +179,7 @@ model FundAccount {
   RemoteCommand                RemoteCommand[]
   SubscriptionRedemptionRecord SubscriptionRedemptionRecord[]
   TransferRecord               TransferRecord[]
+  CustodianTransfer            CustodianTransfer[]
   XTPConfig                    XTPConfig[]
 
   @@schema("public")
@@ -259,20 +260,18 @@ model InnerFundSnapshot {
 }
 
 model TransferRecord {
-  id                         Int                           @id @default(autoincrement())
-  fund_account               String
-  trade_day                  String
-  market                     Market
-  direction                  TransferDirection
-  amount                     Float
-  type                       TransferType
-  createdAt                  DateTime                      @default(now())
-  updatedAt                  DateTime                      @default(now()) @updatedAt
-  createdBy                  String?
-  subscription_redemption_id Int?                          @unique
-  snapshots                  InnerFundSnapshot[]
-  fundAccount                FundAccount                   @relation(fields: [fund_account], references: [account])
-  subscriptionRedemption     SubscriptionRedemptionRecord? @relation(fields: [subscription_redemption_id], references: [id])
+  id           Int                 @id @default(autoincrement())
+  fund_account String
+  trade_day    String
+  market       Market
+  direction    TransferDirection
+  amount       Float
+  type         TransferType
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @default(now()) @updatedAt
+  createdBy    String?
+  snapshots    InnerFundSnapshot[]
+  fundAccount  FundAccount         @relation(fields: [fund_account], references: [account])
 
   @@index([fund_account, market, trade_day(sort: Desc)])
   @@schema("public")
@@ -734,10 +733,29 @@ model SubscriptionRedemptionRecord {
   remark              String?
   reduce_day          String?
   position_change_day String?
-  cash_flow_date      String?
+  status              SubscriptionRedemptionStatus    @default(OPEN)
   fundAccount         FundAccount                     @relation(fields: [fund_account], references: [account])
   operatorUser        User?                           @relation(fields: [operator], references: [username])
-  transferRecord      TransferRecord?
+  custodianTransfers  CustodianTransfer[]
+
+  @@index([fund_account, createdAt(sort: Desc)])
+  @@schema("public")
+}
+
+model CustodianTransfer {
+  id                         Int                             @id @default(autoincrement())
+  fund_account               String
+  direction                  TransferDirection
+  amount                     Float
+  transfer_date              String
+  market                     Market?
+  remark                     String?
+  operator                   String?
+  createdAt                  DateTime                        @default(now())
+  updatedAt                  DateTime                        @default(now()) @updatedAt
+  subscription_redemption_id Int?
+  fundAccount                FundAccount                     @relation(fields: [fund_account], references: [account])
+  subscriptionRedemption     SubscriptionRedemptionRecord?   @relation(fields: [subscription_redemption_id], references: [id])
 
   @@index([fund_account, createdAt(sort: Desc)])
   @@schema("public")
@@ -917,6 +935,13 @@ enum TransferType {
 enum SubscriptionRedemptionDirection {
   SUBSCRIPTION
   REDEMPTION
+
+  @@schema("public")
+}
+
+enum SubscriptionRedemptionStatus {
+  OPEN
+  CLOSE
 
   @@schema("public")
 }

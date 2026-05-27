@@ -16,6 +16,8 @@ import {
   OpsTask,
   RemoteCommandStatus,
   Side,
+  SubscriptionRedemptionDirection,
+  SubscriptionRedemptionStatus,
   TransferDirection,
   TransferType,
 } from '@prisma/client';
@@ -30,12 +32,15 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RemoteCommandError, RemoteCommandService } from 'src/remote-command';
 
 import {
+  ConfirmCompletionDto,
+  CreateSubscriptionRedemptionDto,
   FundAccountEntity,
   FundSnapshotEntity,
   InnerSnapshotFromServer,
   ListFundAccountQueryDto,
   ListFundSnapshotQueryDto,
   TransferDto,
+  UpdateSubscriptionRedemptionDto,
 } from './fund_account.dto';
 
 @Injectable()
@@ -1019,6 +1024,69 @@ export class FundAccountService {
     return record;
   }
 
+  async refreshFunds(fund_account: string) {
+    await this.syncFundAccount(
+      fund_account,
+      Market.SH,
+      InnerFundSnapshotReason.SYNC
+    );
+    await this.syncFundAccount(
+      fund_account,
+      Market.SZ,
+      InnerFundSnapshotReason.SYNC
+    );
+
+    const shSnapshots = await this.prismaService.innerFundSnapshot.findMany({
+      where: { fund_account, market: Market.SH },
+      orderBy: { id: 'desc' },
+      take: 2,
+    });
+
+    const szSnapshots = await this.prismaService.innerFundSnapshot.findMany({
+      where: { fund_account, market: Market.SZ },
+      orderBy: { id: 'desc' },
+      take: 2,
+    });
+
+    const currentSh = shSnapshots[0]?.balance ?? 0;
+    const currentSz = szSnapshots[0]?.balance ?? 0;
+    const previousSh = shSnapshots[1]?.balance ?? 0;
+    const previousSz = szSnapshots[1]?.balance ?? 0;
+
+    const current_balance = currentSh + currentSz;
+    const previous_balance = previousSh + previousSz;
+
+    const currentTimestamps = [
+      shSnapshots[0]?.createdAt,
+      szSnapshots[0]?.createdAt,
+    ].filter(Boolean) as Date[];
+    const previousTimestamps = [
+      shSnapshots[1]?.createdAt,
+      szSnapshots[1]?.createdAt,
+    ].filter(Boolean) as Date[];
+
+    const current_updated_at =
+      currentTimestamps.length > 0
+        ? new Date(
+            Math.max(...currentTimestamps.map((t) => t.getTime()))
+          ).toISOString()
+        : null;
+    const previous_updated_at =
+      previousTimestamps.length > 0
+        ? new Date(
+            Math.max(...previousTimestamps.map((t) => t.getTime()))
+          ).toISOString()
+        : null;
+
+    return {
+      current_balance,
+      previous_balance,
+      delta: current_balance - previous_balance,
+      current_updated_at,
+      previous_updated_at,
+    };
+  }
+
   async externalTransfer(fund_account: string, transferDto: TransferDto) {
     const { market: marketStr, amount, direction } = transferDto;
     const market = marketStr as Market;
@@ -1109,5 +1177,86 @@ export class FundAccountService {
     });
 
     return record;
+  }
+
+  async createSubscriptionRedemption(dto: CreateSubscriptionRedemptionDto) {
+    let position_change_day: string | null = null;
+
+    if (
+      dto.direction === SubscriptionRedemptionDirection.REDEMPTION &&
+      dto.reduce_day
+    ) {
+      position_change_day = this.getNextTradingDay(dto.reduce_day);
+    }
+
+    return this.prismaService.subscriptionRedemptionRecord.create({
+      data: {
+        fund_account: dto.fund_account,
+        direction: dto.direction,
+        amount: dto.amount,
+        reduce_day: dto.reduce_day,
+        remark: dto.remark,
+        operator: dto.operator,
+        position_change_day,
+        status: SubscriptionRedemptionStatus.OPEN,
+      },
+    });
+  }
+
+  async confirmSubscriptionRedemption(dto: ConfirmCompletionDto) {
+    const record =
+      await this.prismaService.subscriptionRedemptionRecord.findUnique({
+        where: { id: dto.subscription_redemption_id },
+      });
+
+    if (!record) {
+      throw new BadRequestException('申赎记录不存在');
+    }
+
+    if (record.status === SubscriptionRedemptionStatus.CLOSE) {
+      throw new BadRequestException('该申赎记录已完成');
+    }
+
+    return this.prismaService.$transaction(async (tx: any) => {
+      const updateData: any = {
+        status: SubscriptionRedemptionStatus.CLOSE,
+      };
+
+      if (record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION) {
+        updateData.position_change_day = this.getNextTradingDay(
+          dto.transfer_date
+        );
+      }
+
+      return tx.subscriptionRedemptionRecord.update({
+        where: { id: dto.subscription_redemption_id },
+        data: updateData,
+      });
+    });
+  }
+
+  async updateSubscriptionRedemption(
+    id: number,
+    dto: UpdateSubscriptionRedemptionDto
+  ) {
+    const record =
+      await this.prismaService.subscriptionRedemptionRecord.findUnique({
+        where: { id },
+      });
+
+    if (!record) {
+      throw new BadRequestException('申赎记录不存在');
+    }
+
+    if (record.status === SubscriptionRedemptionStatus.CLOSE) {
+      throw new BadRequestException('已完成的申赎记录不可修改');
+    }
+
+    return this.prismaService.subscriptionRedemptionRecord.update({
+      where: { id },
+      data: {
+        remark: dto.remark,
+      },
+    });
   }
 }
