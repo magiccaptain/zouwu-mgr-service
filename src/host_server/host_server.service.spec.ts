@@ -6,7 +6,11 @@ import { HostServerService } from './host_server.service';
 describe('HostServerService', () => {
   let service: HostServerService;
   let prismaService: {
-    hostServer: { findFirst: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    hostServer: {
+      findFirst: jest.Mock;
+      findMany: jest.Mock;
+      update: jest.Mock;
+    };
     xTPConfig: { findFirst: jest.Mock };
     fundAccount: { findFirst: jest.Mock };
   };
@@ -14,7 +18,11 @@ describe('HostServerService', () => {
 
   beforeEach(() => {
     prismaService = {
-      hostServer: { findFirst: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      hostServer: {
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        update: jest.fn(),
+      },
       xTPConfig: { findFirst: jest.fn() },
       fundAccount: { findFirst: jest.fn() },
     };

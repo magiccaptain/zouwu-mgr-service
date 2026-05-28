@@ -1,3 +1,5 @@
+import { PrismaService } from './prisma.service';
+
 jest.mock('@prisma/adapter-pg', () => ({
   PrismaPg: jest.fn().mockImplementation(() => ({
     provider: 'postgres',
@@ -10,8 +12,6 @@ jest.mock('@prisma/adapter-pg', () => ({
     startTransaction: jest.fn(),
   })),
 }));
-
-import { PrismaService } from './prisma.service';
 
 describe('PrismaService', () => {
   let service: PrismaService;

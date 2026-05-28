@@ -20,7 +20,11 @@ describe('OpsTaskService', () => {
   beforeEach(() => {
     prismaService = {
       hostServer: { findMany: jest.fn() },
-      opsTask: { findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
+      opsTask: {
+        findMany: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+      },
     };
     service = new OpsTaskService(
       prismaService as unknown as PrismaService,
