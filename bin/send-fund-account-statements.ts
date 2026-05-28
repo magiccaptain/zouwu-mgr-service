@@ -17,7 +17,14 @@ interface SendFundAccountStatementsOptions {
   directoryPath: string;
   recipients: string[];
   sendFeishuNotification: boolean;
+  dryRun: boolean;
 }
+
+const PREVIEW_RECIPIENTS = [
+  'magiccaptain510@gmail.com',
+  'iwnlgre@outlook.com',
+  '2876254887@qq.com',
+];
 
 const SEND_OPTIONS: SendFundAccountStatementsOptions = {
   date: '', // 运行时设置
@@ -49,6 +56,7 @@ const SEND_OPTIONS: SendFundAccountStatementsOptions = {
   //   'magiccaptain510@gmail.com',
   // ],
   sendFeishuNotification: true,
+  dryRun: false,
 };
 
 const SPECIAL_MESSAGE = '';
@@ -88,6 +96,7 @@ async function main() {
   const argv = process.argv.slice(2);
   let dateArg = '';
   let sendFeishuNotificationArg: boolean | undefined;
+  let dryRunArg: boolean | undefined;
   for (const arg of argv) {
     if (arg.startsWith('--date=')) {
       dateArg = arg.replace('--date=', '');
@@ -97,6 +106,10 @@ async function main() {
       );
     } else if (arg === '--no-feishu-notify') {
       sendFeishuNotificationArg = false;
+    } else if (arg === '--dry-run') {
+      dryRunArg = true;
+    } else if (arg === '--prod') {
+      dryRunArg = false;
     }
   }
   let today = dayjs();
@@ -112,6 +125,17 @@ async function main() {
   SEND_OPTIONS.date = dateStr;
   if (typeof sendFeishuNotificationArg === 'boolean') {
     SEND_OPTIONS.sendFeishuNotification = sendFeishuNotificationArg;
+  }
+  if (typeof dryRunArg === 'boolean') {
+    SEND_OPTIONS.dryRun = dryRunArg;
+  }
+  if (SEND_OPTIONS.dryRun) {
+    SEND_OPTIONS.recipients = SEND_OPTIONS.recipients.filter((r) =>
+      PREVIEW_RECIPIENTS.includes(r)
+    );
+    console.log(`[DRY-RUN] 预览模式，仅发送至: ${SEND_OPTIONS.recipients.join(', ')}`);
+  } else {
+    console.log(`[PROD] 正式发送模式，收件人: ${SEND_OPTIONS.recipients.length} 人`);
   }
 
   const minioService = new MinioService();
@@ -168,7 +192,7 @@ async function main() {
       );
     });
 
-    feishuMsg = `对账单发送成功\n日期: ${SEND_OPTIONS.date}\n收件人: ${SEND_OPTIONS.recipients.join(', ')}\n共 ${results.length} 封邮件`;
+    feishuMsg = `对账单发送成功${SEND_OPTIONS.dryRun ? ' [DRY-RUN 预览]' : ''}\n日期: ${SEND_OPTIONS.date}\n收件人: ${SEND_OPTIONS.recipients.join(', ')}\n共 ${results.length} 封邮件`;
     console.log(
       `done: ${SEND_OPTIONS.directoryPath}/${SEND_OPTIONS.date
       } -> ${SEND_OPTIONS.recipients.join(', ')}`
