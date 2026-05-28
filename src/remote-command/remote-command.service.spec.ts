@@ -1,19 +1,22 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 import { RemoteCommandService } from './remote-command.service';
 
 describe('RemoteCommandService', () => {
   let service: RemoteCommandService;
+  let prismaService: {
+    remoteCommand: { create: jest.Mock; findMany: jest.Mock; update: jest.Mock };
+    fundAccount: { findMany: jest.Mock };
+  };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule],
-      providers: [RemoteCommandService],
-    }).compile();
-
-    service = module.get<RemoteCommandService>(RemoteCommandService);
+  beforeEach(() => {
+    prismaService = {
+      remoteCommand: { create: jest.fn(), findMany: jest.fn(), update: jest.fn() },
+      fundAccount: { findMany: jest.fn() },
+    };
+    service = new RemoteCommandService(
+      prismaService as unknown as PrismaService
+    );
   });
 
   it('should be defined', () => {

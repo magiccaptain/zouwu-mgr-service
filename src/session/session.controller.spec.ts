@@ -1,21 +1,15 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { PrismaModule } from 'src/prisma/prisma.module';
-
 import { SessionController } from './session.controller';
 import { SessionService } from './session.service';
 
 describe('SessionController', () => {
   let controller: SessionController;
+  let sessionService: jest.Mocked<SessionService>;
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule],
-      providers: [SessionService],
-      controllers: [SessionController],
-    }).compile();
-
-    controller = module.get<SessionController>(SessionController);
+  beforeEach(() => {
+    sessionService = {
+      getSession: jest.fn(),
+    } as unknown as jest.Mocked<SessionService>;
+    controller = new SessionController(sessionService);
   });
 
   it('should be defined', () => {

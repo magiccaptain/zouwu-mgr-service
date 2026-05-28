@@ -1,19 +1,16 @@
-import { Test, TestingModule } from '@nestjs/testing';
-
-import { PrismaModule } from 'src/prisma/prisma.module';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 import { SessionService } from './session.service';
 
 describe('SessionService', () => {
   let service: SessionService;
+  let prismaService: { session: { findUnique: jest.Mock } };
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [PrismaModule],
-      providers: [SessionService],
-    }).compile();
-
-    service = module.get<SessionService>(SessionService);
+  beforeEach(() => {
+    prismaService = {
+      session: { findUnique: jest.fn() },
+    };
+    service = new SessionService(prismaService as unknown as PrismaService);
   });
 
   it('should be defined', () => {

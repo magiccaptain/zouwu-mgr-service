@@ -70,7 +70,7 @@ export const settings = env({
   },
   feishu: {
     maintenance_webhook:
-      'https://open.feishu.cn/open-apis/bot/v2/hook/53315122-106b-4b2a-b8fb-38c7c8c4ca08',
+      'https://open.feishu.cn/open-apis/bot/v2/hook/fae3b387-fb86-4ae5-8be9-26d9a1180ffc',
   },
   email: {
     host: 'smtp.exmail.qq.com',

@@ -7,7 +7,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 import { ProcessMonitorService } from './process-monitor.service';
 
-describe('ProcessMonitorService', () => {
+const hasDatabase = !!process.env.DATABASE_URL;
+
+describe.skipIf(!hasDatabase)('ProcessMonitorService', () => {
   let service: ProcessMonitorService;
   let prismaService: PrismaService;
 
