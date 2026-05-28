@@ -1,6 +1,6 @@
 {
   "name": "@zouwu/core",
-  "version": "0.0.1",
+  "version": "0.1.4",
   "description": "zouwu core service for mgr and auth.",
   "author": "",
   "private": true,
