@@ -46,7 +46,7 @@ export class FundAccountService {
     private readonly prismaService: PrismaService,
     private readonly hostServerService: HostServerService,
     private readonly remoteCommandService: RemoteCommandService
-  ) {}
+  ) { }
 
   private parseBaseDate(base_date: string): Date {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(base_date);
@@ -707,6 +707,7 @@ export class FundAccountService {
       should_pull = force_pull;
     }
 
+
     if (should_pull) {
       let remoteCommand = await this.remoteCommandService.makeQueryTrade(
         hostServer,
@@ -750,94 +751,96 @@ export class FundAccountService {
       } else {
         throw new RemoteCommandError(remoteCommand);
       }
+    }
 
-      type RawTrade = {
-        ticker: string;
-        order_api_id: number;
-        order_ref: number;
-        trade_id: string;
-        trade_price: number;
-        trade_quantity: number;
-        trade_time: number;
-        side: number;
-      };
+    type RawTrade = {
+      ticker: string;
+      order_api_id: number;
+      order_ref: number;
+      trade_id: string;
+      trade_price: number;
+      trade_quantity: number;
+      trade_time: number;
+      side: number;
+    };
 
-      const raw_trades = fs.readFileSync(local_file, 'utf-8');
-      const trades = JSON.parse(raw_trades) as RawTrade[];
+    const raw_trades = fs.readFileSync(local_file, 'utf-8');
+    const trades = JSON.parse(raw_trades) as RawTrade[];
 
-      for (const t of trades) {
-        const sideChar = String.fromCharCode(t.side);
+    for (const t of trades) {
+      const sideChar = String.fromCharCode(t.side);
 
-        if (sideChar !== 'B' && sideChar !== 'S') {
-          this.logger.error(
-            `${fundAccount.account} trade ${t.trade_id}: invalid side: ${t.side}`
-          );
-          continue;
-        }
-
-        const side = sideChar === 'B' ? Side.BUY : Side.SELL;
-
-        try {
-          await this.prismaService.trade.upsert({
-            where: {
-              tradeDay_fundAccount_market_ticker_tradeId: {
-                tradeDay: dayjs().format('YYYY-MM-DD'),
-                fundAccount: fundAccount.account,
-                market: hostServer.market,
-                ticker: t.ticker,
-                tradeId: t.trade_id,
-              },
-            },
-            update: {
-              tradeDay: dayjs().format('YYYY-MM-DD'),
-              fundAccount: fundAccount.account,
-              market: hostServer.market,
-              brokerKey: fundAccount.brokerKey,
-              productKey: fundAccount.productKey,
-              companyKey: fundAccount.companyKey,
-              ticker: t.ticker,
-              tradeId: t.trade_id,
-              orderApiId: BigInt(t.order_api_id),
-              orderRef: t.order_ref,
-              price: t.trade_price,
-              quantity: t.trade_quantity,
-              tradeTime: BigInt(t.trade_time),
-              tradeAmount: t.trade_price * t.trade_quantity,
-              side,
-            },
-            create: {
-              tradeDay: dayjs().format('YYYY-MM-DD'),
-              fundAccount: fundAccount.account,
-              market: hostServer.market,
-              brokerKey: fundAccount.brokerKey,
-              productKey: fundAccount.productKey,
-              companyKey: fundAccount.companyKey,
-              ticker: t.ticker,
-              tradeId: t.trade_id,
-              orderApiId: BigInt(t.order_api_id),
-              orderRef: t.order_ref,
-              price: t.trade_price,
-              quantity: t.trade_quantity,
-              tradeTime: BigInt(t.trade_time),
-              tradeAmount: t.trade_price * t.trade_quantity,
-              side,
-            },
-          });
-        } catch (error) {
-          console.error(error);
-          console.log({
-            ...t,
-            fundAccount: fundAccount.account,
-            brokerKey: fundAccount.brokerKey,
-          });
-          continue;
-        }
+      if (sideChar !== 'B' && sideChar !== 'S') {
+        this.logger.error(
+          `${fundAccount.account} trade ${t.trade_id}: invalid side: ${t.side}`
+        );
+        continue;
       }
 
-      this.logger.log(
-        `${fundAccount.account} ${hostServer.ssh_port}: sync trade to database`
-      );
+      const side = sideChar === 'B' ? Side.BUY : Side.SELL;
+
+
+      try {
+        await this.prismaService.trade.upsert({
+          where: {
+            tradeDay_fundAccount_market_ticker_tradeId: {
+              tradeDay: dayjs().format('YYYY-MM-DD'),
+              fundAccount: fundAccount.account,
+              market: hostServer.market,
+              ticker: t.ticker,
+              tradeId: t.trade_id,
+            },
+          },
+          update: {
+            tradeDay: dayjs().format('YYYY-MM-DD'),
+            fundAccount: fundAccount.account,
+            market: hostServer.market,
+            brokerKey: fundAccount.brokerKey,
+            productKey: fundAccount.productKey,
+            companyKey: fundAccount.companyKey,
+            ticker: t.ticker,
+            tradeId: t.trade_id,
+            orderApiId: BigInt(t.order_api_id),
+            orderRef: t.order_ref,
+            price: t.trade_price,
+            quantity: t.trade_quantity,
+            tradeTime: BigInt(t.trade_time),
+            tradeAmount: t.trade_price * t.trade_quantity,
+            side,
+          },
+          create: {
+            tradeDay: dayjs().format('YYYY-MM-DD'),
+            fundAccount: fundAccount.account,
+            market: hostServer.market,
+            brokerKey: fundAccount.brokerKey,
+            productKey: fundAccount.productKey,
+            companyKey: fundAccount.companyKey,
+            ticker: t.ticker,
+            tradeId: t.trade_id,
+            orderApiId: BigInt(t.order_api_id),
+            orderRef: t.order_ref,
+            price: t.trade_price,
+            quantity: t.trade_quantity,
+            tradeTime: BigInt(t.trade_time),
+            tradeAmount: t.trade_price * t.trade_quantity,
+            side,
+          },
+        });
+      } catch (error) {
+        console.error(error);
+        console.log({
+          ...t,
+          fundAccount: fundAccount.account,
+          brokerKey: fundAccount.brokerKey,
+        });
+        continue;
+      }
     }
+
+    this.logger.log(
+      `${fundAccount.account} ${hostServer.ssh_port}: sync trade to database`
+    );
+
   }
 
   async saveFundAccountSnapshot(

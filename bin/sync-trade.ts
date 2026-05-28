@@ -3,9 +3,9 @@
 import { NestFactory } from '@nestjs/core';
 import { isEmpty } from 'lodash';
 
-import { AppModule } from '../dist/app.module';
-import { FundAccountService } from '../dist/fund_account/fund_account.service';
-import { PrismaService } from '../dist/prisma/prisma.service';
+import { AppModule } from '../src/app.module';
+import { FundAccountService } from '../src/fund_account/fund_account.service';
+import { PrismaService } from '../src/prisma/prisma.service';
 
 async function main() {
   const app = await NestFactory.createApplicationContext(AppModule);
