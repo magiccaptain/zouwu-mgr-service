@@ -477,7 +477,7 @@ export class OpsTaskService {
   //   return;
   // }
 
-  // 周一到周五下午15:5 执行
+  // 周一到周五下午16:5 执行
   @Cron(settings.cron.after_sync_fund_account)
   async startAfterSyncFundAccountTask() {
     const task = await this.prismaService.opsTask.create({
@@ -698,7 +698,7 @@ export class OpsTaskService {
     return;
   }
 
-  // 周一到周五下午16:00 执行计算盈亏
+  // 周一到周五下午16:10 执行计算盈亏
   @Cron(settings.cron.after_calc_pnl)
   async startAfterCalcPnlTask() {
     await this.prismaService.opsTask.create({

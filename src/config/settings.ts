@@ -104,8 +104,8 @@ export const settings = env({
     before_sync_fund_account: '40 8 * * 1-5',
     // 周一到周五早上9:10执行盘前第二次资金账户同步
     before_sync_fund_account2: '10 9 * * 1-5',
-    // 周一到周五下午15:5执行盘后资金账户同步
-    after_sync_fund_account: '5 15 * * 1-5',
+    // 周一到周五下午16:5执行盘后资金账户同步
+    after_sync_fund_account: '5 16 * * 1-5',
     // 周一到周五下午15:20执行同步行情数据
     after_sync_last_price: '20 15 * * 1-5',
     // 周一到周五下午15:15执行查询持仓数据
@@ -114,8 +114,8 @@ export const settings = env({
     after_sync_order: '20 15 * * 1-5',
     // 周一到周五下午15:30执行查询交易数据
     after_sync_trade: '30 15 * * 1-5',
-    // 周一到周五下午16:00执行计算盈亏
-    after_calc_pnl: '0 16 * * 1-5',
+    // 周一到周五下午16:10执行计算盈亏
+    after_calc_pnl: '10 16 * * 1-5',
     // 周一到周五早上8:35执行盘前权重指数同步
     before_sync_index_weight: '35 8 * * 1-5',
     // 周一到周五晚上23:30执行盘后进程清理
