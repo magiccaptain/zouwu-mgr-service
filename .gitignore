@@ -40,3 +40,4 @@ lerna-debug.log*
 # sdk
 sdk
 data-migrate
+python/__pycache__

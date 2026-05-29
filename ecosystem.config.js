@@ -15,9 +15,9 @@ module.exports = {
     },
     {
       name: 'trade-cal-service',
-      script: './python/.venv/bin/uvicorn',
+      script: './.venv/bin/uvicorn',
       args: 'main:app --host 0.0.0.0 --port 8001',
-      interpreter: './python/.venv/bin/python',
+      interpreter: 'none',
       cwd: './python',
       env: {
         PYTHON_SERVICE_PORT: 8001,
