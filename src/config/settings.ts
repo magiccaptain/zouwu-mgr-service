@@ -90,6 +90,9 @@ export const settings = env({
     },
   },
   mock_fund_operations: false,
+  python_service: {
+    url: 'http://localhost:8001',
+  },
   cron: {
     task_switch: 'on',
     // 每日早8点执行盘前磁盘检查
@@ -124,5 +127,7 @@ export const settings = env({
     before_write_fund_data: '15 9 * * 1-5',
     // 周一到周五下午19:00执行申赎记录写入
     after_write_subscription_redemption_record: '0 19 * * 1-5',
+    // 每日早9点触发，代码判断12月20日才执行同步下一年交易日历
+    sync_next_year_trading_calendar: '0 9 * * *',
   },
 });

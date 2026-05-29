@@ -867,6 +867,17 @@ model FuturesContractParameter {
   @@schema("public")
 }
 
+model TradingCalendar {
+  id       Int     @id @default(autoincrement())
+  market   Market
+  cal_date String
+  is_open  Boolean
+
+  @@unique([market, cal_date])
+  @@index([market, cal_date])
+  @@schema("public")
+}
+
 enum StrategyLevel {
   PRODUCT
   FUND_ACCOUNT
@@ -896,6 +907,7 @@ enum Market {
   CSI
   CNI
   BJ
+  SSE
 
   @@schema("public")
 }

@@ -30,6 +30,7 @@ import { tryParseJSON } from 'src/lib/lang/json';
 import { GetMarketByTicker } from 'src/lib/stock';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RemoteCommandError, RemoteCommandService } from 'src/remote-command';
+import { TradingCalendarService } from 'src/trading-calendar/trading-calendar.service';
 
 import {
   ConfirmCompletionDto,
@@ -50,7 +51,8 @@ export class FundAccountService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly hostServerService: HostServerService,
-    private readonly remoteCommandService: RemoteCommandService
+    private readonly remoteCommandService: RemoteCommandService,
+    private readonly tradingCalendarService: TradingCalendarService
   ) {}
 
   private parseBaseDate(base_date: string): Date {
@@ -78,14 +80,23 @@ export class FundAccountService {
     return parsedDate;
   }
 
-  getNextTradingDay(base_date: string): string {
-    let nextTradingDay = dayjs(this.parseBaseDate(base_date)).add(1, 'day');
+  async getNextTradingDay(base_date: string): Promise<string> {
+    this.parseBaseDate(base_date);
 
-    while (nextTradingDay.day() === 0 || nextTradingDay.day() === 6) {
-      nextTradingDay = nextTradingDay.add(1, 'day');
+    try {
+      return await this.tradingCalendarService.getNextTradingDay(base_date);
+    } catch (error) {
+      this.logger.warn(
+        `TradingCalendarService unavailable, falling back to weekend-skipping: ${error}`
+      );
+      let nextTradingDay = dayjs(this.parseBaseDate(base_date)).add(1, 'day');
+
+      while (nextTradingDay.day() === 0 || nextTradingDay.day() === 6) {
+        nextTradingDay = nextTradingDay.add(1, 'day');
+      }
+
+      return nextTradingDay.format('YYYY-MM-DD');
     }
-
-    return nextTradingDay.format('YYYY-MM-DD');
   }
 
   async listFundSnapshot(
@@ -1186,7 +1197,7 @@ export class FundAccountService {
       dto.direction === SubscriptionRedemptionDirection.REDEMPTION &&
       dto.reduce_day
     ) {
-      position_change_day = this.getNextTradingDay(dto.reduce_day);
+      position_change_day = await this.getNextTradingDay(dto.reduce_day);
     }
 
     return this.prismaService.subscriptionRedemptionRecord.create({
@@ -1223,7 +1234,7 @@ export class FundAccountService {
       };
 
       if (record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION) {
-        updateData.position_change_day = this.getNextTradingDay(
+        updateData.position_change_day = await this.getNextTradingDay(
           dto.transfer_date
         );
       }

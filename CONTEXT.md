@@ -19,6 +19,10 @@
 - ProcessMonitor：进程监控配置与状态采集能力
 - OpsTask：后台任务、批处理、执行编排的任务实体
 - Prisma schema 源头：数据库模型设计首先发生在 `ops-core/prisma/schema.prisma`
+- TradingCalendar：交易日历。按市场维度记录每日是否开市，以 SSE（上交所）为 A 股唯一数据源，SH/SZ 共用同一份日历。存储全量日期（含 `is_open` 标记），覆盖周末与法定节假日。数据通过内嵌 Python 服务从 AKShare 获取，运维人员在管理页面触发同步。
+- TradingCalendarService：交易日历的独立查询服务。提供"是否交易日""下一交易日"等基础能力，供 OpsTask 调度、申赎计算、前端日期选择器等各模块消费，不隶属于任何业务模块。
+- 交易日历同步策略：初始化拉取过去 5 年 + 当年数据。之后每年 12 月 20 日由 OpsTask 定时任务自动拉取下一年日历（cron 每日触发，代码内判断日期）。同步结果（成功/失败）均通过飞书通知运维人员。
+- 交易日历管理页面：ops-admin 提供按年份查看日历、手动同步、以及对个别日期调整 `is_open` 状态的能力。不开放完整 CRUD。
 - 申赎记录：资金账户的一次申购或赎回业务事实。记录创建时状态为 OPEN；用户确认出入金完成后手动将状态置为 CLOSE，流程彻底结束。无中间状态。一笔申赎可关联多笔 CustodianTransfer。申购的 `position_change_day` 在用户确认完成时，以该笔 CustodianTransfer 的 transfer_date + 1 交易日计算并回填。赎回的 `position_change_day` 在创建申赎记录时即以 reduce_day + 1 交易日自动计算并填好。
 - CustodianTransfer：托管出入金记录。由托管平台执行出入金操作后，运维人员在运维平台手动登记的人工确认记录。与 `TransferRecord`（系统自动执行的转账记录）是不同实体。
 

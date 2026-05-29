@@ -43,11 +43,11 @@ export class FundAccountController {
     type: NextTradingDayEntity,
   })
   @Get('@next-trading-day')
-  queryNextTradingDay(
+  async queryNextTradingDay(
     @Query() query: QueryNextTradingDayDto
-  ): NextTradingDayEntity {
+  ): Promise<NextTradingDayEntity> {
     return {
-      next_trading_day: this.fundAccountService.getNextTradingDay(
+      next_trading_day: await this.fundAccountService.getNextTradingDay(
         query.base_date
       ),
     };

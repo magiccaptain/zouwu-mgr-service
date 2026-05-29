@@ -6,9 +6,18 @@ import { FundAccountService } from './fund_account.service';
 describe('FundAccountService', () => {
   let service: FundAccountService;
   let mockPrisma: any;
+  let mockTradingCalendar: any;
 
   beforeEach(() => {
-    service = new FundAccountService({} as any, {} as any, {} as any);
+    mockTradingCalendar = {
+      getNextTradingDay: jest.fn().mockResolvedValue('2026-05-25'),
+    };
+    service = new FundAccountService(
+      {} as any,
+      {} as any,
+      {} as any,
+      mockTradingCalendar as any
+    );
   });
 
   it('should be defined', () => {
@@ -18,16 +27,32 @@ describe('FundAccountService', () => {
   it.each([
     ['2026-05-21', '2026-05-22'],
     ['2026-05-22', '2026-05-25'],
-    ['2026-05-23', '2026-05-25'],
+    ['2026-05-23', '2026-05-26'],
     ['2026-05-24', '2026-05-25'],
-  ])('should return next trading day for %s', (baseDate, expectedDate) => {
-    expect(service.getNextTradingDay(baseDate)).toBe(expectedDate);
-  });
+  ])(
+    'should return next trading day for %s',
+    async (baseDate, expectedDate) => {
+      mockTradingCalendar.getNextTradingDay.mockResolvedValue(expectedDate);
+      expect(await service.getNextTradingDay(baseDate)).toBe(expectedDate);
+      expect(mockTradingCalendar.getNextTradingDay).toHaveBeenCalledWith(
+        baseDate
+      );
+    }
+  );
 
-  it('should reject invalid base date', () => {
-    expect(() => service.getNextTradingDay('2026-02-31')).toThrow(
+  it('should reject invalid base date', async () => {
+    await expect(service.getNextTradingDay('2026-02-31')).rejects.toThrow(
       BadRequestException
     );
+  });
+
+  it('should fall back to weekend-skipping when TradingCalendarService throws', async () => {
+    mockTradingCalendar.getNextTradingDay.mockRejectedValue(
+      new Error('no data')
+    );
+
+    expect(await service.getNextTradingDay('2026-05-22')).toBe('2026-05-25');
+    expect(await service.getNextTradingDay('2026-05-21')).toBe('2026-05-22');
   });
 
   xit('should query fund account from host server', async () => {
@@ -41,7 +66,15 @@ describe('FundAccountService', () => {
           create: jest.fn().mockResolvedValue({ id: 1 }),
         },
       };
-      service = new FundAccountService(mockPrisma as any, {} as any, {} as any);
+      mockTradingCalendar = {
+        getNextTradingDay: jest.fn().mockResolvedValue('2026-05-25'),
+      };
+      service = new FundAccountService(
+        mockPrisma as any,
+        {} as any,
+        {} as any,
+        mockTradingCalendar as any
+      );
     });
 
     it('should auto-calculate position_change_day for REDEMPTION with reduce_day', async () => {
@@ -52,6 +85,9 @@ describe('FundAccountService', () => {
         reduce_day: '2026-05-22',
       });
 
+      expect(mockTradingCalendar.getNextTradingDay).toHaveBeenCalledWith(
+        '2026-05-22'
+      );
       expect(
         mockPrisma.subscriptionRedemptionRecord.create
       ).toHaveBeenCalledWith({
@@ -87,7 +123,15 @@ describe('FundAccountService', () => {
         },
         $transaction: jest.fn((fn: any) => fn(mockPrisma)),
       };
-      service = new FundAccountService(mockPrisma as any, {} as any, {} as any);
+      mockTradingCalendar = {
+        getNextTradingDay: jest.fn().mockResolvedValue('2026-05-25'),
+      };
+      service = new FundAccountService(
+        mockPrisma as any,
+        {} as any,
+        {} as any,
+        mockTradingCalendar as any
+      );
     });
 
     it('should set status CLOSE and calculate position_change_day for SUBSCRIPTION', async () => {
@@ -102,6 +146,9 @@ describe('FundAccountService', () => {
         transfer_date: '2026-05-22',
       });
 
+      expect(mockTradingCalendar.getNextTradingDay).toHaveBeenCalledWith(
+        '2026-05-22'
+      );
       expect(
         mockPrisma.subscriptionRedemptionRecord.update
       ).toHaveBeenCalledWith({
@@ -159,7 +206,12 @@ describe('FundAccountService', () => {
           update: jest.fn().mockResolvedValue({ id: 1 }),
         },
       };
-      service = new FundAccountService(mockPrisma as any, {} as any, {} as any);
+      service = new FundAccountService(
+        mockPrisma as any,
+        {} as any,
+        {} as any,
+        mockTradingCalendar as any
+      );
     });
 
     it('should update remark when status is OPEN', async () => {
@@ -208,7 +260,12 @@ describe('FundAccountService', () => {
         },
       } as any;
 
-      const svc = new FundAccountService(prismaService, {} as any, {} as any);
+      const svc = new FundAccountService(
+        prismaService,
+        {} as any,
+        {} as any,
+        mockTradingCalendar as any
+      );
       jest.spyOn(svc, 'syncFundAccount').mockResolvedValue(undefined as any);
 
       const result = await svc.refreshFunds('test-account');
@@ -232,7 +289,12 @@ describe('FundAccountService', () => {
         },
       } as any;
 
-      const svc = new FundAccountService(prismaService, {} as any, {} as any);
+      const svc = new FundAccountService(
+        prismaService,
+        {} as any,
+        {} as any,
+        mockTradingCalendar as any
+      );
       jest.spyOn(svc, 'syncFundAccount').mockResolvedValue(undefined as any);
 
       const result = await svc.refreshFunds('test-account');

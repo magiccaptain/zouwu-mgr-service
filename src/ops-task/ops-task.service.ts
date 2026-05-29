@@ -27,6 +27,7 @@ import { MarketValueService } from 'src/market-value/market-value.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QuoteService } from 'src/quote/quote.service';
 import { RemoteCommand, RemoteCommandService } from 'src/remote-command';
+import { TradingCalendarService } from 'src/trading-calendar/trading-calendar.service';
 import { ValCalcService } from 'src/val-calc/val-calc.service';
 import { WarningService } from 'src/warning/warning.service';
 
@@ -43,7 +44,8 @@ export class OpsTaskService {
     private readonly quoteService: QuoteService,
     private readonly marketValueService: MarketValueService,
     private readonly valCalcService: ValCalcService,
-    private readonly feishuService: FeishuService
+    private readonly feishuService: FeishuService,
+    private readonly tradingCalendarService: TradingCalendarService
   ) {}
 
   async checkHostServerDiskTask(task: OpsTask) {
@@ -407,6 +409,14 @@ export class OpsTaskService {
   // 周一到周五下午15:40 执行计算市值
   @Cron(settings.cron.after_calc_market_value)
   async startAfterCalcMarketValueTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const fundAccounts = await this.prismaService.fundAccount.findMany({
       where: {
         active: true,
@@ -438,6 +448,14 @@ export class OpsTaskService {
   // 周一到周五早上8:40 执行
   @Cron(settings.cron.before_sync_fund_account)
   async startBeforeSyncFundAccountTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘前资金账户同步',
@@ -480,6 +498,14 @@ export class OpsTaskService {
   // 周一到周五下午16:5 执行
   @Cron(settings.cron.after_sync_fund_account)
   async startAfterSyncFundAccountTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后资金账户同步',
@@ -501,6 +527,14 @@ export class OpsTaskService {
   // 周一到周五下午15:20 执行 同步行情数据
   @Cron(settings.cron.after_sync_last_price)
   async startAfterSyncQuoteTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     await this.prismaService.opsTask.create({
       data: {
         name: '盘后行情brief数据同步',
@@ -521,6 +555,14 @@ export class OpsTaskService {
   // 周一到周五下午15:15 执行查询持仓数据
   @Cron(settings.cron.after_sync_positions)
   async startAfterSyncPositionTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后持仓数据同步',
@@ -586,6 +628,14 @@ export class OpsTaskService {
   // 周一到周五下午15:20 执行查询订单数据
   @Cron(settings.cron.after_sync_order)
   async startAfterSyncOrderTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后订单数据同步',
@@ -643,6 +693,14 @@ export class OpsTaskService {
   // 周一到周五下午15:25 执行查询交易数据
   @Cron(settings.cron.after_sync_trade)
   async startAfterSyncTradeTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后交易数据同步',
@@ -701,6 +759,14 @@ export class OpsTaskService {
   // 周一到周五下午16:10 执行计算盈亏
   @Cron(settings.cron.after_calc_pnl)
   async startAfterCalcPnlTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     await this.prismaService.opsTask.create({
       data: {
         name: '盘后盈亏计算',
@@ -733,6 +799,14 @@ export class OpsTaskService {
   async startAfterWriteSubscriptionRedemptionRecordTask(
     tradeDay = dayjs().format('YYYY-MM-DD')
   ) {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const tradeDayDate = dayjs(tradeDay);
     const reduceDay = tradeDayDate
       .add(tradeDayDate.day() === 5 ? 3 : 1, 'day')
@@ -860,6 +934,14 @@ export class OpsTaskService {
   // 周一到周五早上8:35 执行
   @Cron(settings.cron.before_sync_index_weight)
   async startBeforeSyncWeightIndexTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     this.logger.debug('暂时不执行盘前权重指数同步');
     return;
 
@@ -882,6 +964,14 @@ export class OpsTaskService {
   // 周一到周五晚上23:30 执行
   @Cron(settings.cron.after_clear_processes)
   async startAfterClearProcessesTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后进程清理',
@@ -913,6 +1003,14 @@ export class OpsTaskService {
 
   @Cron(settings.cron.before_write_fund_data)
   async startBeforeWriteFundDataTask() {
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      dayjs().format('YYYY-MM-DD')
+    );
+    if (!isTradingDay) {
+      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      return;
+    }
+
     const skip = true;
 
     if (skip) {
@@ -1202,5 +1300,37 @@ export class OpsTaskService {
     }
 
     await this.feishuService.notifyMaintenance(`托管机写入资金账户数据完成`);
+  }
+
+  @Cron(settings.cron.sync_next_year_trading_calendar)
+  async syncNextYearTradingCalendar() {
+    const now = dayjs();
+    if (now.month() !== 11 || now.date() !== 20) {
+      return;
+    }
+
+    const nextYear = now.year() + 1;
+    this.logger.log(`开始同步 ${nextYear} 年交易日历数据`);
+
+    try {
+      const result = await this.tradingCalendarService.sync(nextYear, nextYear);
+
+      this.logger.log(
+        `交易日历同步成功：${nextYear} 年，新增 ${result.created} 条，更新 ${result.updated} 条`
+      );
+
+      await this.feishuService.notifyMaintenance(
+        `交易日历自动同步成功：已更新 ${nextYear} 年交易日历数据，新增 ${result.created} 条，更新 ${result.updated} 条`
+      );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      this.logger.error(`交易日历同步失败：${errorMessage}`);
+
+      await this.feishuService.notifyMaintenance(
+        `交易日历自动同步失败：${errorMessage}，请在管理页面手动重试`
+      );
+    }
   }
 }
