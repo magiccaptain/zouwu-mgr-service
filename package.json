@@ -28,7 +28,8 @@
     "seed": "prisma db seed",
     "migrate": "prisma migrate dev",
     "generate": "prisma generate",
-    "deploydb": "prisma migrate deploy"
+    "deploydb": "prisma migrate deploy",
+    "sync:trading-calendar": "bun run bin/sync-trading-calendar.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.922.0",
