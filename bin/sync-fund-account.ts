@@ -52,9 +52,9 @@ async function main() {
     //   continue;
     // }
 
-    if (fund_account.account !== '330200063628') {
-      continue;
-    }
+    // if (fund_account.account !== '330200063628') {
+    //   continue;
+    // }
 
     console.log('begin sync account', fund_account.account);
 
