@@ -410,7 +410,9 @@ export class OpsTaskService {
   @Cron(settings.cron.after_calc_market_value)
   async startAfterCalcMarketValueTask() {
     const tradeDay = dayjs().format('YYYY-MM-DD');
-    const isTradingDay = await this.tradingCalendarService.isTradingDay(tradeDay);
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(
+      tradeDay
+    );
     if (!isTradingDay) {
       this.logger.log(`非交易日 ${tradeDay}，跳过执行`);
       return;
@@ -438,11 +440,16 @@ export class OpsTaskService {
         10
       );
 
-      await this.feishuService.notifyMaintenance(`盘后市值计算完成 ${tradeDay}`);
+      await this.feishuService.notifyMaintenance(
+        `盘后市值计算完成 ${tradeDay}`
+      );
       this.logger.log('盘后市值计算完成');
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error));
-      this.logger.error(`盘后市值计算失败 ${tradeDay}: ${err.message}`, err.stack);
+      this.logger.error(
+        `盘后市值计算失败 ${tradeDay}: ${err.message}`,
+        err.stack
+      );
       await this.feishuService.notifyMaintenance(
         `盘后市值计算失败 ${tradeDay}: ${err.message}`
       );
@@ -848,7 +855,7 @@ export class OpsTaskService {
       return;
     }
 
-    const fundAccountAmountMap = new Map<string, number>();
+    const fundAccountAmountMap = new Map();
 
     for (const record of records) {
       const signedAmount =

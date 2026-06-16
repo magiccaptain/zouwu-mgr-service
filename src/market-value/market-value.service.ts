@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { FundAccount, Market, QuoteBrief } from '@prisma/client';
+import { FundAccount, Market } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import { Decimal } from 'decimal.js';
 
@@ -9,7 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class MarketValueService {
   private readonly logger = new Logger(MarketValueService.name);
   // key: wind_code
-  private readonly quoteBriefMap = new Map<string, QuoteBrief>();
+  private readonly quoteBriefMap = new Map();
 
   constructor(private readonly prismaService: PrismaService) {}
 
@@ -178,7 +178,9 @@ export class MarketValueService {
       for (let i = 0; i < fundAccounts.length; i += batchSize) {
         const batch = fundAccounts.slice(i, i + batchSize);
         const batchResults = await Promise.allSettled(
-          batch.map((fundAccount) => this.calcMarketValue(fundAccount, tradeDay))
+          batch.map((fundAccount) =>
+            this.calcMarketValue(fundAccount, tradeDay)
+          )
         );
 
         const failedAccounts: string[] = [];
@@ -198,7 +200,9 @@ export class MarketValueService {
 
         if (failedAccounts.length > 0) {
           throw new Error(
-            `Failed to calc market value for ${failedAccounts.length} account(s): ${failedAccounts.join(', ')}`
+            `Failed to calc market value for ${
+              failedAccounts.length
+            } account(s): ${failedAccounts.join(', ')}`
           );
         }
       }
