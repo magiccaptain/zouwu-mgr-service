@@ -409,11 +409,10 @@ export class OpsTaskService {
   // 周一到周五下午15:40 执行计算市值
   @Cron(settings.cron.after_calc_market_value)
   async startAfterCalcMarketValueTask() {
-    const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
-    );
+    const tradeDay = dayjs().format('YYYY-MM-DD');
+    const isTradingDay = await this.tradingCalendarService.isTradingDay(tradeDay);
     if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      this.logger.log(`非交易日 ${tradeDay}，跳过执行`);
       return;
     }
 
@@ -424,25 +423,30 @@ export class OpsTaskService {
       },
     });
 
-    await this.marketValueService.batchCalcActualClosePrice(
-      fundAccounts,
-      dayjs().format('YYYY-MM-DD'),
-      10
-    );
-
     await this.prismaService.opsTask.create({
       data: {
         name: '盘后市值计算',
-        trade_day: dayjs().format('YYYY-MM-DD'),
+        trade_day: tradeDay,
         type: OpsTaskType.AFTER_CALC_MARKET_VALUE,
       },
     });
 
-    await this.feishuService.notifyMaintenance(
-      `盘后市值计算完成 ${dayjs().format('YYYY-MM-DD')}`
-    );
+    try {
+      await this.marketValueService.batchCalcActualClosePrice(
+        fundAccounts,
+        tradeDay,
+        10
+      );
 
-    this.logger.log('盘后市值计算完成');
+      await this.feishuService.notifyMaintenance(`盘后市值计算完成 ${tradeDay}`);
+      this.logger.log('盘后市值计算完成');
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(`盘后市值计算失败 ${tradeDay}: ${err.message}`, err.stack);
+      await this.feishuService.notifyMaintenance(
+        `盘后市值计算失败 ${tradeDay}: ${err.message}`
+      );
+    }
   }
 
   // 周一到周五早上8:40 执行

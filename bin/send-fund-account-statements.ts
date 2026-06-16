@@ -50,7 +50,8 @@ const SEND_OPTIONS: SendFundAccountStatementsOptions = {
     "baijinyu@guosen.com.cn",
     "yinyun@hicend.com.cn",
     "weiyi@wncapital.cn",
-    "zdkwz1101@gmail.com"
+    "zdkwz1101@gmail.com",
+    "caoyu@zeusamc.com"
   ],
 
   // recipients: [

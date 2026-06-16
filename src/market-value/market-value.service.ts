@@ -137,41 +137,32 @@ export class MarketValueService {
       return;
     }
 
-    // 查询该账户当日所有市值记录用于更新占比
-    const marketValues = await this.prismaService.marketValue.findMany({
+    const marketValueCount = await this.prismaService.marketValue.count({
       where: {
         fund_account: fundAccount.account,
         trade_day: tradeDay,
       },
     });
 
-    if (marketValues.length === 0) {
+    if (marketValueCount === 0) {
       this.logger.warn(
         `No market values found for fund account ${fundAccount.account} on trade day ${tradeDay}`
       );
       return;
     }
 
-    // 计算每条记录的市值占比并批量更新
-    const updateOperations = marketValues.map((mv) => {
-      const marketValueRatio =
-        mv.value && mv.value > 0 ? mv.value / totalValue : null;
-
-      return this.prismaService.marketValue.update({
-        where: {
-          id: mv.id,
-        },
-        data: {
-          market_value_ratio: marketValueRatio,
-        },
-      });
-    });
-
-    // 使用事务批量更新，确保原子性
-    await this.prismaService.$transaction(updateOperations);
+    const updatedCount = await this.prismaService.$executeRaw`
+      UPDATE "MarketValue"
+      SET market_value_ratio = CASE
+        WHEN value > 0 THEN value / ${totalValue}
+        ELSE NULL
+      END
+      WHERE fund_account = ${fundAccount.account}
+        AND trade_day = ${tradeDay}
+    `;
 
     this.logger.debug(
-      `Updated market_value_ratio for ${marketValues.length} records, total value: ${totalValue}, fund account: ${fundAccount.account}, trade day: ${tradeDay}`
+      `Updated market_value_ratio for ${updatedCount} records, total value: ${totalValue}, fund account: ${fundAccount.account}, trade day: ${tradeDay}`
     );
   }
 
@@ -182,22 +173,37 @@ export class MarketValueService {
   ) {
     await this.buildQuoteBriefMap(tradeDay);
 
-    // 分批并行处理
-    for (let i = 0; i < fundAccounts.length; i += batchSize) {
-      const batch = fundAccounts.slice(i, i + batchSize);
-      await Promise.all(
-        batch.map((fundAccount) =>
-          this.calcMarketValue(fundAccount, tradeDay).catch((error) => {
+    try {
+      // 分批并行处理
+      for (let i = 0; i < fundAccounts.length; i += batchSize) {
+        const batch = fundAccounts.slice(i, i + batchSize);
+        const batchResults = await Promise.allSettled(
+          batch.map((fundAccount) => this.calcMarketValue(fundAccount, tradeDay))
+        );
+
+        const failedAccounts: string[] = [];
+        batchResults.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            const account = batch[index].account;
+            const reason = result.reason;
+            const error =
+              reason instanceof Error ? reason : new Error(String(reason));
             this.logger.error(
-              `Failed to calc market value for fund account ${fundAccount.account}: ${error.message}`,
+              `Failed to calc market value for fund account ${account}: ${error.message}`,
               error.stack
             );
-            throw error;
-          })
-        )
-      );
-    }
+            failedAccounts.push(account);
+          }
+        });
 
-    this.quoteBriefMap.clear();
+        if (failedAccounts.length > 0) {
+          throw new Error(
+            `Failed to calc market value for ${failedAccounts.length} account(s): ${failedAccounts.join(', ')}`
+          );
+        }
+      }
+    } finally {
+      this.quoteBriefMap.clear();
+    }
   }
 }
