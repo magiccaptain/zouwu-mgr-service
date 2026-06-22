@@ -811,10 +811,8 @@ export class OpsTaskService {
       return;
     }
 
-    const tradeDayDate = dayjs(tradeDay);
-    const reduceDay = tradeDayDate
-      .add(tradeDayDate.day() === 5 ? 3 : 1, 'day')
-      .format('YYYY-MM-DD');
+    const reduceDay =
+      await this.tradingCalendarService.getNextTradingDay(tradeDay);
     const taskType =
       'AFTER_WRITE_SUBSCRIPTION_REDEMPTION_RECORD' as OpsTaskType;
     await this.prismaService.opsTask.create({
