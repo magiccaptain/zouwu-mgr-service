@@ -547,12 +547,26 @@ export class OpsTaskService {
       },
     });
 
-    await this.quoteService.queryQuote();
-    await this.quoteService.calcActualClosePrice();
+    const tradeDay = dayjs().format('YYYY-MM-DD');
 
-    this.logger.log('盘后行情brief数据同步完成');
+    try {
+      await this.quoteService.queryQuote();
+      await this.quoteService.calcActualClosePrice();
 
-    await this.feishuService.notifyMaintenance(`盘后行情brief数据同步完成`);
+      this.logger.log('盘后行情brief数据同步完成');
+      await this.feishuService.notifyMaintenance(
+        `盘后行情brief数据同步完成 ${tradeDay}`
+      );
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      this.logger.error(
+        `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`,
+        err.stack
+      );
+      await this.feishuService.notifyMaintenance(
+        `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`
+      );
+    }
     return;
   }
 
