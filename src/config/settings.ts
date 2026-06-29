@@ -102,7 +102,7 @@ export const settings = env({
     // 每日晚上21:00执行盘后磁盘检查
     night_check_host_server_disk: '0 21 * * *',
     // 周一到周五下午15:40执行计算市值
-    after_calc_market_value: '40 15 * * 1-5',
+    after_calc_market_value: '20 16 * * 1-5',
     // 周一到周五早上8:40执行盘前资金账户同步
     before_sync_fund_account: '40 8 * * 1-5',
     // 周一到周五早上9:10执行盘前第二次资金账户同步
