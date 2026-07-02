@@ -905,21 +905,48 @@ export class OpsTaskService {
 
       this.logger.log(`盘后申赎记录写入完成 ${remoteFile}`);
 
+      const fundAccounts = await this.prismaService.fundAccount.findMany({
+        where: {
+          account: {
+            in: [...fundAccountAmountMap.keys()],
+          },
+        },
+        select: {
+          account: true,
+          product: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      const accountProductNameMap = new Map<string, string>(
+        fundAccounts.map((fundAccount) => [
+          fundAccount.account,
+          fundAccount.product.name,
+        ])
+      );
+
       // 构造更详细的飞书通知：每条一行，说明是加仓(申购)或减仓(赎回)
       const detailLines = [...fundAccountAmountMap.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([account, amount]) => {
+          const productName = accountProductNameMap.get(account);
+          const accountWithProduct = productName
+            ? `${account}(${productName})`
+            : account;
           const num = Number(amount);
           if (num > 0) {
-            return `${reduceDay} 日 ${account} 账户将自动 加仓 ${num.toFixed(
+            return `${reduceDay} 日 ${accountWithProduct} 账户将自动 加仓 ${num.toFixed(
               2
-            )} 元，加仓对应的申购`;
+            )} 元`;
           } else if (num < 0) {
-            return `${reduceDay} 日 ${account} 账户将自动 减仓 ${Math.abs(
+            return `${reduceDay} 日 ${accountWithProduct} 账户将自动 减仓 ${Math.abs(
               num
             ).toFixed(2)} 元，减仓对应的赎回`;
           } else {
-            return `${reduceDay} 日 ${account} 账户变动 0.00 元`;
+            return `${reduceDay} 日 ${accountWithProduct} 账户变动 0.00 元`;
           }
         });
 
