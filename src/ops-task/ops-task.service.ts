@@ -529,46 +529,46 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:20 执行 同步行情数据
-  @Cron(settings.cron.after_sync_last_price)
-  async startAfterSyncQuoteTask() {
-    const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
-    );
-    if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
-      return;
-    }
+  // @Cron(settings.cron.after_sync_last_price)
+  // async startAfterSyncQuoteTask() {
+  //   const isTradingDay = await this.tradingCalendarService.isTradingDay(
+  //     dayjs().format('YYYY-MM-DD')
+  //   );
+  //   if (!isTradingDay) {
+  //     this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+  //     return;
+  //   }
 
-    await this.prismaService.opsTask.create({
-      data: {
-        name: '盘后行情brief数据同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
-        type: OpsTaskType.AFTER_SYNC_LAST_PRICE,
-      },
-    });
+  //   await this.prismaService.opsTask.create({
+  //     data: {
+  //       name: '盘后行情brief数据同步',
+  //       trade_day: dayjs().format('YYYY-MM-DD'),
+  //       type: OpsTaskType.AFTER_SYNC_LAST_PRICE,
+  //     },
+  //   });
 
-    const tradeDay = dayjs().format('YYYY-MM-DD');
+  //   const tradeDay = dayjs().format('YYYY-MM-DD');
 
-    try {
-      await this.quoteService.queryQuote();
-      await this.quoteService.calcActualClosePrice();
+  //   try {
+  //     await this.quoteService.queryQuote();
+  //     await this.quoteService.calcActualClosePrice();
 
-      this.logger.log('盘后行情brief数据同步完成');
-      await this.feishuService.notifyMaintenance(
-        `盘后行情brief数据同步完成 ${tradeDay}`
-      );
-    } catch (error) {
-      const err = error instanceof Error ? error : new Error(String(error));
-      this.logger.error(
-        `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`,
-        err.stack
-      );
-      await this.feishuService.notifyMaintenance(
-        `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`
-      );
-    }
-    return;
-  }
+  //     this.logger.log('盘后行情brief数据同步完成');
+  //     await this.feishuService.notifyMaintenance(
+  //       `盘后行情brief数据同步完成 ${tradeDay}`
+  //     );
+  //   } catch (error) {
+  //     const err = error instanceof Error ? error : new Error(String(error));
+  //     this.logger.error(
+  //       `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`,
+  //       err.stack
+  //     );
+  //     await this.feishuService.notifyMaintenance(
+  //       `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`
+  //     );
+  //   }
+  //   return;
+  // }
 
   // 周一到周五下午15:15 执行查询持仓数据
   @Cron(settings.cron.after_sync_positions)
