@@ -11,6 +11,7 @@ import {
   OpsWarningType,
   RemoteCommandType,
   SubscriptionRedemptionDirection,
+  TransferDirection,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -825,8 +826,9 @@ export class OpsTaskService {
       return;
     }
 
-    const reduceDay =
-      await this.tradingCalendarService.getNextTradingDay(tradeDay);
+    const reduceDay = await this.tradingCalendarService.getNextTradingDay(
+      tradeDay
+    );
     const taskType =
       'AFTER_WRITE_SUBSCRIPTION_REDEMPTION_RECORD' as OpsTaskType;
     await this.prismaService.opsTask.create({
@@ -841,6 +843,13 @@ export class OpsTaskService {
       await this.prismaService.subscriptionRedemptionRecord.findMany({
         where: {
           position_change_day: reduceDay,
+        },
+        include: {
+          custodianTransfers: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
         },
       });
 
@@ -861,17 +870,48 @@ export class OpsTaskService {
     }
 
     const fundAccountAmountMap = new Map<string, number>();
+    const subscriptionSkippedMessages: string[] = [];
 
     for (const record of records) {
-      const signedAmount =
-        record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION
-          ? record.amount
-          : -record.amount;
+      let signedAmount: number;
+
+      if (record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION) {
+        const matchedTransfers = record.custodianTransfers.filter(
+          (transfer) => transfer.direction === TransferDirection.IN
+        );
+
+        if (matchedTransfers.length === 0) {
+          const skipMessage = `${reduceDay} 日 ${record.fund_account} 申购记录(id=${record.id})未写入，原因：未关联 CustodianTransfer 入金记录`;
+          subscriptionSkippedMessages.push(skipMessage);
+          this.logger.warn(skipMessage);
+          continue;
+        }
+
+        signedAmount = matchedTransfers.reduce(
+          (sum, transfer) => sum + transfer.amount,
+          0
+        );
+      } else {
+        // 赎回逻辑保持不变
+        signedAmount = -record.amount;
+      }
 
       fundAccountAmountMap.set(
         record.fund_account,
         (fundAccountAmountMap.get(record.fund_account) || 0) + signedAmount
       );
+    }
+
+    if (subscriptionSkippedMessages.length > 0) {
+      try {
+        await this.feishuService.notifyMaintenance(
+          ['盘后申赎记录部分申购未写入：', ...subscriptionSkippedMessages].join(
+            '\n'
+          )
+        );
+      } catch (err) {
+        this.logger.error('发送飞书通知失败', err);
+      }
     }
 
     // 打印出实际的数据，方便调试
