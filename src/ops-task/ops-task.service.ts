@@ -11,6 +11,7 @@ import {
   OpsWarningType,
   RemoteCommandType,
   SubscriptionRedemptionDirection,
+  TransferDirection,
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
@@ -536,32 +537,46 @@ export class OpsTaskService {
   }
 
   // 周一到周五下午15:20 执行 同步行情数据
-  @Cron(settings.cron.after_sync_last_price)
-  async startAfterSyncQuoteTask() {
-    const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
-    );
-    if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
-      return;
-    }
+  // @Cron(settings.cron.after_sync_last_price)
+  // async startAfterSyncQuoteTask() {
+  //   const isTradingDay = await this.tradingCalendarService.isTradingDay(
+  //     dayjs().format('YYYY-MM-DD')
+  //   );
+  //   if (!isTradingDay) {
+  //     this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+  //     return;
+  //   }
 
-    await this.prismaService.opsTask.create({
-      data: {
-        name: '盘后行情brief数据同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
-        type: OpsTaskType.AFTER_SYNC_LAST_PRICE,
-      },
-    });
+  //   await this.prismaService.opsTask.create({
+  //     data: {
+  //       name: '盘后行情brief数据同步',
+  //       trade_day: dayjs().format('YYYY-MM-DD'),
+  //       type: OpsTaskType.AFTER_SYNC_LAST_PRICE,
+  //     },
+  //   });
 
-    await this.quoteService.queryQuote();
-    await this.quoteService.calcActualClosePrice();
+  //   const tradeDay = dayjs().format('YYYY-MM-DD');
 
-    this.logger.log('盘后行情brief数据同步完成');
+  //   try {
+  //     await this.quoteService.queryQuote();
+  //     await this.quoteService.calcActualClosePrice();
 
-    await this.feishuService.notifyMaintenance(`盘后行情brief数据同步完成`);
-    return;
-  }
+  //     this.logger.log('盘后行情brief数据同步完成');
+  //     await this.feishuService.notifyMaintenance(
+  //       `盘后行情brief数据同步完成 ${tradeDay}`
+  //     );
+  //   } catch (error) {
+  //     const err = error instanceof Error ? error : new Error(String(error));
+  //     this.logger.error(
+  //       `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`,
+  //       err.stack
+  //     );
+  //     await this.feishuService.notifyMaintenance(
+  //       `盘后行情brief数据同步失败 ${tradeDay}: ${err.message}`
+  //     );
+  //   }
+  //   return;
+  // }
 
   // 周一到周五下午15:15 执行查询持仓数据
   @Cron(settings.cron.after_sync_positions)
@@ -818,10 +833,9 @@ export class OpsTaskService {
       return;
     }
 
-    const tradeDayDate = dayjs(tradeDay);
-    const reduceDay = tradeDayDate
-      .add(tradeDayDate.day() === 5 ? 3 : 1, 'day')
-      .format('YYYY-MM-DD');
+    const reduceDay = await this.tradingCalendarService.getNextTradingDay(
+      tradeDay
+    );
     const taskType =
       'AFTER_WRITE_SUBSCRIPTION_REDEMPTION_RECORD' as OpsTaskType;
     await this.prismaService.opsTask.create({
@@ -836,6 +850,13 @@ export class OpsTaskService {
       await this.prismaService.subscriptionRedemptionRecord.findMany({
         where: {
           position_change_day: reduceDay,
+        },
+        include: {
+          custodianTransfers: {
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
         },
       });
 
@@ -855,33 +876,84 @@ export class OpsTaskService {
       return;
     }
 
-    const fundAccountAmountMap = new Map();
+    const fundAccountAmountMap = new Map<
+      string,
+      {
+        subscriptionAmount: number;
+        redemptionAmount: number;
+        netAmount: number;
+      }
+    >();
+    const subscriptionSkippedMessages: string[] = [];
 
     for (const record of records) {
-      const signedAmount =
-        record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION
-          ? record.amount
-          : -record.amount;
+      const accountAmount = fundAccountAmountMap.get(record.fund_account) || {
+        subscriptionAmount: 0,
+        redemptionAmount: 0,
+        netAmount: 0,
+      };
 
-      fundAccountAmountMap.set(
-        record.fund_account,
-        (fundAccountAmountMap.get(record.fund_account) || 0) + signedAmount
-      );
+      if (record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION) {
+        const matchedTransfers = record.custodianTransfers.filter(
+          (transfer) => transfer.direction === TransferDirection.IN
+        );
+
+        if (matchedTransfers.length === 0) {
+          const skipMessage = `${reduceDay} 日 ${record.fund_account} 申购记录(id=${record.id})未写入，原因：未关联 CustodianTransfer 入金记录`;
+          subscriptionSkippedMessages.push(skipMessage);
+          this.logger.warn(skipMessage);
+          continue;
+        }
+
+        const subscriptionAmount = matchedTransfers.reduce(
+          (sum, transfer) => sum + transfer.amount,
+          0
+        );
+
+        accountAmount.subscriptionAmount += subscriptionAmount;
+        accountAmount.netAmount += subscriptionAmount;
+      } else {
+        accountAmount.redemptionAmount += record.amount;
+        accountAmount.netAmount -= record.amount;
+      }
+
+      fundAccountAmountMap.set(record.fund_account, accountAmount);
+    }
+
+    if (subscriptionSkippedMessages.length > 0) {
+      try {
+        await this.feishuService.notifyMaintenance(
+          ['盘后申赎记录部分申购未写入：', ...subscriptionSkippedMessages].join(
+            '\n'
+          )
+        );
+      } catch (err) {
+        this.logger.error('发送飞书通知失败', err);
+      }
     }
 
     // 打印出实际的数据，方便调试
     this.logger.debug(
       `盘后申赎记录写入 ${tradeDay} position_change_day=${reduceDay} 数据: ${JSON.stringify(
-        Object.fromEntries(fundAccountAmountMap.entries()),
+        Object.fromEntries(
+          [...fundAccountAmountMap.entries()].map(([account, amount]) => [
+            account,
+            {
+              subscriptionAmount: amount.subscriptionAmount,
+              redemptionAmount: amount.redemptionAmount,
+              netAmount: amount.netAmount,
+            },
+          ])
+        ),
         null,
         2
       )}`
     );
 
     const data = Object.fromEntries(
-      [...fundAccountAmountMap.entries()].sort(([left], [right]) =>
-        left.localeCompare(right)
-      )
+      [...fundAccountAmountMap.entries()]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([account, amount]) => [account, amount.netAmount])
     );
 
     const remoteFile = path.join(
@@ -900,22 +972,79 @@ export class OpsTaskService {
 
       this.logger.log(`盘后申赎记录写入完成 ${remoteFile}`);
 
+      const fundAccounts = await this.prismaService.fundAccount.findMany({
+        where: {
+          account: {
+            in: [...fundAccountAmountMap.keys()],
+          },
+        },
+        select: {
+          account: true,
+          product: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      });
+
+      const accountProductNameMap = new Map<string, string>(
+        fundAccounts.map((fundAccount) => [
+          fundAccount.account,
+          fundAccount.product.name,
+        ])
+      );
+
       // 构造更详细的飞书通知：每条一行，说明是加仓(申购)或减仓(赎回)
       const detailLines = [...fundAccountAmountMap.entries()]
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([account, amount]) => {
-          const num = Number(amount);
-          if (num > 0) {
-            return `${reduceDay} 日 ${account} 账户将自动 加仓 ${num.toFixed(
+          const productName = accountProductNameMap.get(account);
+          const accountWithProduct = productName
+            ? `${account}(${productName})`
+            : account;
+
+          const subscriptionAmount = Number(amount.subscriptionAmount);
+          const redemptionAmount = Number(amount.redemptionAmount);
+          const netAmount = Number(amount.netAmount);
+
+          const summaryPrefix = `${reduceDay} 日 ${accountWithProduct} 账户`;
+
+          if (subscriptionAmount > 0 && redemptionAmount > 0) {
+            if (netAmount > 0) {
+              return `${summaryPrefix} 申购入金 ${subscriptionAmount.toFixed(
+                2
+              )} 元，赎回 ${redemptionAmount.toFixed(
+                2
+              )} 元，轧差后将自动 加仓 ${netAmount.toFixed(2)} 元`;
+            }
+
+            if (netAmount < 0) {
+              return `${summaryPrefix} 申购入金 ${subscriptionAmount.toFixed(
+                2
+              )} 元，赎回 ${redemptionAmount.toFixed(
+                2
+              )} 元，轧差后将自动 减仓 ${Math.abs(netAmount).toFixed(2)} 元`;
+            }
+
+            return `${summaryPrefix} 申购入金 ${subscriptionAmount.toFixed(
               2
-            )} 元，加仓对应的申购`;
-          } else if (num < 0) {
-            return `${reduceDay} 日 ${account} 账户将自动 减仓 ${Math.abs(
-              num
-            ).toFixed(2)} 元，减仓对应的赎回`;
-          } else {
-            return `${reduceDay} 日 ${account} 账户变动 0.00 元`;
+            )} 元，赎回 ${redemptionAmount.toFixed(2)} 元，轧差后变动 0.00 元`;
           }
+
+          if (subscriptionAmount > 0 && redemptionAmount === 0) {
+            return `${summaryPrefix} 将自动 加仓 ${subscriptionAmount.toFixed(
+              2
+            )} 元（仅申购入金）`;
+          }
+
+          if (subscriptionAmount === 0 && redemptionAmount > 0) {
+            return `${summaryPrefix} 将自动 减仓 ${redemptionAmount.toFixed(
+              2
+            )} 元（仅赎回）`;
+          }
+
+          return `${summaryPrefix} 账户变动 0.00 元`;
         });
 
       const message = [
