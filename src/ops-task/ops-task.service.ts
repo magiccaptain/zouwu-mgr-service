@@ -869,11 +869,22 @@ export class OpsTaskService {
       return;
     }
 
-    const fundAccountAmountMap = new Map<string, number>();
+    const fundAccountAmountMap = new Map<
+      string,
+      {
+        subscriptionAmount: number;
+        redemptionAmount: number;
+        netAmount: number;
+      }
+    >();
     const subscriptionSkippedMessages: string[] = [];
 
     for (const record of records) {
-      let signedAmount: number;
+      const accountAmount = fundAccountAmountMap.get(record.fund_account) || {
+        subscriptionAmount: 0,
+        redemptionAmount: 0,
+        netAmount: 0,
+      };
 
       if (record.direction === SubscriptionRedemptionDirection.SUBSCRIPTION) {
         const matchedTransfers = record.custodianTransfers.filter(
@@ -887,18 +898,21 @@ export class OpsTaskService {
           continue;
         }
 
-        signedAmount = matchedTransfers.reduce(
+        const subscriptionAmount = matchedTransfers.reduce(
           (sum, transfer) => sum + transfer.amount,
           0
         );
+
+        accountAmount.subscriptionAmount += subscriptionAmount;
+        accountAmount.netAmount += subscriptionAmount;
       } else {
-        // 赎回逻辑保持不变
-        signedAmount = -record.amount;
+        accountAmount.redemptionAmount += record.amount;
+        accountAmount.netAmount -= record.amount;
       }
 
       fundAccountAmountMap.set(
         record.fund_account,
-        (fundAccountAmountMap.get(record.fund_account) || 0) + signedAmount
+        accountAmount
       );
     }
 
@@ -917,16 +931,25 @@ export class OpsTaskService {
     // 打印出实际的数据，方便调试
     this.logger.debug(
       `盘后申赎记录写入 ${tradeDay} position_change_day=${reduceDay} 数据: ${JSON.stringify(
-        Object.fromEntries(fundAccountAmountMap.entries()),
+        Object.fromEntries(
+          [...fundAccountAmountMap.entries()].map(([account, amount]) => [
+            account,
+            {
+              subscriptionAmount: amount.subscriptionAmount,
+              redemptionAmount: amount.redemptionAmount,
+              netAmount: amount.netAmount,
+            },
+          ])
+        ),
         null,
         2
       )}`
     );
 
     const data = Object.fromEntries(
-      [...fundAccountAmountMap.entries()].sort(([left], [right]) =>
-        left.localeCompare(right)
-      )
+      [...fundAccountAmountMap.entries()]
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([account, amount]) => [account, amount.netAmount])
     );
 
     const remoteFile = path.join(
@@ -976,18 +999,52 @@ export class OpsTaskService {
           const accountWithProduct = productName
             ? `${account}(${productName})`
             : account;
-          const num = Number(amount);
-          if (num > 0) {
-            return `${reduceDay} 日 ${accountWithProduct} 账户将自动 加仓 ${num.toFixed(
+
+          const subscriptionAmount = Number(amount.subscriptionAmount);
+          const redemptionAmount = Number(amount.redemptionAmount);
+          const netAmount = Number(amount.netAmount);
+
+          const summaryPrefix = `${reduceDay} 日 ${accountWithProduct} 账户`;
+
+          if (subscriptionAmount > 0 && redemptionAmount > 0) {
+            if (netAmount > 0) {
+              return `${summaryPrefix} 申购入金 ${subscriptionAmount.toFixed(
+                2
+              )} 元，赎回 ${redemptionAmount.toFixed(
+                2
+              )} 元，轧差后将自动 加仓 ${netAmount.toFixed(2)} 元`;
+            }
+
+            if (netAmount < 0) {
+              return `${summaryPrefix} 申购入金 ${subscriptionAmount.toFixed(
+                2
+              )} 元，赎回 ${redemptionAmount.toFixed(
+                2
+              )} 元，轧差后将自动 减仓 ${Math.abs(netAmount).toFixed(
+                2
+              )} 元`;
+            }
+
+            return `${summaryPrefix} 申购入金 ${subscriptionAmount.toFixed(
               2
-            )} 元`;
-          } else if (num < 0) {
-            return `${reduceDay} 日 ${accountWithProduct} 账户将自动 减仓 ${Math.abs(
-              num
-            ).toFixed(2)} 元，减仓对应的赎回`;
-          } else {
-            return `${reduceDay} 日 ${accountWithProduct} 账户变动 0.00 元`;
+            )} 元，赎回 ${redemptionAmount.toFixed(
+              2
+            )} 元，轧差后变动 0.00 元`;
           }
+
+          if (subscriptionAmount > 0 && redemptionAmount === 0) {
+            return `${summaryPrefix} 将自动 加仓 ${subscriptionAmount.toFixed(
+              2
+            )} 元（仅申购入金）`;
+          }
+
+          if (subscriptionAmount === 0 && redemptionAmount > 0) {
+            return `${summaryPrefix} 将自动 减仓 ${redemptionAmount.toFixed(
+              2
+            )} 元（仅赎回）`;
+          }
+
+          return `${summaryPrefix} 账户变动 0.00 元`;
         });
 
       const message = [
