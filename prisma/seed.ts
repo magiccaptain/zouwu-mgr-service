@@ -4,6 +4,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 
 import { seedBrokers } from './seed/broker';
+import { seedCompanies } from './seed/company';
 import { seedFundAccounts } from './seed/fund-account';
 import { seedHostServer } from './seed/host-server';
 import { seedProcessMonitor } from './seed/process-monitor';
@@ -22,8 +23,9 @@ const prisma = new PrismaClient({
 
 async function main() {
   await seedUser(prisma);
+  await seedCompanies(prisma);
 
-  // await seedBrokers(prisma);
+  await seedBrokers(prisma);
 
   // await seedHostServer(prisma);
 

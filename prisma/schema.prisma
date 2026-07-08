@@ -136,6 +136,7 @@ model Product {
   bizLine                String?
   nominalBenchmarket     String?
   custodianKey           String?
+  fundProductCodes       String[]         @default([])
   FundAccount            FundAccount[]
   company                Company           @relation(fields: [companyKey], references: [key])
   custodian              Custodian?        @relation(fields: [custodianKey], references: [key])
