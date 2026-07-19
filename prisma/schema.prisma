@@ -129,14 +129,25 @@ model Product {
   type                   String
   companyKey             String
   active                 Boolean           @default(true)
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @default(now()) @updatedAt
-  isTradeAnalysisEnabled Boolean           @default(true)
-  isValuationEnabled     Boolean           @default(true)
   bizLine                String?
   nominalBenchmarket     String?
   custodianKey           String?
   fundProductCodes       String[]         @default([])
+  dealingSchedule           String?
+  strategyInceptionDate     DateTime?         @db.Date
+  subscriptionFeeRate       Decimal?          @db.Decimal(10, 6)
+  redemptionFeePolicy       String?
+  classificationBasis       String?
+  managementFeeRate         Decimal?          @db.Decimal(10, 6)
+  performanceFeeRate        Decimal?          @db.Decimal(10, 6)
+  performanceFeeBasis       String?
+  minimumSubscriptionAmount Decimal?          @db.Decimal(18, 2)
+  portfolioManager          String?
+  strategyCapacity          Decimal?          @db.Decimal(20, 2)
+  isTradeAnalysisEnabled    Boolean           @default(true)
+  isValuationEnabled        Boolean           @default(true)
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @default(now()) @updatedAt
   FundAccount            FundAccount[]
   company                Company           @relation(fields: [companyKey], references: [key])
   custodian              Custodian?        @relation(fields: [custodianKey], references: [key])
