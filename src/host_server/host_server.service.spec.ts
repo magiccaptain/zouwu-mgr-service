@@ -118,7 +118,7 @@ describe('HostServerService', () => {
       expect(ssh.dispose).toHaveBeenCalled();
     });
 
-    it('未知券商直接返回，不进行任何写入', async () => {
+    it('未知券商抛出错误，不进行任何写入', async () => {
       const hostServer = {
         id: 2,
         brokerKey: 'unknown_broker',
@@ -129,10 +129,12 @@ describe('HostServerService', () => {
         .spyOn(service, 'connect')
         .mockResolvedValue(ssh as any);
 
-      await service.syncTDConfig(hostServer, {
-        fund_account: 'ACC002',
-        market: Market.SZ,
-      } as any);
+      await expect(
+        service.syncTDConfig(hostServer, {
+          fund_account: 'ACC002',
+          market: Market.SZ,
+        } as any)
+      ).rejects.toThrow('不支持同步交易配置的券商: unknown_broker');
 
       expect(connectSpy).not.toHaveBeenCalled();
       expect(putFile).not.toHaveBeenCalled();

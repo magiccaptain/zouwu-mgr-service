@@ -425,7 +425,7 @@ export class HostServerService {
         other_config['fund_account_id'] = tdConfig.fund_account;
         break;
       default:
-        return;
+        throw new Error(`不支持同步交易配置的券商: ${hostServer.brokerKey}`);
     }
 
     // tdConfig 中去掉 为 None 的字段

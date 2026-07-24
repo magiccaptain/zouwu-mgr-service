@@ -44,6 +44,24 @@ import {
   UpdateSubscriptionRedemptionDto,
 } from './fund_account.dto';
 
+const ATP_REQUIRED_SYNC_FIELDS = [
+  'ip',
+  'port',
+  'user',
+  'password',
+  'branch_id',
+  'cust_id',
+  'cust_password',
+  'sh_account_id',
+  'sz_account_id',
+  'client_name',
+  'client_version',
+  'client_feature_code',
+  'account_mode',
+  'login_mode',
+  'order_way',
+] as const;
+
 @Injectable()
 export class FundAccountService {
   private readonly logger = new Logger(FundAccountService.name);
@@ -1121,6 +1139,30 @@ export class FundAccountService {
     if (configs.length === 0) {
       throw new BadRequestException(
         `资金账户 ${fund_account} 没有任何交易配置，无法同步`
+      );
+    }
+
+    const incompleteATPConfigs = account.ATPConfig.flatMap((conf) => {
+      const missingFields = ATP_REQUIRED_SYNC_FIELDS.filter((field) => {
+        const value = conf[field];
+        return (
+          value === null ||
+          value === undefined ||
+          value === -1 ||
+          (typeof value === 'string' && value.trim() === '')
+        );
+      });
+
+      return missingFields.length > 0
+        ? [`${conf.market}: ${missingFields.join(', ')}`]
+        : [];
+    });
+
+    if (incompleteATPConfigs.length > 0) {
+      throw new BadRequestException(
+        `资金账户 ${fund_account} 的 ATP 配置未完成：${incompleteATPConfigs.join(
+          '；'
+        )}`
       );
     }
 

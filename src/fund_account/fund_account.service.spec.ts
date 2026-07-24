@@ -247,6 +247,25 @@ describe('FundAccountService', () => {
 
     const shServer = { id: 1, market: Market.SH };
     const szServer = { id: 2, market: Market.SZ };
+    const completeATPConfig = (market: Market) => ({
+      market,
+      fund_account: 'acc-1',
+      ip: '10.0.0.1',
+      port: 6001,
+      user: 'user',
+      password: 'password',
+      branch_id: 'branch',
+      cust_id: 'customer',
+      cust_password: 'customer-password',
+      sh_account_id: 'sh-account',
+      sz_account_id: 'sz-account',
+      client_name: 'client',
+      client_version: '1.0.0',
+      client_feature_code: 'feature',
+      account_mode: 1,
+      login_mode: 1,
+      order_way: 'order-way',
+    });
 
     const buildService = (findUniqueResult: any, findFirstImpl?: any) => {
       mockHostServer = { syncTDConfig: jest.fn().mockResolvedValue(undefined) };
@@ -275,8 +294,8 @@ describe('FundAccountService', () => {
     };
 
     it('should sync ATP SH/SZ configs to the matching host servers (ssh write mocked)', async () => {
-      const atpSH = { market: Market.SH, fund_account: 'acc-1' };
-      const atpSZ = { market: Market.SZ, fund_account: 'acc-1' };
+      const atpSH = completeATPConfig(Market.SH);
+      const atpSZ = completeATPConfig(Market.SZ);
       const svc = buildService({
         account: 'acc-1',
         brokerKey: 'guojun',
@@ -303,7 +322,7 @@ describe('FundAccountService', () => {
           brokerKey: 'guojun',
           companyKey: 'zhisui',
           XTPConfig: [],
-          ATPConfig: [{ market: Market.SZ, fund_account: 'acc-1' }],
+          ATPConfig: [completeATPConfig(Market.SZ)],
         },
         ({ where }: any) =>
           Promise.resolve(where.market === Market.SH ? shServer : null)
@@ -317,6 +336,27 @@ describe('FundAccountService', () => {
         market: Market.SZ,
         status: 'no_host_server',
       });
+    });
+
+    it('should reject incomplete ATP configs before writing any host server', async () => {
+      const incomplete = {
+        ...completeATPConfig(Market.SH),
+        ip: '',
+        port: -1,
+      };
+      const svc = buildService({
+        account: 'acc-1',
+        brokerKey: 'guojun',
+        companyKey: 'zhisui',
+        XTPConfig: [],
+        ATPConfig: [incomplete],
+      });
+
+      await expect(svc.syncTDConfig('acc-1')).rejects.toThrow(
+        'ATP 配置未完成：SH: ip, port'
+      );
+      expect(mockHostServer.syncTDConfig).not.toHaveBeenCalled();
+      expect(mockPrisma.hostServer.findFirst).not.toHaveBeenCalled();
     });
 
     it('should mark error when ssh write fails', async () => {
