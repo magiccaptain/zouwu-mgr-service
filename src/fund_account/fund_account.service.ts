@@ -1098,6 +1098,95 @@ export class FundAccountService {
     };
   }
 
+  /**
+   * 将某个资金账户的 XTP/ATP 交易配置同步到对应券商/公司的主托管机。
+   * 复用 bin/sync-td-config.ts 的逻辑：按 market 选主托管机，逐条经 SSH 写入配置文件
+   * （SSH 写入由 HostServerService.syncTDConfig 完成）。
+   */
+  async syncTDConfig(fund_account: string) {
+    const account = await this.prismaService.fundAccount.findUnique({
+      where: { account: fund_account },
+      include: { XTPConfig: true, ATPConfig: true },
+    });
+
+    if (!account) {
+      throw new NotFoundException(`资金账户 ${fund_account} 不存在`);
+    }
+
+    const configs = [
+      ...account.XTPConfig.map((conf) => ({ apiType: 'XTP' as const, conf })),
+      ...account.ATPConfig.map((conf) => ({ apiType: 'ATP' as const, conf })),
+    ];
+
+    if (configs.length === 0) {
+      throw new BadRequestException(
+        `资金账户 ${fund_account} 没有任何交易配置，无法同步`
+      );
+    }
+
+    // 沪 / 深主托管机（按券商 + 公司匹配）
+    const [sh_host_server, sz_host_server] = await Promise.all([
+      this.prismaService.hostServer.findFirst({
+        where: {
+          market: Market.SH,
+          is_master: true,
+          active: true,
+          brokerKey: account.brokerKey,
+          companyKey: account.companyKey,
+        },
+      }),
+      this.prismaService.hostServer.findFirst({
+        where: {
+          market: Market.SZ,
+          is_master: true,
+          active: true,
+          brokerKey: account.brokerKey,
+          companyKey: account.companyKey,
+        },
+      }),
+    ]);
+
+    const results: {
+      apiType: 'XTP' | 'ATP';
+      market: Market;
+      status: 'synced' | 'no_host_server' | 'error';
+      message?: string;
+    }[] = [];
+
+    for (const { apiType, conf } of configs) {
+      const host_server =
+        conf.market === Market.SH ? sh_host_server : sz_host_server;
+
+      if (!host_server) {
+        results.push({
+          apiType,
+          market: conf.market,
+          status: 'no_host_server',
+          message: `未找到 ${conf.market} 主托管机`,
+        });
+        continue;
+      }
+
+      try {
+        await this.hostServerService.syncTDConfig(host_server, conf);
+        results.push({ apiType, market: conf.market, status: 'synced' });
+      } catch (error) {
+        this.logger.error(
+          `同步 ${fund_account} ${apiType}/${conf.market} 到托管机失败`,
+          error
+        );
+        results.push({
+          apiType,
+          market: conf.market,
+          status: 'error',
+          message: error?.message ?? '同步失败',
+        });
+      }
+    }
+
+    return { fund_account, results };
+  }
+
   async externalTransfer(fund_account: string, transferDto: TransferDto) {
     const { market: marketStr, amount, direction } = transferDto;
     const market = marketStr as Market;

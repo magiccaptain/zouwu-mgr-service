@@ -316,3 +316,30 @@ export class UpdateSubscriptionRedemptionDto {
   @IsString()
   remark?: string;
 }
+
+export class SyncTDConfigItemEntity {
+  @IsNotEmpty()
+  @IsString()
+  apiType: string;
+
+  @IsNotEmpty()
+  @IsString()
+  market: string;
+
+  @IsNotEmpty()
+  @IsString()
+  status: string;
+
+  @IsOptional()
+  @IsString()
+  message?: string;
+}
+
+export class SyncTDConfigEntity {
+  @IsNotEmpty()
+  @IsString()
+  fund_account: string;
+
+  @IsArray()
+  results: SyncTDConfigItemEntity[];
+}

@@ -27,6 +27,7 @@ import {
   QueryNextTradingDayDto,
   QueryStockAccountDto,
   RefreshFundsEntity,
+  SyncTDConfigEntity,
   TransferDto,
   TransferRecordEntity,
   UpdateSubscriptionRedemptionDto,
@@ -135,6 +136,21 @@ export class FundAccountController {
     @Param('fund_account') fund_account: string
   ): Promise<RefreshFundsEntity> {
     return this.fundAccountService.refreshFunds(fund_account);
+  }
+
+  /**
+   * 同步该资金账户的交易配置到主托管机
+   */
+  @ApiOperation({ operationId: 'syncTDConfig' })
+  @ApiOkResponse({
+    description: 'sync td config to host server',
+    type: SyncTDConfigEntity,
+  })
+  @Post(':fund_account/@sync-td-config')
+  syncTDConfig(
+    @Param('fund_account') fund_account: string
+  ): Promise<SyncTDConfigEntity> {
+    return this.fundAccountService.syncTDConfig(fund_account);
   }
 
   @ApiOperation({ operationId: 'createSubscriptionRedemption' })

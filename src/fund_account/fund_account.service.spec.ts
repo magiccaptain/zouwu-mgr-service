@@ -1,5 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
-import { SubscriptionRedemptionDirection } from '@prisma/client';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { Market, SubscriptionRedemptionDirection } from '@prisma/client';
 
 import { FundAccountService } from './fund_account.service';
 
@@ -239,6 +239,126 @@ describe('FundAccountService', () => {
       await expect(
         service.updateSubscriptionRedemption(1, { remark: 'updated' })
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('syncTDConfig', () => {
+    let mockHostServer: { syncTDConfig: jest.Mock };
+
+    const shServer = { id: 1, market: Market.SH };
+    const szServer = { id: 2, market: Market.SZ };
+
+    const buildService = (findUniqueResult: any, findFirstImpl?: any) => {
+      mockHostServer = { syncTDConfig: jest.fn().mockResolvedValue(undefined) };
+      mockPrisma = {
+        fundAccount: {
+          findUnique: jest.fn().mockResolvedValue(findUniqueResult),
+        },
+        hostServer: {
+          findFirst: jest
+            .fn()
+            .mockImplementation(
+              findFirstImpl ??
+                (({ where }: any) =>
+                  Promise.resolve(
+                    where.market === Market.SH ? shServer : szServer
+                  ))
+            ),
+        },
+      };
+      return new FundAccountService(
+        mockPrisma as any,
+        mockHostServer as any,
+        {} as any,
+        {} as any
+      );
+    };
+
+    it('should sync ATP SH/SZ configs to the matching host servers (ssh write mocked)', async () => {
+      const atpSH = { market: Market.SH, fund_account: 'acc-1' };
+      const atpSZ = { market: Market.SZ, fund_account: 'acc-1' };
+      const svc = buildService({
+        account: 'acc-1',
+        brokerKey: 'guojun',
+        companyKey: 'zhisui',
+        XTPConfig: [],
+        ATPConfig: [atpSH, atpSZ],
+      });
+
+      const ret = await svc.syncTDConfig('acc-1');
+
+      expect(mockHostServer.syncTDConfig).toHaveBeenCalledTimes(2);
+      expect(mockHostServer.syncTDConfig).toHaveBeenCalledWith(shServer, atpSH);
+      expect(mockHostServer.syncTDConfig).toHaveBeenCalledWith(szServer, atpSZ);
+      expect(ret.results).toEqual([
+        { apiType: 'ATP', market: Market.SH, status: 'synced' },
+        { apiType: 'ATP', market: Market.SZ, status: 'synced' },
+      ]);
+    });
+
+    it('should report no_host_server when the master server is missing', async () => {
+      const svc = buildService(
+        {
+          account: 'acc-1',
+          brokerKey: 'guojun',
+          companyKey: 'zhisui',
+          XTPConfig: [],
+          ATPConfig: [{ market: Market.SZ, fund_account: 'acc-1' }],
+        },
+        ({ where }: any) =>
+          Promise.resolve(where.market === Market.SH ? shServer : null)
+      );
+
+      const ret = await svc.syncTDConfig('acc-1');
+
+      expect(mockHostServer.syncTDConfig).not.toHaveBeenCalled();
+      expect(ret.results[0]).toMatchObject({
+        apiType: 'ATP',
+        market: Market.SZ,
+        status: 'no_host_server',
+      });
+    });
+
+    it('should mark error when ssh write fails', async () => {
+      const svc = buildService({
+        account: 'acc-1',
+        brokerKey: 'xtp',
+        companyKey: 'zhisui',
+        XTPConfig: [{ market: Market.SH, fund_account: 'acc-1' }],
+        ATPConfig: [],
+      });
+      mockHostServer.syncTDConfig.mockRejectedValueOnce(new Error('ssh boom'));
+
+      const ret = await svc.syncTDConfig('acc-1');
+
+      expect(ret.results[0]).toMatchObject({
+        apiType: 'XTP',
+        market: Market.SH,
+        status: 'error',
+        message: 'ssh boom',
+      });
+    });
+
+    it('should throw BadRequestException when no config exists', async () => {
+      const svc = buildService({
+        account: 'acc-1',
+        brokerKey: 'guojun',
+        companyKey: 'zhisui',
+        XTPConfig: [],
+        ATPConfig: [],
+      });
+
+      await expect(svc.syncTDConfig('acc-1')).rejects.toThrow(
+        BadRequestException
+      );
+      expect(mockHostServer.syncTDConfig).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when account does not exist', async () => {
+      const svc = buildService(null);
+      await expect(svc.syncTDConfig('missing')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
