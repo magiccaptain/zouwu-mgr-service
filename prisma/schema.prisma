@@ -135,11 +135,11 @@ model Product {
   fundProductCodes       String[]         @default([])
   dealingSchedule           String?
   strategyInceptionDate     DateTime?         @db.Date
-  subscriptionFeeRate       Decimal?          @db.Decimal(10, 6)
+  subscriptionFeeRate       String?
   redemptionFeePolicy       String?
   classificationBasis       String?
-  managementFeeRate         Decimal?          @db.Decimal(10, 6)
-  performanceFeeRate        Decimal?          @db.Decimal(10, 6)
+  managementFeeRate         String?
+  performanceFeeRate        String?
   performanceFeeBasis       String?
   minimumSubscriptionAmount Decimal?          @db.Decimal(18, 2)
   portfolioManager          String?
