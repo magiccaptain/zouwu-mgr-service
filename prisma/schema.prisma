@@ -39,14 +39,29 @@ model Session {
 }
 
 model Broker {
-  id          Int           @id @default(autoincrement())
-  name        String
-  key         String        @unique
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @default(now()) @updatedAt
-  FundAccount FundAccount[]
-  HostServer  HostServer[]
+  id                  Int                   @id @default(autoincrement())
+  name                String
+  key                 String                @unique
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @default(now()) @updatedAt
+  FundAccount         FundAccount[]
+  HostServer          HostServer[]
+  TradeConfigTemplate TradeConfigTemplate[]
 
+  @@schema("public")
+}
+
+// 券商级交易配置模板：存一份"部分配置"(JSON)，新建账户交易配置时预填共通字段。
+model TradeConfigTemplate {
+  id        Int          @id @default(autoincrement())
+  brokerKey String
+  apiType   TradeApiType
+  config    Json         @default("{}")
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  broker    Broker       @relation(fields: [brokerKey], references: [key])
+
+  @@unique([brokerKey, apiType])
   @@schema("public")
 }
 
@@ -144,6 +159,7 @@ model Product {
   minimumSubscriptionAmount Decimal?          @db.Decimal(18, 2)
   portfolioManager          String?
   strategyCapacity          Decimal?          @db.Decimal(20, 2)
+  productScale              Decimal?          @db.Decimal(20, 2)
   isTradeAnalysisEnabled    Boolean           @default(true)
   isValuationEnabled        Boolean           @default(true)
   createdAt                 DateTime          @default(now())
@@ -227,7 +243,7 @@ model ATPConfig {
   spare_port                Int?
   user                      String
   password                  String
-  branch_id                 String
+  branch_id                 Int
   cust_id                   String
   cust_password             String
   sh_account_id             String
