@@ -16,7 +16,8 @@ describe('FundAccountService', () => {
       {} as any,
       {} as any,
       {} as any,
-      mockTradingCalendar as any
+      mockTradingCalendar as any,
+      {} as any
     );
   });
 
@@ -73,7 +74,8 @@ describe('FundAccountService', () => {
         mockPrisma as any,
         {} as any,
         {} as any,
-        mockTradingCalendar as any
+        mockTradingCalendar as any,
+        {} as any
       );
     });
 
@@ -130,7 +132,8 @@ describe('FundAccountService', () => {
         mockPrisma as any,
         {} as any,
         {} as any,
-        mockTradingCalendar as any
+        mockTradingCalendar as any,
+        {} as any
       );
     });
 
@@ -210,7 +213,8 @@ describe('FundAccountService', () => {
         mockPrisma as any,
         {} as any,
         {} as any,
-        mockTradingCalendar as any
+        mockTradingCalendar as any,
+        {} as any
       );
     });
 
@@ -244,6 +248,7 @@ describe('FundAccountService', () => {
 
   describe('syncTDConfig', () => {
     let mockHostServer: { syncTDConfig: jest.Mock };
+    let mockFeishu: { notifyMaintenance: jest.Mock };
 
     const shServer = { id: 1, market: Market.SH };
     const szServer = { id: 2, market: Market.SZ };
@@ -269,6 +274,9 @@ describe('FundAccountService', () => {
 
     const buildService = (findUniqueResult: any, findFirstImpl?: any) => {
       mockHostServer = { syncTDConfig: jest.fn().mockResolvedValue(undefined) };
+      mockFeishu = {
+        notifyMaintenance: jest.fn().mockResolvedValue(undefined),
+      };
       mockPrisma = {
         fundAccount: {
           findUnique: jest.fn().mockResolvedValue(findUniqueResult),
@@ -285,12 +293,22 @@ describe('FundAccountService', () => {
             ),
         },
       };
-      return new FundAccountService(
+      const svc = new FundAccountService(
         mockPrisma as any,
         mockHostServer as any,
         {} as any,
-        {} as any
+        {} as any,
+        mockFeishu as any
       );
+      // 同步后的资金查询在此隔离，只验证"同步 + 通知"编排；查询本身另有测试
+      jest.spyOn(svc, 'refreshFunds').mockResolvedValue({
+        current_balance: 100,
+        previous_balance: 80,
+        delta: 20,
+        current_updated_at: null,
+        previous_updated_at: null,
+      });
+      return svc;
     };
 
     it('should sync ATP SH/SZ configs to the matching host servers (ssh write mocked)', async () => {
@@ -313,6 +331,34 @@ describe('FundAccountService', () => {
         { apiType: 'ATP', market: Market.SH, status: 'synced' },
         { apiType: 'ATP', market: Market.SZ, status: 'synced' },
       ]);
+      // 同步后执行资金查询，结果随响应返回
+      expect(svc.refreshFunds).toHaveBeenCalledWith('acc-1');
+      expect(ret.fundQuery).toMatchObject({ ok: true, current_balance: 100 });
+      // 成功后发一条飞书通知
+      expect(mockFeishu.notifyMaintenance).toHaveBeenCalledTimes(1);
+      const msg = mockFeishu.notifyMaintenance.mock.calls[0][0] as string;
+      expect(msg).toContain('【成功】');
+      expect(msg).toContain('当前余额');
+    });
+
+    it('should still query funds and notify failure via feishu when fund query throws', async () => {
+      const svc = buildService({
+        account: 'acc-1',
+        brokerKey: 'guojun',
+        companyKey: 'zhisui',
+        XTPConfig: [],
+        ATPConfig: [completeATPConfig(Market.SH), completeATPConfig(Market.SZ)],
+      });
+      (svc.refreshFunds as jest.Mock).mockRejectedValueOnce(
+        new Error('query boom')
+      );
+
+      const ret = await svc.syncTDConfig('acc-1');
+
+      expect(ret.fundQuery).toMatchObject({ ok: false, error: 'query boom' });
+      const msg = mockFeishu.notifyMaintenance.mock.calls[0][0] as string;
+      expect(msg).toContain('同步成功·资金查询失败');
+      expect(msg).toContain('资金查询失败：query boom');
     });
 
     it('should report no_host_server when the master server is missing', async () => {
@@ -357,6 +403,10 @@ describe('FundAccountService', () => {
       );
       expect(mockHostServer.syncTDConfig).not.toHaveBeenCalled();
       expect(mockPrisma.hostServer.findFirst).not.toHaveBeenCalled();
+      // 前置校验失败也发飞书（失败）
+      const msg = mockFeishu.notifyMaintenance.mock.calls[0][0] as string;
+      expect(msg).toContain('【失败】');
+      expect(msg).toContain('ATP 配置未完成');
     });
 
     it('should mark error when ssh write fails', async () => {
@@ -424,7 +474,8 @@ describe('FundAccountService', () => {
         prismaService,
         {} as any,
         {} as any,
-        mockTradingCalendar as any
+        mockTradingCalendar as any,
+        {} as any
       );
       jest.spyOn(svc, 'syncFundAccount').mockResolvedValue(undefined as any);
 
@@ -453,7 +504,8 @@ describe('FundAccountService', () => {
         prismaService,
         {} as any,
         {} as any,
-        mockTradingCalendar as any
+        mockTradingCalendar as any,
+        {} as any
       );
       jest.spyOn(svc, 'syncFundAccount').mockResolvedValue(undefined as any);
 

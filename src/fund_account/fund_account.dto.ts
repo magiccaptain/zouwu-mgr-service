@@ -335,6 +335,27 @@ export class SyncTDConfigItemEntity {
   message?: string;
 }
 
+export class SyncTDFundQueryEntity {
+  @IsBoolean()
+  ok: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  current_balance?: number;
+
+  @IsOptional()
+  @IsNumber()
+  previous_balance?: number;
+
+  @IsOptional()
+  @IsNumber()
+  delta?: number;
+
+  @IsOptional()
+  @IsString()
+  error?: string;
+}
+
 export class SyncTDConfigEntity {
   @IsNotEmpty()
   @IsString()
@@ -342,4 +363,8 @@ export class SyncTDConfigEntity {
 
   @IsArray()
   results: SyncTDConfigItemEntity[];
+
+  @IsOptional()
+  @IsObject()
+  fundQuery?: SyncTDFundQueryEntity;
 }

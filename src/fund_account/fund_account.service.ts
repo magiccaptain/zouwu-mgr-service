@@ -25,6 +25,7 @@ import dayjs from 'dayjs';
 
 import { settings } from 'src/config';
 import { MarketCode } from 'src/config/constants';
+import { FeishuService } from 'src/feishu/feishu.service';
 import { HostServerService } from 'src/host_server/host_server.service';
 import { tryParseJSON } from 'src/lib/lang/json';
 import { GetMarketByTicker } from 'src/lib/stock';
@@ -43,6 +44,17 @@ import {
   TransferDto,
   UpdateSubscriptionRedemptionDto,
 } from './fund_account.dto';
+
+/** 同步后资金查询结果：成功带余额对比，失败带错误信息 */
+interface FundQueryResult {
+  ok: boolean;
+  current_balance?: number;
+  previous_balance?: number;
+  delta?: number;
+  current_updated_at?: string | null;
+  previous_updated_at?: string | null;
+  error?: string;
+}
 
 const ATP_REQUIRED_SYNC_FIELDS = [
   'ip',
@@ -70,7 +82,8 @@ export class FundAccountService {
     private readonly prismaService: PrismaService,
     private readonly hostServerService: HostServerService,
     private readonly remoteCommandService: RemoteCommandService,
-    private readonly tradingCalendarService: TradingCalendarService
+    private readonly tradingCalendarService: TradingCalendarService,
+    private readonly feishuService: FeishuService
   ) {}
 
   private parseBaseDate(base_date: string): Date {
@@ -1124,12 +1137,23 @@ export class FundAccountService {
   async syncTDConfig(fund_account: string) {
     const account = await this.prismaService.fundAccount.findUnique({
       where: { account: fund_account },
-      include: { XTPConfig: true, ATPConfig: true },
+      include: {
+        XTPConfig: true,
+        ATPConfig: true,
+        broker: true,
+        product: true,
+      },
     });
 
     if (!account) {
+      await this.notifySyncFailure(
+        fund_account,
+        `资金账户 ${fund_account} 不存在`
+      );
       throw new NotFoundException(`资金账户 ${fund_account} 不存在`);
     }
+
+    const label = this.buildAccountLabel(account);
 
     const configs = [
       ...account.XTPConfig.map((conf) => ({ apiType: 'XTP' as const, conf })),
@@ -1137,6 +1161,7 @@ export class FundAccountService {
     ];
 
     if (configs.length === 0) {
+      await this.notifySyncFailure(label, '没有任何交易配置，无法同步');
       throw new BadRequestException(
         `资金账户 ${fund_account} 没有任何交易配置，无法同步`
       );
@@ -1159,11 +1184,9 @@ export class FundAccountService {
     });
 
     if (incompleteATPConfigs.length > 0) {
-      throw new BadRequestException(
-        `资金账户 ${fund_account} 的 ATP 配置未完成：${incompleteATPConfigs.join(
-          '；'
-        )}`
-      );
+      const reason = `ATP 配置未完成：${incompleteATPConfigs.join('；')}`;
+      await this.notifySyncFailure(label, reason);
+      throw new BadRequestException(`资金账户 ${fund_account} 的 ${reason}`);
     }
 
     // 沪 / 深主托管机（按券商 + 公司匹配）
@@ -1226,7 +1249,109 @@ export class FundAccountService {
       }
     }
 
-    return { fund_account, results };
+    // 同步之后执行一次资金查询（沪深，落快照）；无论同步成败都查一次
+    let fundQuery: FundQueryResult;
+    try {
+      const refreshed = await this.refreshFunds(fund_account);
+      fundQuery = { ok: true, ...refreshed };
+    } catch (error) {
+      this.logger.error(`同步后资金查询 ${fund_account} 失败`, error);
+      fundQuery = { ok: false, error: error?.message ?? '资金查询失败' };
+    }
+
+    // 成功或失败都发飞书通知（best-effort，不影响接口返回）
+    await this.notifySyncCompleted(label, results, fundQuery);
+
+    return { fund_account, results, fundQuery };
+  }
+
+  /** 资金账户展示名：账号（券商 - 产品） */
+  private buildAccountLabel(account: {
+    account: string;
+    brokerKey: string;
+    productKey: string;
+    broker?: { name: string } | null;
+    product?: { short_name?: string | null; name?: string | null } | null;
+  }): string {
+    const broker = account.broker?.name ?? account.brokerKey;
+    const product =
+      account.product?.short_name ??
+      account.product?.name ??
+      account.productKey;
+    return `${account.account}（${broker} - ${product}）`;
+  }
+
+  /** 发送飞书通知（best-effort，吞掉异常，不影响主流程） */
+  private async safeNotifyFeishu(msg: string): Promise<void> {
+    try {
+      await this.feishuService.notifyMaintenance(msg);
+    } catch (error) {
+      this.logger.error('发送飞书通知失败', error);
+    }
+  }
+
+  /** 同步前置校验失败时的飞书通知 */
+  private async notifySyncFailure(
+    label: string,
+    reason: string
+  ): Promise<void> {
+    await this.safeNotifyFeishu(
+      [
+        '交易配置同步到托管机【失败】',
+        `账户：${label}`,
+        `原因：${reason}`,
+      ].join('\n')
+    );
+  }
+
+  /** 同步 + 资金查询完成后的飞书通知 */
+  private async notifySyncCompleted(
+    label: string,
+    results: {
+      apiType: 'XTP' | 'ATP';
+      market: Market;
+      status: 'synced' | 'no_host_server' | 'error';
+      message?: string;
+    }[],
+    fundQuery: FundQueryResult
+  ): Promise<void> {
+    const syncAllOk = results.every((r) => r.status === 'synced');
+    const syncLines = results.map((r) => {
+      const ok = r.status === 'synced';
+      return `${r.apiType}/${r.market}：${
+        ok ? '成功' : `失败（${r.message ?? r.status}）`
+      }`;
+    });
+
+    let fundLine: string;
+    if (fundQuery.ok) {
+      const balance = fundQuery.current_balance ?? 0;
+      const delta = fundQuery.delta ?? 0;
+      const sign = delta >= 0 ? '+' : '';
+      fundLine = `当前余额：${balance.toFixed(
+        2
+      )}（较上次 ${sign}${delta.toFixed(2)}）`;
+    } else {
+      fundLine = `资金查询失败：${fundQuery.error ?? '未知错误'}`;
+    }
+
+    const overall =
+      syncAllOk && fundQuery.ok
+        ? '成功'
+        : syncAllOk
+        ? '同步成功·资金查询失败'
+        : '存在失败';
+
+    const msg = [
+      `交易配置同步到托管机【${overall}】`,
+      `账户：${label}`,
+      '—— 同步 ——',
+      ...syncLines,
+      '—— 资金查询 ——',
+      fundLine,
+    ].join('\n');
+
+    await this.safeNotifyFeishu(msg);
   }
 
   async externalTransfer(fund_account: string, transferDto: TransferDto) {

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { FeishuModule } from 'src/feishu/feishu.module';
 import { HostServerModule } from 'src/host_server/host_server.module';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { RemoteCommandModule } from 'src/remote-command';
@@ -14,6 +15,7 @@ import { FundAccountService } from './fund_account.service';
     HostServerModule,
     RemoteCommandModule,
     TradingCalendarModule,
+    FeishuModule,
   ],
   providers: [FundAccountService],
   controllers: [FundAccountController],
