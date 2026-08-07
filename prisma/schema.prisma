@@ -160,6 +160,13 @@ model Product {
   portfolioManager          String?
   strategyCapacity          Decimal?          @db.Decimal(20, 2)
   productScale              Decimal?          @db.Decimal(20, 2)
+  // 费用信息 B 类份额（A 类沿用上方无后缀字段）
+  subscriptionFeeRateB       String?
+  redemptionFeePolicyB       String?
+  managementFeeRateB         String?
+  performanceFeeRateB        String?
+  performanceFeeBasisB       String?
+  minimumSubscriptionAmountB Decimal?         @db.Decimal(18, 2)
   isTradeAnalysisEnabled    Boolean           @default(true)
   isValuationEnabled        Boolean           @default(true)
   createdAt                 DateTime          @default(now())
@@ -209,6 +216,7 @@ model FundAccount {
   TransferRecord               TransferRecord[]
   CustodianTransfer            CustodianTransfer[]
   XTPConfig                    XTPConfig[]
+  CTPConfig                    CTPConfig?
 
   @@schema("public")
 }
@@ -262,6 +270,25 @@ model ATPConfig {
   fundAccount               FundAccount @relation(fields: [fund_account], references: [account])
 
   @@unique([fund_account, market])
+  @@schema("public")
+}
+
+// CTP 期货户交易配置：单条连接（无市场维度），存 config.ini 顶部连接/账户块。
+// 硬必填 user_id/investor_id/broker_id/password（运营已知）；其余 NOT NULL 列
+// 为空时写占位假值并在界面标记“未完成”，允许由另一人后补（仿 ATP）。
+model CTPConfig {
+  id           Int         @id @default(autoincrement())
+  fund_account String      @unique
+  user_id      String
+  investor_id  String
+  password     String
+  broker_id    String
+  app_id       String
+  auth_code    String
+  trade_front  String
+  market_front String
+  fundAccount  FundAccount @relation(fields: [fund_account], references: [account])
+
   @@schema("public")
 }
 
