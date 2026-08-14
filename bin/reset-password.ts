@@ -13,6 +13,10 @@ async function resetPassword(options: ResetPasswordOptions) {
   const { username, password } = options;
 
   try {
+    if (password.length < 8) {
+      throw new Error('新密码至少需要 8 位');
+    }
+
     // 查找用户
     const user = await prisma.user.findUnique({
       where: { username },
@@ -26,19 +30,23 @@ async function resetPassword(options: ResetPasswordOptions) {
     // 生成新密码哈希
     const hashedPassword = bcryptjs.hashSync(password, 10);
 
-    console.log(hashedPassword);
+    await prisma.$transaction(async (tx) => {
+      await tx.session.deleteMany({
+        where: { userId: user.id },
+      });
 
-    // 更新用户密码
-    await prisma.user.update({
-      where: { username },
-      data: {
-        password: hashedPassword,
-        needResetPwd: true, // 重置密码后，用户登录后需要再次重置密码
-        updatedAt: new Date(),
-      },
+      await tx.user.update({
+        where: { username },
+        data: {
+          password: hashedPassword,
+          needResetPwd: true,
+          updatedAt: new Date(),
+        },
+      });
     });
 
     console.log(`✅ 用户 "${username}" 的密码已成功重置`);
+    console.log('🔒 该用户的所有现有会话已失效');
     console.log(`👤 用户ID: ${user.id}`);
     console.log(`📧 用户邮箱: ${user.email || '未设置'}`);
     console.log(`📱 用户手机: ${user.phone || '未设置'}`);
@@ -56,19 +64,15 @@ function parseArgs(): ResetPasswordOptions {
 
   if (args.length < 2) {
     console.log(
-      '使用方法: ts-node bin/reset-password.ts <用户名> <新密码> [--bcrypt]'
+      '使用方法: ts-node bin/reset-password.ts <用户名> <新密码>'
     );
     console.log('');
     console.log('参数说明:');
     console.log('  <用户名>    要重置密码的用户名');
-    console.log('  <新密码>    新的密码');
-    console.log('  --bcrypt    可选，使用bcryptjs加密（默认使用MD5+salt）');
+    console.log('  <新密码>    至少 8 位的新密码（使用 bcryptjs 加密）');
     console.log('');
     console.log('示例:');
     console.log('  ts-node bin/reset-password.ts admin newpassword123');
-    console.log(
-      '  ts-node bin/reset-password.ts admin newpassword123 --bcrypt'
-    );
     process.exit(1);
   }
 

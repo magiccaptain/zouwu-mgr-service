@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, jest, mock } from 'bun:test';
 import { Test, TestingModule } from '@nestjs/testing';
+import { beforeEach, describe, expect, it, jest, mock } from 'bun:test';
 import fetch from 'node-fetch';
 
 import { FeishuService } from './feishu.service';
