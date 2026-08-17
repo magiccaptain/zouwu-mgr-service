@@ -185,27 +185,31 @@ describe('HostServerService', () => {
       ({
         id,
         hostServer: { id: hostId, ssh_port: 2200 + hostId },
-      }) as any;
+      } as any);
 
     it('runs different hosts in parallel and the same host serially, reusing one SSH', async () => {
       const events: string[] = [];
       const sshByHost: Record<number, { dispose: jest.Mock }> = {};
 
-      jest.spyOn(service, 'connectWithRemoteCommand').mockImplementation(async (c: any) => {
-        const hid = c.hostServer.id;
-        events.push(`connect-${hid}`);
-        if (!sshByHost[hid]) {
-          sshByHost[hid] = { dispose: jest.fn() };
-        }
-        return sshByHost[hid] as any;
-      });
+      jest
+        .spyOn(service, 'connectWithRemoteCommand')
+        .mockImplementation(async (c: any) => {
+          const hid = c.hostServer.id;
+          events.push(`connect-${hid}`);
+          if (!sshByHost[hid]) {
+            sshByHost[hid] = { dispose: jest.fn() };
+          }
+          return sshByHost[hid] as any;
+        });
 
-      jest.spyOn(service, 'runRemoteCommand').mockImplementation(async (c: any, ssh: any) => {
-        events.push(`start-${c.id}`);
-        await new Promise((r) => setTimeout(r, 40));
-        events.push(`end-${c.id}`);
-        return { ...c, ssh };
-      });
+      jest
+        .spyOn(service, 'runRemoteCommand')
+        .mockImplementation(async (c: any, ssh: any) => {
+          events.push(`start-${c.id}`);
+          await new Promise((r) => setTimeout(r, 40));
+          events.push(`end-${c.id}`);
+          return { ...c, ssh };
+        });
 
       const result = await service.execByHost([
         cmd(1, 10),
@@ -221,6 +225,8 @@ describe('HostServerService', () => {
       const end1 = events.indexOf('end-1');
       const start2 = events.indexOf('start-2');
       const start3 = events.indexOf('start-3');
+      expect(start1).toBeGreaterThan(-1);
+      expect(start1).toBeLessThan(end1);
       expect(start2).toBeGreaterThan(end1);
       expect(start3).toBeGreaterThan(-1);
       expect(start3).toBeLessThan(end1);
@@ -231,7 +237,9 @@ describe('HostServerService', () => {
     it('disposes SSH when runRemoteCommand rejects on the first command', async () => {
       const ssh = { dispose: jest.fn() };
 
-      jest.spyOn(service, 'connectWithRemoteCommand').mockResolvedValue(ssh as any);
+      jest
+        .spyOn(service, 'connectWithRemoteCommand')
+        .mockResolvedValue(ssh as any);
       jest
         .spyOn(service, 'runRemoteCommand')
         .mockRejectedValue(new Error('command failed'));
@@ -252,15 +260,19 @@ describe('HostServerService', () => {
       const sshOk = { dispose: jest.fn() };
       const sshBad = { dispose: jest.fn() };
 
-      jest.spyOn(service, 'connectWithRemoteCommand').mockImplementation(async (c: any) => {
-        return c.hostServer.id === 10 ? (sshOk as any) : (sshBad as any);
-      });
-      jest.spyOn(service, 'runRemoteCommand').mockImplementation(async (c: any) => {
-        if (c.hostServer.id === 20) {
-          throw new Error('ssh exploded');
-        }
-        return { ...c, code: 0, stdout: 'ok' };
-      });
+      jest
+        .spyOn(service, 'connectWithRemoteCommand')
+        .mockImplementation(async (c: any) => {
+          return c.hostServer.id === 10 ? (sshOk as any) : (sshBad as any);
+        });
+      jest
+        .spyOn(service, 'runRemoteCommand')
+        .mockImplementation(async (c: any) => {
+          if (c.hostServer.id === 20) {
+            throw new Error('ssh exploded');
+          }
+          return { ...c, code: 0, stdout: 'ok' };
+        });
 
       const result = await service.execByHost([cmd(1, 10), cmd(2, 20)]);
       const byId = Object.fromEntries(result.map((c: any) => [c.id, c]));

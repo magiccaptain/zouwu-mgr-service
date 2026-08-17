@@ -37,7 +37,9 @@ describe('parseSyncTradeDataArgs', () => {
     expect(() => parseSyncTradeDataArgs(['--account='])).toThrow(
       /unknown|--account=/i
     );
-    expect(() => parseSyncTradeDataArgs(['--froce'])).toThrow(/unknown|--froce/i);
+    expect(() => parseSyncTradeDataArgs(['--froce'])).toThrow(
+      /unknown|--froce/i
+    );
   });
 });
 

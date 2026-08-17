@@ -172,7 +172,9 @@ export class TradeDataSyncService {
     const resolved = defaults.filter((d) => wanted.has(d));
     if (resolved.length === 0) {
       throw new Error(
-        `无匹配的 dataTypes: taskType=${input.taskType} requested=${input.dataTypes.join(',')}`
+        `无匹配的 dataTypes: taskType=${
+          input.taskType
+        } requested=${input.dataTypes.join(',')}`
       );
     }
     return resolved;
