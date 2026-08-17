@@ -828,12 +828,13 @@ export class FundAccountService {
       try {
         await this.prismaService.trade.upsert({
           where: {
-            tradeDay_fundAccount_market_ticker_tradeId: {
+            tradeDay_fundAccount_market_ticker_tradeId_orderApiId: {
               tradeDay: dayjs().format('YYYY-MM-DD'),
               fundAccount: fundAccount.account,
               market: hostServer.market,
               ticker: t.ticker,
               tradeId: t.trade_id,
+              orderApiId: BigInt(t.order_api_id),
             },
           },
           update: {

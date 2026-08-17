@@ -71,34 +71,37 @@ export class TradeDataSyncWriter {
     const raw = fs.readFileSync(input.localFilePath, 'utf-8');
     const parsed = JSON.parse(raw);
 
-    await this.prisma.$transaction(async (tx: any) => {
-      switch (input.dataType) {
-        case TradeDataType.POSITION:
-          await this.replacePositions(tx, input, parsed as RawPosition[]);
-          break;
-        case TradeDataType.ORDER:
-          await this.replaceOrders(tx, input, parsed as RawOrder[]);
-          break;
-        case TradeDataType.TRADE:
-          await this.replaceTrades(tx, input, parsed as RawTrade[]);
-          break;
-        case TradeDataType.FUND:
-          await this.replaceFund(tx, input, parsed as RawFund);
-          break;
-      }
-    });
+    const operations = this.replaceOperations(input, parsed);
+    await this.prisma.$transaction(operations);
   }
 
-  private async createManyInChunks(
-    createMany: (args: { data: unknown[] }) => Promise<unknown>,
-    data: unknown[]
-  ) {
+  private replaceOperations(input: WriteUnitInput, parsed: unknown): any[] {
+    switch (input.dataType) {
+      case TradeDataType.POSITION:
+        return this.replacePositions(input, parsed as RawPosition[]);
+      case TradeDataType.ORDER:
+        return this.replaceOrders(input, parsed as RawOrder[]);
+      case TradeDataType.TRADE:
+        return this.replaceTrades(input, parsed as RawTrade[]);
+      case TradeDataType.FUND:
+        return this.replaceFund(input, parsed as RawFund);
+    }
+  }
+
+  private createManyInChunks<T>(
+    createMany: (args: { data: T[] }) => unknown,
+    data: T[]
+  ): unknown[] {
+    const operations: unknown[] = [];
     if (data.length === 0) {
-      return;
+      return operations;
     }
     for (let i = 0; i < data.length; i += WRITE_CHUNK_SIZE) {
-      await createMany({ data: data.slice(i, i + WRITE_CHUNK_SIZE) });
+      operations.push(
+        createMany({ data: data.slice(i, i + WRITE_CHUNK_SIZE) })
+      );
     }
+    return operations;
   }
 
   private dayWhere(input: WriteUnitInput) {
@@ -117,12 +120,10 @@ export class TradeDataSyncWriter {
     };
   }
 
-  private async replacePositions(
-    tx: any,
+  private replacePositions(
     input: WriteUnitInput,
     positions: RawPosition[]
-  ) {
-    await tx.position.deleteMany({ where: this.dayWhere(input) });
+  ): any[] {
     const data = positions
       .filter((p) => GetMarketByTicker(p.ticker) === input.market)
       .map((p) => ({
@@ -132,15 +133,19 @@ export class TradeDataSyncWriter {
         totalQty: p.total_qty,
         sellableQty: p.sellable_qty,
       }));
-    await this.createManyInChunks((args) => tx.position.createMany(args), data);
+    return [
+      this.prisma.position.deleteMany({ where: this.dayWhere(input) }),
+      ...this.createManyInChunks(
+        (args) => this.prisma.position.createMany(args),
+        data
+      ),
+    ];
   }
 
-  private async replaceOrders(
-    tx: any,
+  private replaceOrders(
     input: WriteUnitInput,
     orders: RawOrder[]
-  ) {
-    await tx.order.deleteMany({ where: this.dayWhere(input) });
+  ): any[] {
     const data = [];
     for (const o of orders) {
       const side = mapSide(o.side);
@@ -165,15 +170,19 @@ export class TradeDataSyncWriter {
         status: o.status,
       });
     }
-    await this.createManyInChunks((args) => tx.order.createMany(args), data);
+    return [
+      this.prisma.order.deleteMany({ where: this.dayWhere(input) }),
+      ...this.createManyInChunks(
+        (args) => this.prisma.order.createMany(args),
+        data
+      ),
+    ];
   }
 
-  private async replaceTrades(
-    tx: any,
+  private replaceTrades(
     input: WriteUnitInput,
     trades: RawTrade[]
-  ) {
-    await tx.trade.deleteMany({ where: this.dayWhere(input) });
+  ): any[] {
     const data = [];
     for (const t of trades) {
       const side = mapSide(t.side);
@@ -194,30 +203,38 @@ export class TradeDataSyncWriter {
         side,
       });
     }
-    await this.createManyInChunks((args) => tx.trade.createMany(args), data);
+    return [
+      this.prisma.trade.deleteMany({ where: this.dayWhere(input) }),
+      ...this.createManyInChunks(
+        (args) => this.prisma.trade.createMany(args),
+        data
+      ),
+    ];
   }
 
-  private async replaceFund(tx: any, input: WriteUnitInput, snapshot: RawFund) {
-    await tx.innerFundSnapshot.deleteMany({
-      where: {
-        trade_day: input.tradeDay,
-        fund_account: input.fundAccount,
-        market: input.market,
-        reason: input.reason,
-      },
-    });
-    await tx.innerFundSnapshot.create({
-      data: {
-        market: input.market,
-        fund_account: input.fundAccount,
-        reason: input.reason,
-        balance: snapshot.balance,
-        buying_power: snapshot.buying_power,
-        frozen: snapshot.frozen,
-        trade_day: input.tradeDay,
-        xtp_account: snapshot.xtp_account,
-        atp_account: snapshot.atp_account,
-      },
-    });
+  private replaceFund(input: WriteUnitInput, snapshot: RawFund): any[] {
+    return [
+      this.prisma.innerFundSnapshot.deleteMany({
+        where: {
+          trade_day: input.tradeDay,
+          fund_account: input.fundAccount,
+          market: input.market,
+          reason: input.reason,
+        },
+      }),
+      this.prisma.innerFundSnapshot.create({
+        data: {
+          market: input.market,
+          fund_account: input.fundAccount,
+          reason: input.reason,
+          balance: snapshot.balance,
+          buying_power: snapshot.buying_power,
+          frozen: snapshot.frozen,
+          trade_day: input.tradeDay,
+          xtp_account: snapshot.xtp_account,
+          atp_account: snapshot.atp_account,
+        },
+      }),
+    ];
   }
 }

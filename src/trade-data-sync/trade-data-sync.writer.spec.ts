@@ -42,7 +42,13 @@ describe('TradeDataSyncWriter', () => {
       innerFundSnapshot: { deleteMany: jest.fn(), create: jest.fn() },
     };
     prisma = {
-      $transaction: jest.fn(async (fn: any) => fn(tx)),
+      ...tx,
+      $transaction: jest.fn(async (operations: any) => {
+        if (typeof operations === 'function') {
+          return operations(tx);
+        }
+        return Promise.all(operations);
+      }),
     };
   });
 
@@ -367,6 +373,34 @@ describe('TradeDataSyncWriter', () => {
         }),
       ],
     });
+  });
+
+  it('replaces trades in a batch transaction', async () => {
+    const file = writeFixture(
+      'trade.SH.json',
+      Array.from({ length: WRITE_CHUNK_SIZE + 1 }, (_, index) => ({
+        ticker: `60${String(index).padStart(4, '0')}`,
+        order_api_id: index + 1,
+        order_ref: index + 1,
+        trade_id: `T${index}`,
+        trade_price: 10,
+        trade_quantity: 100,
+        trade_time: index + 1,
+        side: 'B'.charCodeAt(0),
+      }))
+    );
+    const writer = new TradeDataSyncWriter(prisma as any);
+
+    await writer.write({
+      ...baseInput,
+      dataType: TradeDataType.TRADE,
+      localFilePath: file,
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Array));
+    expect(prisma.$transaction.mock.calls[0][0]).toHaveLength(3);
+    expect(tx.trade.deleteMany).toHaveBeenCalledTimes(1);
+    expect(tx.trade.createMany).toHaveBeenCalledTimes(2);
   });
 
   it('builds localTradeDataFile with compact tradeDay', () => {
