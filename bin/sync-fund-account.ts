@@ -1,85 +1,22 @@
-// 同步fund account数据
+// 同步 fund account 数据
 
-import { NestFactory } from '@nestjs/core';
-import { InnerFundSnapshotReason } from '@prisma/client';
 import dayjs from 'dayjs';
-import { isEmpty } from 'lodash';
 
-import { AppModule } from '../src/app.module';
-import { FundAccountService } from '../src/fund_account/fund_account.service';
-import { PrismaService } from '../src/prisma/prisma.service';
+import {
+  inferFundAccountTaskType,
+  parseSyncTradeDataArgs,
+  runTradeDataSyncCli,
+} from '../src/trade-data-sync/trade-data-sync.cli';
 
 async function main() {
-  const app = await NestFactory.createApplicationContext(AppModule);
-
-  const prismaService = app.get(PrismaService);
-  const fundAccountService = app.get(FundAccountService);
-
-  const fundAccounts = await prismaService.fundAccount.findMany({
-    where: {
-      active: true,
-    },
-    include: {
-      XTPConfig: true,
-      ATPConfig: true,
-      broker: true,
-    },
-  });
-
-  let reason: InnerFundSnapshotReason = InnerFundSnapshotReason.SYNC;
-  const now = dayjs();
-
-  if (now.hour() <= 9) {
-    reason = InnerFundSnapshotReason.BEFORE_TRADING_DAY;
-  } else if (now.hour() >= 15) {
-    reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
+  const parsed = parseSyncTradeDataArgs(process.argv.slice(2));
+  if (!parsed.taskType) {
+    parsed.taskType = inferFundAccountTaskType(dayjs().hour());
   }
-
-  for (const fund_account of fundAccounts) {
-    // if (fund_account.account !== '109004038415') {
-    //   continue;
-    // }
-
-    // if (fund_account.brokerKey !== 'zhongxin') {
-    //   continue;
-    // }
-
-    // if (fund_account.brokerKey !== 'fangzheng') {
-    //   continue;
-    // }
-
-    // if (fund_account.account === '106110006463') {
-    //   continue;
-    // }
-
-    // if (fund_account.account !== '330200063628') {
-    //   continue;
-    // }
-
-    console.log('begin sync account', fund_account.account);
-
-    const markets = !isEmpty(fund_account.XTPConfig)
-      ? fund_account.XTPConfig.map((c) => c.market)
-      : fund_account.ATPConfig.map((c) => c.market);
-
-    for (const market of markets) {
-      try {
-        await fundAccountService.syncFundAccount(
-          fund_account.account,
-          market,
-          reason
-        );
-
-        console.log(
-          `Synced fund account ${fund_account.account} for ${fund_account.broker.name} ${market}`
-        );
-      } catch (error) {
-        console.log(error);
-      }
-    }
-  }
-
-  app.close();
+  await runTradeDataSyncCli(parsed);
 }
 
-main();
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

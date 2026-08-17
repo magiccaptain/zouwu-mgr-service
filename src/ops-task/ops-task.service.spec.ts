@@ -1,3 +1,5 @@
+import { OpsTaskType } from '@prisma/client';
+
 import { FeishuService } from 'src/feishu/feishu.service';
 import { FundAccountService } from 'src/fund_account';
 import { HostServerService } from 'src/host_server/host_server.service';
@@ -5,6 +7,7 @@ import { MarketValueService } from 'src/market-value/market-value.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QuoteService } from 'src/quote/quote.service';
 import { RemoteCommandService } from 'src/remote-command';
+import { TradeDataSyncService } from 'src/trade-data-sync/trade-data-sync.service';
 import { TradingCalendarService } from 'src/trading-calendar/trading-calendar.service';
 import { ValCalcService } from 'src/val-calc/val-calc.service';
 import { WarningService } from 'src/warning/warning.service';
@@ -15,10 +18,16 @@ describe('OpsTaskService', () => {
   let service: OpsTaskService;
   let prismaService: {
     hostServer: { findMany: jest.Mock };
-    opsTask: { findMany: jest.Mock; findUnique: jest.Mock; update: jest.Mock };
+    opsTask: {
+      findMany: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
+      create: jest.Mock;
+    };
   };
   let feishuService: { notifyMaintenance: jest.Mock };
   let tradingCalendarService: { sync: jest.Mock; isTradingDay: jest.Mock };
+  let tradeDataSyncService: { run: jest.Mock };
 
   beforeEach(() => {
     prismaService = {
@@ -27,10 +36,12 @@ describe('OpsTaskService', () => {
         findMany: jest.fn(),
         findUnique: jest.fn(),
         update: jest.fn(),
+        create: jest.fn(),
       },
     };
     feishuService = { notifyMaintenance: jest.fn() };
     tradingCalendarService = { sync: jest.fn(), isTradingDay: jest.fn() };
+    tradeDataSyncService = { run: jest.fn() };
     service = new OpsTaskService(
       prismaService as unknown as PrismaService,
       {} as unknown as RemoteCommandService,
@@ -41,7 +52,8 @@ describe('OpsTaskService', () => {
       {} as unknown as MarketValueService,
       {} as unknown as ValCalcService,
       feishuService as unknown as FeishuService,
-      tradingCalendarService as unknown as TradingCalendarService
+      tradingCalendarService as unknown as TradingCalendarService,
+      tradeDataSyncService as unknown as TradeDataSyncService
     );
   });
 
@@ -82,7 +94,8 @@ describe('syncNextYearTradingCalendar', () => {
       {} as unknown as MarketValueService,
       {} as unknown as ValCalcService,
       feishuService as unknown as FeishuService,
-      tradingCalendarService as unknown as TradingCalendarService
+      tradingCalendarService as unknown as TradingCalendarService,
+      { run: jest.fn() } as unknown as TradeDataSyncService
     );
   });
 
@@ -128,5 +141,90 @@ describe('syncNextYearTradingCalendar', () => {
     expect(feishuService.notifyMaintenance).toHaveBeenCalledWith(
       '交易日历自动同步失败：Python service unavailable，请在管理页面手动重试'
     );
+  });
+});
+
+describe('trade data sync crons', () => {
+  let service: OpsTaskService;
+  let prisma: { opsTask: { create: jest.Mock } };
+  let feishuService: { notifyMaintenance: jest.Mock };
+  let tradingCalendarService: { isTradingDay: jest.Mock };
+  let tradeDataSyncService: { run: jest.Mock };
+
+  beforeEach(() => {
+    prisma = { opsTask: { create: jest.fn() } };
+    feishuService = { notifyMaintenance: jest.fn() };
+    tradingCalendarService = { isTradingDay: jest.fn() };
+    tradeDataSyncService = { run: jest.fn() };
+    service = new OpsTaskService(
+      prisma as unknown as PrismaService,
+      {} as unknown as RemoteCommandService,
+      {} as unknown as HostServerService,
+      {} as unknown as FundAccountService,
+      {} as unknown as WarningService,
+      {} as unknown as QuoteService,
+      {} as unknown as MarketValueService,
+      {} as unknown as ValCalcService,
+      feishuService as unknown as FeishuService,
+      tradingCalendarService as unknown as TradingCalendarService,
+      tradeDataSyncService as unknown as TradeDataSyncService
+    );
+  });
+
+  it('skips before-fund sync on non-trading day', async () => {
+    tradingCalendarService.isTradingDay.mockResolvedValue(false);
+    await service.startBeforeSyncFundAccountTask();
+    expect(tradeDataSyncService.run).not.toHaveBeenCalled();
+  });
+
+  it('creates BEFORE_SYNC_FUND_ACCOUNT task and runs TradeDataSyncService on trading day', async () => {
+    tradingCalendarService.isTradingDay.mockResolvedValue(true);
+    prisma.opsTask.create.mockResolvedValue({
+      id: 9,
+      trade_day: '2026-08-17',
+      type: 'BEFORE_SYNC_FUND_ACCOUNT',
+    });
+    await service.startBeforeSyncFundAccountTask();
+    expect(tradeDataSyncService.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        taskType: OpsTaskType.BEFORE_SYNC_FUND_ACCOUNT,
+        opsTaskId: 9,
+        tradeDay: '2026-08-17',
+      })
+    );
+    expect(feishuService.notifyMaintenance).not.toHaveBeenCalled();
+  });
+
+  it('creates AFTER_SYNC_FUND_ACCOUNT task and runs TradeDataSyncService on trading day', async () => {
+    tradingCalendarService.isTradingDay.mockResolvedValue(true);
+    prisma.opsTask.create.mockResolvedValue({
+      id: 11,
+      trade_day: '2026-08-17',
+      type: 'AFTER_SYNC_FUND_ACCOUNT',
+    });
+    await service.startAfterSyncFundAccountTask();
+    expect(tradeDataSyncService.run).toHaveBeenCalledWith(
+      expect.objectContaining({
+        taskType: OpsTaskType.AFTER_SYNC_FUND_ACCOUNT,
+        opsTaskId: 11,
+        tradeDay: '2026-08-17',
+      })
+    );
+    expect(feishuService.notifyMaintenance).not.toHaveBeenCalled();
+  });
+
+  it('15:15 runs AFTER_SYNC_TRADE_DATA only', async () => {
+    tradingCalendarService.isTradingDay.mockResolvedValue(true);
+    prisma.opsTask.create.mockResolvedValue({ id: 3, trade_day: '2026-08-17' });
+    await service.startAfterSyncTradeDataTask();
+    expect(tradeDataSyncService.run).toHaveBeenCalledWith(
+      expect.objectContaining({ taskType: OpsTaskType.AFTER_SYNC_TRADE_DATA })
+    );
+  });
+
+  it('does not expose old position/order/trade cron methods', () => {
+    expect(service['startAfterSyncPositionTask']).toBeUndefined();
+    expect(service['startAfterSyncOrderTask']).toBeUndefined();
+    expect(service['startAfterSyncTradeTask']).toBeUndefined();
   });
 });

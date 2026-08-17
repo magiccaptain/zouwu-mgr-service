@@ -23,6 +23,7 @@ import { ProcessMonitorModule } from './process-monitor/process-monitor.module';
 import { QuoteModule } from './quote/quote.module';
 import { RemoteCommandModule } from './remote-command/remote-command.module';
 import { SessionModule } from './session/session.module';
+import { TradeDataSyncModule } from './trade-data-sync/trade-data-sync.module';
 import { TradingCalendarModule } from './trading-calendar/trading-calendar.module';
 import { ValCalcModule } from './val-calc/val-calc.module';
 import { WarningModule } from './warning/warning.module';
@@ -57,6 +58,7 @@ import { WarningModule } from './warning/warning.module';
     MinioModule,
     EmailModule,
     TradingCalendarModule,
+    TradeDataSyncModule,
   ],
   controllers: [HelloController],
 })

@@ -3,7 +3,6 @@ import path from 'path';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   FundAccountType,
-  InnerFundSnapshotReason,
   Market,
   OpsTask,
   OpsTaskType,
@@ -15,19 +14,17 @@ import {
 } from '@prisma/client';
 import dayjs from 'dayjs';
 import Decimal from 'decimal.js';
-import { flatten, isEmpty } from 'lodash';
 
 import { settings } from 'src/config';
-import { MarketCode } from 'src/config/constants';
 import { FeishuService } from 'src/feishu/feishu.service';
-import { FundAccountService, InnerSnapshotFromServer } from 'src/fund_account';
+import { FundAccountService } from 'src/fund_account';
 import { HostServerService } from 'src/host_server/host_server.service';
 import { Cron } from 'src/lib/cron';
-import { tryParseJSON } from 'src/lib/lang/json';
 import { MarketValueService } from 'src/market-value/market-value.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { QuoteService } from 'src/quote/quote.service';
-import { RemoteCommand, RemoteCommandService } from 'src/remote-command';
+import { RemoteCommandService } from 'src/remote-command';
+import { TradeDataSyncService } from 'src/trade-data-sync/trade-data-sync.service';
 import { TradingCalendarService } from 'src/trading-calendar/trading-calendar.service';
 import { ValCalcService } from 'src/val-calc/val-calc.service';
 import { WarningService } from 'src/warning/warning.service';
@@ -46,7 +43,8 @@ export class OpsTaskService {
     private readonly marketValueService: MarketValueService,
     private readonly valCalcService: ValCalcService,
     private readonly feishuService: FeishuService,
-    private readonly tradingCalendarService: TradingCalendarService
+    private readonly tradingCalendarService: TradingCalendarService,
+    private readonly tradeDataSyncService: TradeDataSyncService
   ) {}
 
   async checkHostServerDiskTask(task: OpsTask) {
@@ -231,182 +229,6 @@ export class OpsTaskService {
     );
   }
 
-  async startSyncFundAccountTask(task: OpsTask) {
-    const fundAccounts = await this.prismaService.fundAccount.findMany({
-      where: {
-        active: true,
-        type: FundAccountType.STOCK,
-      },
-      include: {
-        XTPConfig: true,
-        ATPConfig: true,
-      },
-    });
-
-    let commands = flatten(
-      await Promise.all(
-        fundAccounts.map(async (fund_account) => {
-          const { brokerKey, account, companyKey } = fund_account;
-
-          const markets = !isEmpty(fund_account.XTPConfig)
-            ? fund_account.XTPConfig.map((c) => c.market)
-            : fund_account.ATPConfig.map((c) => c.market);
-
-          const ret: RemoteCommand[] = [];
-
-          for (const market of markets) {
-            const masterServer = await this.hostServerService.getMasterServer(
-              brokerKey,
-              market,
-              companyKey
-            );
-
-            if (!masterServer) {
-              console.error(`${brokerKey} ${market} 无 master 服务器`);
-            } else {
-              const cmd = await this.remoteCommandService.makeQueryAccount(
-                masterServer,
-                account,
-                task
-              );
-
-              ret.push(cmd);
-            }
-          }
-
-          return ret;
-        })
-      )
-    );
-
-    commands = await this.hostServerService.batchExecRemoteCommand(
-      commands,
-      false
-    );
-
-    await Promise.all(
-      commands.map(async (cmd) => {
-        const {
-          code,
-          stdout,
-          stderr,
-          trade_day,
-          opsTaskId,
-          id,
-          hostServer,
-          fund_account,
-        } = cmd;
-        const { market, brokerKey } = hostServer;
-
-        if (code !== 0) {
-          console.error(
-            `资金账户同步失败 ${brokerKey} ${fund_account} ${market}`,
-            stdout,
-            stderr
-          );
-
-          await this.feishuService.notifyMaintenance(
-            `${hostServer.ssh_port} 资金账户同步失败 ${brokerKey} ${fund_account} ${market}`
-          );
-
-          return await this.prismaService.opsWarning.create({
-            data: {
-              trade_day,
-              opsTask: {
-                connect: {
-                  id: opsTaskId,
-                },
-              },
-              hostServer: {
-                connect: {
-                  id: hostServer.id,
-                },
-              },
-              fundAccount: {
-                connect: {
-                  account: fund_account,
-                },
-              },
-              remoteCommand: {
-                connect: {
-                  id: id,
-                },
-              },
-              text: `资金账户同步失败`,
-            },
-          });
-        }
-
-        // 保存snapshot
-        const data = stdout
-          .split('\n')
-          .map((l) => tryParseJSON(l))
-          .filter(Boolean);
-
-        const snapshot: InnerSnapshotFromServer = data.find(
-          (d) => d.market === MarketCode[market]
-        );
-
-        if (!snapshot) {
-          console.error(
-            `资金账户同步失败 ${brokerKey} ${fund_account} ${market}`,
-            stdout,
-            stderr
-          );
-
-          await this.feishuService.notifyMaintenance(
-            `${hostServer.ssh_port} 资金账户同步失败 未找到数据 ${brokerKey} ${fund_account} ${market}`
-          );
-
-          return await this.prismaService.opsWarning.create({
-            data: {
-              trade_day,
-              opsTask: {
-                connect: {
-                  id: opsTaskId,
-                },
-              },
-              hostServer: {
-                connect: {
-                  id: hostServer.id,
-                },
-              },
-              fundAccount: {
-                connect: {
-                  account: fund_account,
-                },
-              },
-              remoteCommand: {
-                connect: {
-                  id: id,
-                },
-              },
-              text: '资金账户同步失败 未找到数据',
-            },
-          });
-        }
-
-        let reason: InnerFundSnapshotReason = InnerFundSnapshotReason.SYNC;
-        const now = dayjs();
-
-        if (now.hour() <= 9) {
-          reason = InnerFundSnapshotReason.BEFORE_TRADING_DAY;
-        } else if (now.hour() >= 15) {
-          reason = InnerFundSnapshotReason.AFTER_TRADING_DAY;
-        }
-
-        await this.fundAccountService.saveFundAccountSnapshot(
-          market,
-          fund_account,
-          reason,
-          snapshot
-        );
-
-        console.log(`资金账户同步成功 ${fund_account} ${market}`);
-      })
-    );
-  }
-
   // 周一到周五下午15:40 执行计算市值
   @Cron(settings.cron.after_calc_market_value)
   async startAfterCalcMarketValueTask() {
@@ -460,77 +282,58 @@ export class OpsTaskService {
   // 周一到周五早上8:40 执行
   @Cron(settings.cron.before_sync_fund_account)
   async startBeforeSyncFundAccountTask() {
+    const tradeDay = dayjs().format('YYYY-MM-DD');
     const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
+      tradeDay
     );
     if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      this.logger.log(`非交易日 ${tradeDay}，跳过执行`);
       return;
     }
 
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘前资金账户同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
+        trade_day: tradeDay,
         type: OpsTaskType.BEFORE_SYNC_FUND_ACCOUNT,
       },
     });
 
-    await this.startSyncFundAccountTask(task);
-
-    await this.feishuService.notifyMaintenance(
-      `盘前资金账户同步完成 ${task.trade_day}`
-    );
+    await this.tradeDataSyncService.run({
+      taskType: OpsTaskType.BEFORE_SYNC_FUND_ACCOUNT,
+      tradeDay: task.trade_day,
+      opsTaskId: task.id,
+    });
 
     this.logger.log('盘前资金账户同步完成');
     return;
   }
 
-  // // 周一到周五早上9:10 执行
-  // @Cron(settings.cron.before_sync_fund_account)
-  // async startBeforeSyncFundAccountTask2() {
-  //   const task = await this.prismaService.opsTask.create({
-  //     data: {
-  //       name: '盘前资金账户同步-2',
-  //       trade_day: dayjs().format('YYYY-MM-DD'),
-  //       type: OpsTaskType.BEFORE_SYNC_FUND_ACCOUNT,
-  //     },
-  //   });
-
-  //   await this.startSyncFundAccountTask(task);
-
-  //   await this.feishuService.notifyMaintenance(
-  //     `盘前资金账户-2同步完成 ${task.trade_day}`
-  //   );
-
-  //   this.logger.log('盘前资金账户同步完成');
-  //   return;
-  // }
-
   // 周一到周五下午16:5 执行
   @Cron(settings.cron.after_sync_fund_account)
   async startAfterSyncFundAccountTask() {
+    const tradeDay = dayjs().format('YYYY-MM-DD');
     const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
+      tradeDay
     );
     if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      this.logger.log(`非交易日 ${tradeDay}，跳过执行`);
       return;
     }
 
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后资金账户同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
+        trade_day: tradeDay,
         type: OpsTaskType.AFTER_SYNC_FUND_ACCOUNT,
       },
     });
 
-    await this.startSyncFundAccountTask(task);
-
-    await this.feishuService.notifyMaintenance(
-      `盘后资金账户同步完成 ${task.trade_day}`
-    );
+    await this.tradeDataSyncService.run({
+      taskType: OpsTaskType.AFTER_SYNC_FUND_ACCOUNT,
+      tradeDay: task.trade_day,
+      opsTaskId: task.id,
+    });
 
     this.logger.log('盘后资金账户同步完成');
     return;
@@ -578,207 +381,33 @@ export class OpsTaskService {
   //   return;
   // }
 
-  // 周一到周五下午15:15 执行查询持仓数据
-  @Cron(settings.cron.after_sync_positions)
-  async startAfterSyncPositionTask() {
+  // 周一到周五下午15:15 执行盘后交易数据同步
+  @Cron(settings.cron.after_sync_trade_data)
+  async startAfterSyncTradeDataTask() {
+    const tradeDay = dayjs().format('YYYY-MM-DD');
     const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
+      tradeDay
     );
     if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
-      return;
-    }
-
-    const task = await this.prismaService.opsTask.create({
-      data: {
-        name: '盘后持仓数据同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
-        type: OpsTaskType.AFTER_SYNC_POSITIONS,
-      },
-    });
-
-    const fundAccounts = await this.prismaService.fundAccount.findMany({
-      where: {
-        active: true,
-        type: FundAccountType.STOCK,
-      },
-      include: {
-        XTPConfig: true,
-        ATPConfig: true,
-        broker: true,
-      },
-    });
-
-    for (const fundAccount of fundAccounts) {
-      const markets = !isEmpty(fundAccount.XTPConfig)
-        ? fundAccount.XTPConfig.map((c) => c.market)
-        : fundAccount.ATPConfig.map((c) => c.market);
-
-      for (const market of markets) {
-        try {
-          await this.fundAccountService.queryPosition(
-            fundAccount,
-            market,
-            task
-          );
-        } catch (error) {
-          this.logger.error(error);
-
-          await this.prismaService.opsWarning.create({
-            data: {
-              trade_day: dayjs().format('YYYY-MM-DD'),
-              opsTask: {
-                connect: { id: task.id },
-              },
-              text: ` FundAccount ${fundAccount.account} market ${market} 持仓数据同步失败 ${error.message}`,
-              fundAccount: {
-                connect: { id: fundAccount.id },
-              },
-            },
-          });
-
-          await this.feishuService.notifyMaintenance(
-            `FundAccount ${fundAccount.account} ${market} 持仓数据同步失败`
-          );
-        }
-      }
-    }
-
-    this.logger.log('盘后持仓数据同步完成');
-
-    await this.feishuService.notifyMaintenance(`盘后持仓数据同步完成`);
-
-    return;
-  }
-
-  // 周一到周五下午15:20 执行查询订单数据
-  @Cron(settings.cron.after_sync_order)
-  async startAfterSyncOrderTask() {
-    const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
-    );
-    if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
-      return;
-    }
-
-    const task = await this.prismaService.opsTask.create({
-      data: {
-        name: '盘后订单数据同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
-        type: OpsTaskType.AFTER_SYNC_ORDER,
-      },
-    });
-
-    const fundAccounts = await this.prismaService.fundAccount.findMany({
-      where: {
-        active: true,
-        type: FundAccountType.STOCK,
-      },
-      include: {
-        XTPConfig: true,
-        ATPConfig: true,
-      },
-    });
-
-    for (const fundAccount of fundAccounts) {
-      const markets = !isEmpty(fundAccount.XTPConfig)
-        ? fundAccount.XTPConfig.map((c) => c.market)
-        : fundAccount.ATPConfig.map((c) => c.market);
-
-      for (const market of markets) {
-        try {
-          await this.fundAccountService.queryOrder(fundAccount, market, task);
-        } catch (error) {
-          this.logger.error(error);
-
-          await this.prismaService.opsWarning.create({
-            data: {
-              trade_day: dayjs().format('YYYY-MM-DD'),
-              opsTask: {
-                connect: { id: task.id },
-              },
-              fundAccount: {
-                connect: { id: fundAccount.id },
-              },
-              text: ` FundAccount ${fundAccount.account} market ${market} 订单数据同步失败 ${error.message}`,
-            },
-          });
-
-          await this.feishuService.notifyMaintenance(
-            `FundAccount ${fundAccount.account} ${market} 订单数据同步失败`
-          );
-        }
-      }
-    }
-    this.logger.log('盘后订单数据同步完成');
-    await this.feishuService.notifyMaintenance(`盘后订单数据同步完成`);
-    return;
-  }
-
-  // 周一到周五下午15:25 执行查询交易数据
-  @Cron(settings.cron.after_sync_trade)
-  async startAfterSyncTradeTask() {
-    const isTradingDay = await this.tradingCalendarService.isTradingDay(
-      dayjs().format('YYYY-MM-DD')
-    );
-    if (!isTradingDay) {
-      this.logger.log(`非交易日 ${dayjs().format('YYYY-MM-DD')}，跳过执行`);
+      this.logger.log(`非交易日 ${tradeDay}，跳过执行`);
       return;
     }
 
     const task = await this.prismaService.opsTask.create({
       data: {
         name: '盘后交易数据同步',
-        trade_day: dayjs().format('YYYY-MM-DD'),
-        type: OpsTaskType.AFTER_SYNC_TRADE,
-      },
-    });
-    const fundAccounts = await this.prismaService.fundAccount.findMany({
-      where: {
-        active: true,
-        type: FundAccountType.STOCK,
-      },
-      include: {
-        XTPConfig: true,
-        ATPConfig: true,
+        trade_day: tradeDay,
+        type: OpsTaskType.AFTER_SYNC_TRADE_DATA,
       },
     });
 
-    for (const fundAccount of fundAccounts) {
-      const markets = !isEmpty(fundAccount.XTPConfig)
-        ? fundAccount.XTPConfig.map((c) => c.market)
-        : fundAccount.ATPConfig.map((c) => c.market);
-
-      for (const market of markets) {
-        try {
-          await this.fundAccountService.queryTrade(fundAccount, market, task);
-        } catch (error) {
-          this.logger.error(error);
-          await this.prismaService.opsWarning.create({
-            data: {
-              trade_day: dayjs().format('YYYY-MM-DD'),
-              opsTask: {
-                connect: { id: task.id },
-              },
-              fundAccount: {
-                connect: { id: fundAccount.id },
-              },
-              text: ` FundAccount ${fundAccount.account} market ${market} 交易数据同步失败 ${error.message}`,
-            },
-          });
-
-          await this.feishuService.notifyMaintenance(
-            `FundAccount ${fundAccount.account} ${market} 交易数据同步失败`
-          );
-        }
-      }
-    }
+    await this.tradeDataSyncService.run({
+      taskType: OpsTaskType.AFTER_SYNC_TRADE_DATA,
+      tradeDay: task.trade_day,
+      opsTaskId: task.id,
+    });
 
     this.logger.log('盘后交易数据同步完成');
-
-    await this.feishuService.notifyMaintenance(`盘后交易数据同步完成`);
-
     return;
   }
 

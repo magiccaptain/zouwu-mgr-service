@@ -275,6 +275,71 @@ export class HostServerService {
     return result;
   }
 
+  async execByHost(remoteCommands: RemoteCommand[]): Promise<RemoteCommand[]> {
+    const groups = new Map<number, RemoteCommand[]>();
+    for (const remoteCommand of remoteCommands) {
+      const hostId = remoteCommand.hostServer.id;
+      const list = groups.get(hostId) ?? [];
+      list.push(remoteCommand);
+      groups.set(hostId, list);
+    }
+
+    const grouped = await Promise.all(
+      [...groups.values()].map(async (group) => {
+        const ssh_pool: { [id: number]: NodeSSH } = {};
+        const result: RemoteCommand[] = [];
+        try {
+          for (const remoteCommand of group) {
+            try {
+              const { hostServer } = remoteCommand;
+              if (!ssh_pool[hostServer.id]) {
+                ssh_pool[hostServer.id] = await this.connectWithRemoteCommand(
+                  remoteCommand
+                );
+              }
+              const ssh = ssh_pool[hostServer.id];
+              if (!ssh) {
+                result.push(
+                  this.commandExecFailed(remoteCommand, 'ssh connect failed')
+                );
+                continue;
+              }
+              const ret_cmd = await this.runRemoteCommand(remoteCommand, ssh);
+              result.push(ret_cmd);
+            } catch (error: any) {
+              result.push(
+                this.commandExecFailed(
+                  remoteCommand,
+                  error?.message ?? String(error)
+                )
+              );
+            }
+          }
+          return result;
+        } finally {
+          for (const ssh of Object.values(ssh_pool)) {
+            ssh?.dispose();
+          }
+        }
+      })
+    );
+
+    return grouped.flat();
+  }
+
+  private commandExecFailed(
+    remoteCommand: RemoteCommand,
+    message: string
+  ): RemoteCommand {
+    return {
+      ...remoteCommand,
+      code: 999,
+      stdout: '',
+      stderr: message,
+      status: RemoteCommandStatus.ERROR,
+    };
+  }
+
   async checkDisk(hostServer: HostServer, task?: OpsTask): Promise<HostServer> {
     let command = await this.remoteCommandService.makeCheckDisk(
       hostServer,

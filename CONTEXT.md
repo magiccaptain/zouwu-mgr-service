@@ -25,6 +25,9 @@
 - 交易日历管理页面：ops-admin 提供按年份查看日历、手动同步、以及对个别日期调整 `is_open` 状态的能力。不开放完整 CRUD。
 - 申赎记录：资金账户的一次申购或赎回业务事实。记录创建时状态为 OPEN；用户确认出入金完成后手动将状态置为 CLOSE，流程彻底结束。无中间状态。一笔申赎可关联多笔 CustodianTransfer。申购的 `position_change_day` 在用户确认完成时，以该笔 CustodianTransfer 的 transfer_date + 1 交易日计算并回填。赎回的 `position_change_day` 在创建申赎记录时即以 reduce_day + 1 交易日自动计算并填好。
 - CustodianTransfer：托管出入金记录。由托管平台执行出入金操作后，运维人员在运维平台手动登记的人工确认记录。与 `TransferRecord`（系统自动执行的转账记录）是不同实体。
+- TradeDataSyncService：交易数据两阶段同步的编排服务。按托管机并行拉取资金 / 持仓 / 委托 / 成交到本地 JSON，再按成功文件批量写入数据库，并用步骤表断点续跑。不承担单账户即时查询。
+- TradeDataSyncStep：当日同步步骤。单元为 `trade_day × taskType × 账户 × 市场 × dataType`，每单元记录 `pull` / `write` 状态。本地 JSON 是拉取产物，步骤表才是进度。
+- AFTER_SYNC_TRADE_DATA：盘后 15:15 的合并作业类型，一次同步持仓、委托、成交。盘前资金（08:40）与盘后资金（16:05）仍为独立 OpsTask。
 
 ## 关键能力边界
 

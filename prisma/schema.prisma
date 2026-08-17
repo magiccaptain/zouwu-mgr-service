@@ -217,6 +217,7 @@ model FundAccount {
   CustodianTransfer            CustodianTransfer[]
   XTPConfig                    XTPConfig[]
   CTPConfig                    CTPConfig?
+  TradeDataSyncStep            TradeDataSyncStep[]
 
   @@schema("public")
 }
@@ -361,8 +362,9 @@ model OpsTask {
   trade_day      String
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @default(now()) @updatedAt
-  opsWarnings    OpsWarning[]
-  remoteCommands RemoteCommand[]
+  opsWarnings         OpsWarning[]
+  remoteCommands      RemoteCommand[]
+  tradeDataSyncSteps  TradeDataSyncStep[]
 
   @@index([trade_day(sort: Desc)])
   @@schema("public")
@@ -489,6 +491,29 @@ model Trade {
   @@index([tradeDay, fundAccount, orderApiId])
   @@index([tradeDay, fundAccount, orderRef])
   @@index([tradeDay, fundAccount, tradeId])
+  @@schema("public")
+}
+
+model TradeDataSyncStep {
+  id            Int                 @id @default(autoincrement())
+  trade_day     String
+  taskType      OpsTaskType
+  fund_account  String
+  market        Market
+  dataType      TradeDataType
+  pullStatus    TradeDataStepStatus @default(PENDING)
+  writeStatus   TradeDataStepStatus @default(PENDING)
+  localFilePath String?
+  pullError     String?
+  writeError    String?
+  opsTaskId     Int?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @default(now()) @updatedAt
+  fundAccount   FundAccount         @relation(fields: [fund_account], references: [account])
+  opsTask       OpsTask?            @relation(fields: [opsTaskId], references: [id])
+
+  @@unique([trade_day, taskType, fund_account, market, dataType])
+  @@index([trade_day, taskType])
   @@schema("public")
 }
 
@@ -1022,6 +1047,7 @@ enum OpsTaskType {
   AFTER_SYNC_POSITIONS
   AFTER_SYNC_ORDER
   AFTER_SYNC_TRADE
+  AFTER_SYNC_TRADE_DATA
   AFTER_SYNC_LAST_PRICE
   AFTER_PULL_OP_VALUE
   AFTER_PULL_QUOTE_SNAPSHOT
@@ -1058,6 +1084,23 @@ enum OpsWarningType {
   PROCESS_HIGH_CPU
   PROCESS_HIGH_MEMORY
   PROCESS_CHECK_FAILED
+
+  @@schema("public")
+}
+
+enum TradeDataType {
+  FUND
+  POSITION
+  ORDER
+  TRADE
+
+  @@schema("public")
+}
+
+enum TradeDataStepStatus {
+  PENDING
+  SUCCESS
+  FAILED
 
   @@schema("public")
 }
