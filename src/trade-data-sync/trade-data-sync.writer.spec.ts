@@ -140,10 +140,9 @@ describe('TradeDataSyncWriter', () => {
       localFilePath: file,
     });
 
-    expect(prisma.$transaction).toHaveBeenCalledWith(
-      expect.any(Array),
-      { timeout: 30000 }
-    );
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Array), {
+      timeout: 30000,
+    });
   });
 
   it('empty position file deletes existing rows and inserts none', async () => {

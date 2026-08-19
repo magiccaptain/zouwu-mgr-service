@@ -142,10 +142,7 @@ export class TradeDataSyncWriter {
     ];
   }
 
-  private replaceOrders(
-    input: WriteUnitInput,
-    orders: RawOrder[]
-  ): any[] {
+  private replaceOrders(input: WriteUnitInput, orders: RawOrder[]): any[] {
     const data = [];
     for (const o of orders) {
       const side = mapSide(o.side);
@@ -179,10 +176,7 @@ export class TradeDataSyncWriter {
     ];
   }
 
-  private replaceTrades(
-    input: WriteUnitInput,
-    trades: RawTrade[]
-  ): any[] {
+  private replaceTrades(input: WriteUnitInput, trades: RawTrade[]): any[] {
     const data = [];
     for (const t of trades) {
       const side = mapSide(t.side);
