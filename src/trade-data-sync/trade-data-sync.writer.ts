@@ -72,7 +72,7 @@ export class TradeDataSyncWriter {
     const parsed = JSON.parse(raw);
 
     const operations = this.replaceOperations(input, parsed);
-    await this.prisma.$transaction(operations);
+    await this.prisma.$transaction(operations, { timeout: 30000 });
   }
 
   private replaceOperations(input: WriteUnitInput, parsed: unknown): any[] {

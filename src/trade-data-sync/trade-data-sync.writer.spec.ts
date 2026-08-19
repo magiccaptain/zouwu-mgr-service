@@ -128,6 +128,24 @@ describe('TradeDataSyncWriter', () => {
     ).resolves.toBeUndefined();
   });
 
+  it('uses an extended transaction timeout for batch writes', async () => {
+    const file = writeFixture('position.SH.json', [
+      { ticker: '600000.SH', total_qty: 1, sellable_qty: 1 },
+    ]);
+    const writer = new TradeDataSyncWriter(prisma as any);
+
+    await writer.write({
+      ...baseInput,
+      dataType: TradeDataType.POSITION,
+      localFilePath: file,
+    });
+
+    expect(prisma.$transaction).toHaveBeenCalledWith(
+      expect.any(Array),
+      { timeout: 30000 }
+    );
+  });
+
   it('empty position file deletes existing rows and inserts none', async () => {
     const file = writeFixture('position.SH.json', []);
     const writer = new TradeDataSyncWriter(prisma as any);
@@ -397,7 +415,9 @@ describe('TradeDataSyncWriter', () => {
       localFilePath: file,
     });
 
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Array));
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Array), {
+      timeout: 30000,
+    });
     expect(prisma.$transaction.mock.calls[0][0]).toHaveLength(3);
     expect(tx.trade.deleteMany).toHaveBeenCalledTimes(1);
     expect(tx.trade.createMany).toHaveBeenCalledTimes(2);
