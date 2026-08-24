@@ -6,6 +6,7 @@ module.exports = {
       name: 'mgr-service',
       script: 'bun dist/main.js',
       watch: 'dist',
+      cron_restart: '0 0 * * *',
       cwd: './',
       env: {
         NODE_ENV: 'production',
@@ -21,6 +22,7 @@ module.exports = {
       args: 'main:app --host 0.0.0.0 --port 8001',
       interpreter: 'none',
       cwd: './python',
+      cron_restart: '0 0 * * *',
       env: {
         PYTHON_SERVICE_PORT: 8001,
       },
