@@ -461,7 +461,7 @@ model Order {
   hedgeFlag   HedgeFlag?
   offsetFlag  OffsetFlag?
 
-  @@unique([tradeDay, fundAccount, market, ticker, orderRef])
+  @@unique([tradeDay, fundAccount, market, ticker, orderRef, orderApiId])
   @@index([tradeDay, fundAccount, orderApiId])
   @@index([tradeDay, fundAccount, orderRef])
   @@schema("public")

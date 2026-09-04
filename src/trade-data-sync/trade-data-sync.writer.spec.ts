@@ -295,6 +295,53 @@ describe('TradeDataSyncWriter', () => {
     });
   });
 
+  it('keeps orders that share ticker+orderRef but differ in orderApiId', async () => {
+    const file = writeFixture('order.SH.json', [
+      {
+        order_api_id: 100000006,
+        order_ref: 200000006,
+        ticker: '603256',
+        price: 135.02,
+        quantity: 100,
+        price_type: 1,
+        side: 'S'.charCodeAt(0),
+        qty_left: 0,
+        insert_time: 1,
+        update_time: 0,
+        cancel_time: 0,
+        status: 1,
+      },
+      {
+        order_api_id: 100000582,
+        order_ref: 200000006,
+        ticker: '603256',
+        price: 120.69,
+        quantity: 100,
+        price_type: 1,
+        side: 'S'.charCodeAt(0),
+        qty_left: 100,
+        insert_time: 2,
+        update_time: 0,
+        cancel_time: 0,
+        status: 6,
+      },
+    ]);
+    const writer = new TradeDataSyncWriter(prisma as any);
+    await writer.write({
+      ...baseInput,
+      dataType: TradeDataType.ORDER,
+      localFilePath: file,
+    });
+    const created = tx.order.createMany.mock.calls[0][0].data;
+    expect(created).toHaveLength(2);
+    expect(created.map((row: { orderApiId: bigint }) => row.orderApiId)).toEqual(
+      [BigInt(100000006), BigInt(100000582)]
+    );
+    expect(created.map((row: { orderRef: number }) => row.orderRef)).toEqual([
+      200000006, 200000006,
+    ]);
+  });
+
   it('skips order rows with invalid side', async () => {
     const file = writeFixture('order.SH.json', [
       {
