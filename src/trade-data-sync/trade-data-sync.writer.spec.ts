@@ -334,9 +334,9 @@ describe('TradeDataSyncWriter', () => {
     });
     const created = tx.order.createMany.mock.calls[0][0].data;
     expect(created).toHaveLength(2);
-    expect(created.map((row: { orderApiId: bigint }) => row.orderApiId)).toEqual(
-      [BigInt(100000006), BigInt(100000582)]
-    );
+    expect(
+      created.map((row: { orderApiId: bigint }) => row.orderApiId)
+    ).toEqual([BigInt(100000006), BigInt(100000582)]);
     expect(created.map((row: { orderRef: number }) => row.orderRef)).toEqual([
       200000006, 200000006,
     ]);
