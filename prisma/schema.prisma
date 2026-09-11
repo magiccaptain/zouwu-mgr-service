@@ -460,6 +460,29 @@ model Order {
   ctpData     Json?
   hedgeFlag   HedgeFlag?
   offsetFlag  OffsetFlag?
+  clientSeqId                      BigInt?
+  requestLocalTime                 DateTime? @db.Timestamp(3)
+  gatewayPositiveTransactTime      BigInt?
+  gatewayReportedTransactTime      BigInt?
+  gatewayReportedMinusPositiveMs   Int?
+  gatewayOrderId                   String?   @db.VarChar(32)
+  l2OrderId                        BigInt?
+  l2Presence                       String?   @db.VarChar(32)
+  l2Source                         String?   @db.VarChar(16)
+  l2Orderorino                     BigInt?
+  l2ExchTime                       Int?
+  l2Channel                        Int?
+  l2BizIndex                       BigInt?
+  l2MessageIndex                   BigInt?
+  l2PriceRaw                       BigInt?
+  l2VolumeRaw                      BigInt?
+  l2OrderRows                      Int?
+  l2ActiveTradeRows                Int?
+  l2TradeRows                      Int?
+  l2FirstTradeExchTime             Int?
+  l2FirstTradeChannel              Int?
+  l2FirstTradeBizIndex             BigInt?
+  l2FirstTradeIndex                BigInt?
 
   @@unique([tradeDay, fundAccount, market, ticker, orderRef, orderApiId])
   @@index([tradeDay, fundAccount, orderApiId])
@@ -486,6 +509,25 @@ model Trade {
   tradeId     String
   ctpData     Json?
   offsetFlag  OffsetFlag?
+  orderClientSeqId          BigInt?
+  orderGatewayOrderId       String? @db.VarChar(32)
+  l2OrderId                 BigInt?
+  l2Presence                String? @db.VarChar(32)
+  l2Source                  String? @db.VarChar(16)
+  l2Orderorino              BigInt?
+  l2ExchTime                Int?
+  l2Channel                 Int?
+  l2BizIndex                BigInt?
+  l2MessageIndex            BigInt?
+  l2PriceRaw                BigInt?
+  l2VolumeRaw               BigInt?
+  l2OrderRows               Int?
+  l2ActiveTradeRows         Int?
+  l2TradeRows               Int?
+  l2FirstTradeExchTime      Int?
+  l2FirstTradeChannel       Int?
+  l2FirstTradeBizIndex      BigInt?
+  l2FirstTradeIndex         BigInt?
 
   @@unique([tradeDay, fundAccount, market, ticker, tradeId, orderApiId])
   @@index([tradeDay, fundAccount, orderApiId])
