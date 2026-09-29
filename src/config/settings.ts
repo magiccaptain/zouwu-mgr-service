@@ -55,7 +55,7 @@ export const settings = env({
     local_dir: '/data/index_weight_data',
   },
   subscription_redemption_file: {
-    ssh_host: '192.168.30.6',
+    ssh_host: '192.168.30.9',
     ssh_port: 22,
     ssh_user: 'data001',
     remote_dir: '/mnt/data/public/data001/product',
