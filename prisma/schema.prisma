@@ -192,6 +192,7 @@ model FundAccount {
   companyKey                   String
   type                         FundAccountType                @default(STOCK)
   active                       Boolean                        @default(true)
+  status                       FundAccountStatus              @default(ENABLED)
   remark                       String?
   branch                       String?
   createdAt                    DateTime                       @default(now())
@@ -1037,6 +1038,14 @@ enum Market {
 enum FundAccountType {
   STOCK
   FUTURES
+
+  @@schema("public")
+}
+
+enum FundAccountStatus {
+  ENABLED
+  SUSPENDED
+  DISABLED
 
   @@schema("public")
 }
